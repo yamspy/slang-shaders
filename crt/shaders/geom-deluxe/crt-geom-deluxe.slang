@@ -12,6 +12,8 @@
  
 #include "geom-deluxe-params.inc"
 
+#include "../../../include/subpixel_masks.h"
+
 #define u_tex_size0 global.SourceSize
 #define u_tex_size1 global.internal1Size
 #define u_quad_dims global.OutputSize
@@ -117,9 +119,10 @@ layout(location = 4) in vec2 v_one;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D blur;
 layout(set = 0, binding = 3) uniform sampler2D internal1;
-layout(set = 0, binding = 4) uniform sampler2D aperture;
-layout(set = 0, binding = 5) uniform sampler2D slot;
-layout(set = 0, binding = 6) uniform sampler2D delta;
+// comment these out, as we're using generated masks instead of LUTs
+//layout(set = 0, binding = 4) uniform sampler2D aperture;
+//layout(set = 0, binding = 5) uniform sampler2D slot;
+//layout(set = 0, binding = 6) uniform sampler2D delta;
 
 #define blur_texture blur
 
@@ -301,23 +304,10 @@ void main()
   // original code; just makes a giant phosphor here
   // xy = v_texCoord.xy * u_quad_dims.xy / u_tex_size1.xy;
   
-  // tiling; looks nasty at non-integer x and/or y
-  // xy = fract(v_texCoord * global.SourceSize.xy * 1.9999);
-  
   // gl_FragCoord; tied to physical pixel size
   xy = v_texCoord.xy * global.OutputSize.xy;
-  
-  //vec3 mask = texture(mask_texture, xy).rgb;
-  vec3 mask = vec3(1.0);
-  if(mask_picker == 0) // no mask
-  {
-   FragColor = vec4(mul_res, col.a);
-   return;
-  }
-  else if(mask_picker == 1) mask = texture(aperture, xy * 0.3333).rgb;
-  else if(mask_picker == 2) mask = texture(slot, xy * 0.25).rgb;
-  else mask = texture(delta, xy * 0.49999).rgb;
-  mask = mix(vec3(1.0), mask, aperture_strength.x);
+
+  vec3 mask = mask_weights(xy, aperture_strength.x, mask_picker);
   
   FragColor = vec4(mul_res*mask, col.a);
 }

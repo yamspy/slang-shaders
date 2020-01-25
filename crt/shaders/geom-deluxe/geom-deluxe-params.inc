@@ -16,7 +16,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	mat4 MVP;
 } global;
 
-#pragma parameter mask_type "Mask (none, aperture, slot, delta)" 1.0 0.0 3.0 1.0
+#pragma parameter mask_type "Mask (aperture, delta, slot)" 1.0 1.0 19.0 1.0
 #pragma parameter aperture_strength "Shadow mask strength" 0.4 0.0 1.0 0.05
 #pragma parameter phosphor_power "Phosphor decay power" 1.2 0.5 3.0 0.05
 #pragma parameter phosphor_amplitude "Phosphor persistence amplitude" 0.04 0.0 0.2 0.01
