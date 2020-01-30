@@ -14,18 +14,18 @@
 
 #include "../../../include/subpixel_masks.h"
 
-#define u_tex_size0 global.SourceSize
-#define u_tex_size1 global.internal1Size
-#define u_quad_dims global.OutputSize
+#define u_tex_size0 global.SourceSize.xy
+#define u_tex_size1 global.internal1Size.xy
+#define u_quad_dims global.OutputSize.xy
 
 // Comment the next line to disable interpolation in linear gamma (and gain speed).
-//#define LINEAR_PROCESSING
+#define LINEAR_PROCESSING
 
 // Enable 3x oversampling of the beam profile
 #define OVERSAMPLE
 
 // Use the older, purely gaussian beam profile
-#define USEGAUSSIAN
+//#define USEGAUSSIAN
 
 // Macros.
 #define FIX(c) max(abs(c), 1e-5)
@@ -39,6 +39,8 @@ layout(location = 1) out vec2 v_sinangle;
 layout(location = 2) out vec2 v_cosangle;
 layout(location = 3) out vec3 v_stretch;
 layout(location = 4) out vec2 v_one;
+layout(location = 5) out vec2 ilfac;
+layout(location = 6) out vec2 TextureSize;
 
 float intersect(vec2 xy , vec2 sinangle, vec2 cosangle)
 {
@@ -105,9 +107,13 @@ void main()
   v_sinangle = sin(ang);
   v_cosangle = cos(ang);
   v_stretch = maxscale(v_sinangle, v_cosangle);
+  
+  TextureSize = global.SourceSize.xy;
+  
+  ilfac = vec2(1.0, clamp(floor(global.SourceSize.y/200.0),  1.0, 2.0));
 
   // The size of one texel, in texture-coordinates.
-  v_one = 1.0 / u_tex_size0.xy;
+  v_one = ilfac / TextureSize.xy;
 }
 
 #pragma stage fragment
@@ -116,6 +122,8 @@ layout(location = 1) in vec2 v_sinangle;
 layout(location = 2) in vec2 v_cosangle;
 layout(location = 3) in vec3 v_stretch;
 layout(location = 4) in vec2 v_one;
+layout(location = 5) in vec2 ilfac;
+layout(location = 6) in vec2 TextureSize;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D blur;
 layout(set = 0, binding = 3) uniform sampler2D internal1;
@@ -194,11 +202,11 @@ vec4 scanlineWeights(float distance, vec4 color)
 #ifdef USEGAUSSIAN
   vec4 wid = 0.3 + 0.1 * pow(color, vec4(3.0));
   vec4 weights = vec4(distance / wid);
-  return 0.4 * exp(-weights * weights) / wid;
+  return (geom_lum + 0.4) * exp(-weights * weights) / wid;
 #else
   vec4 wid = 2.0 + 2.0 * pow(color, vec4(4.0));
-  vec4 weights = vec4(distance / 0.3);
-  return 1.4 * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
+  vec4 weights = vec4(distance / scanline_weight);
+  return (geom_lum + 1.4) * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
 #endif
 }
 
@@ -236,7 +244,10 @@ void main()
 
   // Of all the pixels that are mapped onto the texel we are
   // currently rendering, which pixel are we currently rendering?
-  vec2 ratio_scale = xy * u_tex_size0.xy - vec2(0.5);
+    
+  vec2 ilvec = vec2(0.0, ilfac.y * interlace_detect > 1.5 ? mod(float(global.FrameCount), 2.0) : 0.0);
+
+  vec2 ratio_scale = (xy * TextureSize - vec2(0.5, 0.5) + ilvec) / ilfac;
   
 #ifdef OVERSAMPLE
   float oversample_filter = fwidth(ratio_scale.y);
@@ -244,7 +255,7 @@ void main()
   vec2 uv_ratio = fract(ratio_scale);
 
   // Snap to the center of the underlying texel.
-  xy = (floor(ratio_scale) + vec2(0.5)) / u_tex_size0.xy;
+  xy = (floor(ratio_scale)*ilfac + vec2(0.5, 0.5) - ilvec) / TextureSize;
 
   // Calculate Lanczos scaling coefficients describing the effect
   // of various neighbour texels in a scanline on the current

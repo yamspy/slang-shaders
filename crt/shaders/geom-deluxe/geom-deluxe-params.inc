@@ -2,7 +2,7 @@ layout(push_constant) uniform Push
 {
    float phosphor_power, phosphor_amplitude, CRTgamma, width, aspect_x, aspect_y, d, R, angle_x, angle_y,
       aperture_strength, halation, curvature, cornersize, cornersmooth, overscan_x, overscan_y,
-      monitorgamma, mask_type;
+      monitorgamma, mask_type, SHARPER, scanline_weight, geom_lum, interlace_detect;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -35,6 +35,9 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter monitorgamma "Gamma of output display" 2.2 0.7 4.0 0.05
 #pragma parameter aspect_x "Aspect ratio X" 1.0 0.3 1.0 0.01
 #pragma parameter aspect_y "Aspect ratio Y" 0.75 0.3 1.0 0.01
+#pragma parameter scanline_weight "CRTGeom Scanline Weight" 0.3 0.1 0.5 0.05
+#pragma parameter geom_lum "CRTGeom Luminance" 0.0 0.0 1.0 0.01
+#pragma parameter interlace_detect "CRTGeom Interlacing Simulation" 1.0 0.0 1.0 1.0
 
 #define phosphor_power params.phosphor_power
 #define phosphor_amplitude params.phosphor_amplitude
@@ -47,6 +50,9 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define monitorgamma params.monitorgamma
 #define halation params.halation
 #define aperture_strength params.aperture_strength
+#define geom_lum params.geom_lum
+#define scanline_weight params.scanline_weight
+#define interlace_detect params.interlace_detect
 vec2 aspect = vec2(params.aspect_x, params.aspect_y);
 vec2 angle = vec2(params.angle_x, params.angle_y);
 vec2 overscan = vec2(params.overscan_x, params.overscan_y);

@@ -21,6 +21,7 @@ layout(push_constant) uniform Push
 	float scanline_weight;
 	float CURVATURE;
 	float interlace_detect;
+   float lum;
 } registers;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -40,9 +41,10 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter y_tilt "CRTGeom Vertical Tilt" 0.0 -0.5 0.5 0.05
 #pragma parameter overscan_x "CRTGeom Horiz. Overscan %" 100.0 -125.0 125.0 1.0
 #pragma parameter overscan_y "CRTGeom Vert. Overscan %" 100.0 -125.0 125.0 1.0
-#pragma parameter DOTMASK "CRTGeom Dot Mask Toggle" 0.3 0.0 0.3 0.3
+#pragma parameter DOTMASK "CRTGeom Dot Mask Strength" 0.3 0.0 1.0 0.05
 #pragma parameter SHARPER "CRTGeom Sharpness" 1.0 1.0 3.0 1.0
 #pragma parameter scanline_weight "CRTGeom Scanline Weight" 0.3 0.1 0.5 0.05
+#pragma parameter lum "CRTGeom Luminance" 0.0 0.0 1.0 0.01
 #pragma parameter interlace_detect "CRTGeom Interlacing Simulation" 1.0 0.0 1.0 1.0
 
 /*
@@ -75,7 +77,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define OVERSAMPLE
 
 // Use the older, purely gaussian beam profile; uncomment for speed
-#define USEGAUSSIAN
+//#define USEGAUSSIAN
 
 // Macros.
 #define FIX(c) max(abs(c), 1e-5);
@@ -154,37 +156,6 @@ vec3 maxscale()
     return vec3((hi+lo)*aspect*0.5,max(hi.x-lo.x,hi.y-lo.y));
 }
 
-// Calculate the influence of a scanline on the current pixel.
-//
-// 'distance' is the distance in texture coordinates from the current
-// pixel to the scanline in question.
-// 'color' is the colour of the scanline at the horizontal location of
-// the current pixel.
-vec4 scanlineWeights(float distance, vec4 color)
-{
-    // "wid" controls the width of the scanline beam, for each RGB
-    // channel The "weights" lines basically specify the formula
-    // that gives you the profile of the beam, i.e. the intensity as
-    // a function of distance from the vertical center of the
-    // scanline. In this case, it is gaussian if width=2, and
-    // becomes nongaussian for larger widths. Ideally this should
-    // be normalized so that the integral across the beam is
-    // independent of its width. That is, for a narrower beam
-    // "weights" should have a higher peak at the center of the
-    // scanline than for a wider beam.
-    #ifdef USEGAUSSIAN
-        vec4 wid = 0.3 + 0.1 * pow(color, vec4(3.0));
-        vec4 weights = vec4(distance / wid);
-        
-        return 0.4 * exp(-weights * weights) / wid;
-    #else
-        vec4 wid = 2.0 + 2.0 * pow(color, vec4(4.0));
-        vec4 weights = vec4(distance / registers.scanline_weight);
-        
-        return 1.4 * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
-    #endif
-}
-    
 void main()
 {
     gl_Position = global.MVP * Position;
@@ -289,11 +260,11 @@ vec4 scanlineWeights(float distance, vec4 color)
 #ifdef USEGAUSSIAN
     vec4 wid = 0.3 + 0.1 * pow(color, vec4(3.0));
     vec4 weights = vec4(distance / wid);
-    return 0.4 * exp(-weights * weights) / wid;
+    return (registers.lum + 0.4) * exp(-weights * weights) / wid;
 #else
     vec4 wid = 2.0 + 2.0 * pow(color, vec4(4.0));
     vec4 weights = vec4(distance / registers.scanline_weight);
-    return 1.4 * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
+    return (registers.lum + 1.4) * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
 #endif
 }
     
