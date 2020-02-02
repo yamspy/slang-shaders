@@ -3,7 +3,7 @@
 /*
    CRT - Guest - Dr. Venom
    
-   Copyright (C) 2018-2019 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2020 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    
@@ -27,8 +27,18 @@ layout(push_constant) uniform Push
 {
 	float TATE, IOS, OS, BLOOM, brightboost, brightboost1, gsl, scanline1, scanline2, beam_min, beam_max, beam_size,
       h_sharp, s_sharp, csize, bsize, warpX, warpY, glow, shadowMask, masksize, vertmask,
-      slotmask, slotwidth, double_slot, mcut, maskDark, maskLight, CGWG, gamma_out, spike;
+      slotmask, slotwidth, double_slot, mcut, maskDark, maskLight, CGWG, gamma_out, spike, inter;
 } params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+	mat4 MVP;
+   vec4 SourceSize;
+	vec4 OriginalSize;
+	vec4 OutputSize;
+	uint FrameCount;
+	float bloom;
+} global;
 
 #pragma parameter TATE "TATE Mode" 0.0 0.0 1.0 1.0
 #define TATE         params.TATE     // Screen orientation
@@ -56,7 +66,7 @@ layout(push_constant) uniform Push
 #define beam_size    params.beam_size     // increased max. beam size
 #pragma parameter h_sharp "Horizontal sharpness" 5.25 1.5 20.0 0.25
 #define h_sharp      params.h_sharp     // pixel sharpness
-#pragma parameter s_sharp "Substractive sharpness" 0.05 0.0 0.20 0.01
+#pragma parameter s_sharp "Substractive sharpness" 0.01 0.0 0.50 0.01
 #define s_sharp      params.s_sharp     // substractive sharpness
 #pragma parameter csize "Corner size" 0.0 0.0 0.07 0.01
 #define csize        params.csize     // corner size
@@ -82,9 +92,9 @@ layout(push_constant) uniform Push
 #define double_slot  params.double_slot     // Slot Mask Height
 #pragma parameter mcut "Mask 5&6 cutoff" 0.2 0.0 0.5 0.05
 #define mcut         params.mcut     // Mask 5&6 cutoff
-#pragma parameter maskDark "Lottes maskDark" 0.5 0.0 2.0 0.05
+#pragma parameter maskDark "Lottes&Trinitron maskDark" 0.5 0.0 2.0 0.05
 #define maskDark     params.maskDark     // Dark "Phosphor"
-#pragma parameter maskLight "Lottes maskLight" 1.5 0.0 2.0 0.05
+#pragma parameter maskLight "Lottes&Trinitron maskLight" 1.5 0.0 2.0 0.05
 #define maskLight    params.maskLight     // Light "Phosphor"
 #pragma parameter CGWG "CGWG Mask Str." 0.3 0.0 1.0 0.05
 #define CGWG         params.CGWG     // CGWG Mask Strength
@@ -92,20 +102,15 @@ layout(push_constant) uniform Push
 #define gamma_out    params.gamma_out     // output gamma
 #pragma parameter spike "Scanline Spike Removal (0.0 - for speedup)" 1.25 0.0 2.0 0.25
 #define spike params.spike
+#pragma parameter inter "Scanline Removal Starts at Y res (0.0 - OFF):" 400.0 0.0 800.0 25.0
+#define inter         params.inter     // interlacing alternative
+#pragma parameter bloom "Bloom Strength" 0.0 0.0 2.0 0.1
+#define bloom         global.bloom     // bloom effect
 
 #define COMPAT_TEXTURE(c,d) texture(c,d)
 #define TEX0 vTexCoord
 #define InputSize SourceSize
 #define TextureSize SourceSize
-
-layout(std140, set = 0, binding = 0) uniform UBO
-{
-	mat4 MVP;
-   vec4 SourceSize;
-	vec4 OriginalSize;
-	vec4 OutputSize;
-	uint FrameCount;
-} global;
 
 #define SourceSize global.SourceSize
 #define OutputSize global.OutputSize
@@ -326,6 +331,12 @@ float corner(vec2 coord)
 	return clamp((cdist.x-dist)*bsize,0.0, 1.0);
 }
 
+vec3 declip(vec3 c, float b)
+{
+	float m = max(max(c.r,c.g),c.b);
+	if (m > b) c = c*b/m;
+	return c;
+}
 
 void main()
 {
@@ -373,15 +384,33 @@ void main()
 		fpx = fp.y;
 	}
    
-	float wl2 = 1.5 + fpx; wl2*=wl2; wl2 = exp2(-h_sharp*wl2); float twl2 = max(wl2 - s_sharp, -wl2);
-	float wl1 = 0.5 + fpx; wl1*=wl1; wl1 = exp2(-h_sharp*wl1); float twl1 = max(wl1 - s_sharp, -0.4*s_sharp);
-	float wct = 0.5 - fpx; wct*=wct; wct = exp2(-h_sharp*wct); float twct = max(wct - s_sharp,  s_sharp);
-	float wr1 = 1.5 - fpx; wr1*=wr1; wr1 = exp2(-h_sharp*wr1); float twr1 = max(wr1 - s_sharp, -0.4*s_sharp);
-	float wr2 = 2.5 - fpx; wr2*=wr2; wr2 = exp2(-h_sharp*wr2); float twr2 = max(wr2 - s_sharp, -wr2);
-
+	float s_sharp1 = 0.5*s_sharp;
+	float zero = exp2(-h_sharp);
+	float sharp1 = min(zero,s_sharp1);
+	
+	float wl2 = 1.5 + fpx;
+	float wl1 = 0.5 + fpx;
+	float wct = 0.5 - fpx;
+	float wr1 = 1.5 - fpx;
+	float wr2 = 2.5 - fpx;
+	
+	wl2*=wl2; wl2 = exp2(-h_sharp*wl2);
+	wl1*=wl1; wl1 = exp2(-h_sharp*wl1);
+	wct*=wct; wct = exp2(-h_sharp*wct);
+	wr1*=wr1; wr1 = exp2(-h_sharp*wr1);
+	wr2*=wr2; wr2 = exp2(-h_sharp*wr2);
+	
+	float fp1 = 1.-fpx;
+	
+	float twl2 = max(wl2 - sharp1, (fpx <=0.7) ? mix( -0.09, 0.037, fpx) : 0.0);
+	float twl1 = max(wl1 - sharp1, (fpx <=0.5) ? 0.0 : mix( -0.30, -0.09, fpx));
+	float twct = max(wct - sharp1,  0.0);
+	float twr1 = max(wr1 - sharp1, (fp1 <=0.5) ? 0.0 : mix( -0.30, -0.09, fp1));
+	float twr2 = max(wr2 - sharp1, (fp1 <=0.7) ? mix( -0.09, 0.037, fp1) : 0.0);
+	
 	float wtt = 1.0/(twl2+twl1+twct+twr1+twr2);
 	float wt  = 1.0/(wl2+wl1+wct+wr1+wr2);
-	bool sharp = (s_sharp > 0.0);
+	bool sharp = (s_sharp > 0.02);
 	
 	vec3 l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
 	vec3 l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
@@ -395,9 +424,14 @@ void main()
 	vec3 sr1 = COMPAT_TEXTURE(Texture, pC4 +offx).xyz;
 	vec3 sr2 = COMPAT_TEXTURE(Texture, pC4 +off2).xyz;
 	
-	vec3 color1 = (l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt;
-	if (sharp) color1 = clamp(color1, min(min(l1,r1),ct), max(max(l1,r1),ct)); 
-
+	vec3 color1 = clamp((l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt,0.0,1.0);
+	
+	vec3 e2 = l2; if (fp.x > 0.5) e2 = r2;
+	vec3 colmin = min(min(l1,r1), min(ct,e2));
+	vec3 colmax = max(max(l1,r1), max(ct,e2));
+	
+	if (sharp) color1 = clamp(color1, colmin, colmax);
+	
 	vec3 gtmp = vec3(gamma_out*0.1); 
 	vec3 scolor1 = color1;
 	
@@ -422,8 +456,13 @@ void main()
 	sr1 = COMPAT_TEXTURE(Texture, pC4 +offx).xyz;
 	sr2 = COMPAT_TEXTURE(Texture, pC4 +off2).xyz;
 	
-	vec3 color2 = (l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt;
-	if (sharp) color2 = clamp(color2, min(min(l1,r1),ct), max(max(l1,r1),ct)); 
+	vec3 color2 = clamp((l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt,0.0,1.0);
+	
+	e2 = l2; if (fp.x > 0.5) e2 = r2;
+	colmin = min(min(l1,r1), min(ct,e2));
+	colmax = max(max(l1,r1), max(ct,e2));
+	
+	if (sharp) color2 = clamp(color2, colmin, colmax);
 
 	vec3 scolor2 = color2;
 	
@@ -468,23 +507,47 @@ void main()
 	
 	vec3 color = color1*w1 + color2*w2;
 	
+	if (inter != 0.0 && inter <= mix(SourceSize.y, SourceSize.x, TATE)) color = mix(color1, color2, f);
+	
 	ctmp = 0.5*(ctmp+tmp);
 	color*=mix(brightboost, brightboost1, max(max(ctmp.r,ctmp.g),ctmp.b));
 	color = min(color, 1.0); 
    
 	// Apply Mask
 	
-	color *= (TATE < 0.5) ? Mask(gl_FragCoord.xy * 1.000001,tmp) :
+	vec3 orig1 = color; float pixbr = max(max(ctmp.r,ctmp.g),ctmp.b); vec3 orig = ctmp; w1 = w1+w2; float w3 = max(max(w1.r,w1.g),w1.b); 
+	vec3 cmask1 = vec3(1.0); vec3 cmask2 = cmask1; vec3 cmask = cmask1; vec3 one = vec3(1.0);
+	
+	cmask1*= (TATE < 0.5) ? Mask(gl_FragCoord.xy * 1.000001,tmp) :
 		Mask(gl_FragCoord.yx * 1.000001,tmp);
+	
+	color = color*cmask1;
 	
 	color = min(color,1.0);
 	
-	color *= (TATE < 0.5) ? SlotMask(gl_FragCoord.xy * 1.000001,tmp) :
+	cmask2 *= (TATE < 0.5) ? SlotMask(gl_FragCoord.xy * 1.000001,tmp) :
 		SlotMask(gl_FragCoord.yx * 1.000001,tmp);		
-		
+	
+	color = color*cmask2; cmask = cmask1*cmask2;
+	
 	vec3 Bloom = COMPAT_TEXTURE(PassPrev2Texture, pos).xyz;
    
-	color+=glow*Bloom;
+	vec3 Bloom1 = 2.0*Bloom*Bloom;
+	Bloom1 = min(Bloom1, 0.75);
+	float bmax = max(max(Bloom1.r,Bloom1.g),Bloom1.b);
+	float pmax = 0.85;
+	Bloom1 = min(Bloom1, pmax*bmax)/pmax;
+	
+	Bloom1 = mix(min( Bloom1, color), Bloom1, orig1);
+	
+	Bloom1 = bloom*Bloom1;
+	
+	color = color + Bloom1;
+	color = min(color,1.0);
+	color = declip(color, pow(w3, 0.5));		
+
+	color = color + glow*Bloom;
+	color = min(color, mix(cmask,one,0.5));
 	
 	color = pow(color, vec3(1.0/gamma_out));
 	
