@@ -1,9 +1,9 @@
 #version 450
 
 /*
-   Average Luminance Shader, Smart Smoothing Difference Shader
+   Average Luminance Shader
    
-   Copyright (C) 2018-2019 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2020 guest(r) - guest.r@gmail.com
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -24,13 +24,15 @@
 
 layout(push_constant) uniform Push
 {
+	uint FrameCount;
 	vec4 SourceSize;
-   float STH;
+	float lsmooth;
 } params;
 
-#pragma parameter STH "Smart Smoothing Threshold" 0.7 0.4 1.2 0.05
+#pragma parameter lsmooth "Raster Bloom Effect Smoothing" 0.90 0.50 0.99 0.01
 
-#define STH params.STH
+#define lsmooth params.lsmooth
+
 #define COMPAT_TEXTURE(c,d) texture(c,d)
 #define SourceSize params.SourceSize
 #define InputSize SourceSize
@@ -56,54 +58,31 @@ void main()
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D WhitePointPass;
+layout(set = 0, binding = 3) uniform sampler2D AvgLumPassFeedback;
 
 #define PassPrev2Texture WhitePointPass
 
-float df (vec3 A, vec3 B)
-{
-	float diff = length(A-B);
-	float luma = clamp(length(0.5*min(A,B) + 0.25*(A+B) + 1e-8), 0.0001, 1.0);
-	float diff1 = diff/luma;
-	return 1.0 - clamp(7.0*(max(1.5*diff,diff1)-STH), 0.0, 0.9999);
-}
-
 void main()
 {
-	float xtotal = floor(InputSize.x/64.0);
-	float ytotal = floor(InputSize.y/64.0);
+	if (vTexCoord.x > 0.2 || vTexCoord.y > 0.2) discard;
+	
+	float m = max(log2(SourceSize.x), log2(SourceSize.y));
+	m = max(m - 1.0, 1.0);
 	
 	float ltotal = 0.0;
 	
-	vec2 dx  = vec2(SourceSize.z, 0.0)*64.0;
-	vec2 dy  = vec2(0.0, SourceSize.w)*64.0;
-	vec2 offset = 0.25*(dx+dy);
+	ltotal+= max(0.0, length(textureLod(Source, vec2(0.25, 0.25), m).rgb));
+	ltotal+= max(0.0, length(textureLod(Source, vec2(0.25, 0.75), m).rgb));
+	ltotal+= max(0.0, length(textureLod(Source, vec2(0.75, 0.25), m).rgb));
+	ltotal+= max(0.0, length(textureLod(Source, vec2(0.75, 0.75), m).rgb));
 	
-	for (float i = 0.0; i <= xtotal; i++)
-	{
-		for (float j = 0.0; j <= ytotal; j++)
-			{
-				ltotal+= max(0.25, length(textureLod(Source, i*dx + j*dy + offset, 6.0).rgb));
-			}
-	}
-   
-	ltotal = 0.577350269 * ltotal / ((xtotal+1.0)*(ytotal+1.0));
+	ltotal*=0.25;
+	
+	ltotal = pow(0.577350269 * ltotal, 0.6);
+	
+	float lhistory = texture(AvgLumPassFeedback, vec2(0.1,0.1)).a;
 
-	dx  = vec2(SourceSize.z, 0.0);	
-	dy  = vec2(0.0, SourceSize.w);	
-
-	vec3 l1 = COMPAT_TEXTURE(PassPrev2Texture, TEX0.xy -dx).xyz;
-	vec3 ct = COMPAT_TEXTURE(PassPrev2Texture, TEX0.xy    ).xyz;
-	vec3 r1 = COMPAT_TEXTURE(PassPrev2Texture, TEX0.xy +dx).xyz;
-	vec3 t1 = COMPAT_TEXTURE(PassPrev2Texture, TEX0.xy -dy).xyz;
-	vec3 b1 = COMPAT_TEXTURE(PassPrev2Texture, TEX0.xy +dy).xyz;	
+	ltotal = mix(ltotal, lhistory, lsmooth);	
 	
-	float dl = df(ct, l1);
-	float dr = df(ct, r1);
-	float dt = df(ct, t1);
-	float db = df(ct, b1);
-	
-	float resx = dl; float resy = dr; float resz = floor(9.0*dt)/10.0 + floor(9.0*db)/100.0;
-	
-	FragColor = vec4(resx,resy,resz,pow(ltotal, 0.65));
+	FragColor = vec4(ltotal);
 }
