@@ -33,8 +33,6 @@ layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
 
-float phase = (global.OriginalSize.x > 300.0) ? 2.0 : 3.0;
-
 const mat3 yiq2rgb_mat = mat3(
    1.0, 0.956, 0.6210,
    1.0, -0.2720, -0.6474,
@@ -184,6 +182,7 @@ const float chroma_filter_3_phase[25] = float[25](
 
 void main()
 {
+   float phase = (global.OriginalSize.x > 300.0) ? 2.0 : 3.0;
    float one_x = global.SourceSize.z;
    vec3 signal = vec3(0.0);
 
@@ -218,4 +217,4 @@ void main()
    FragColor = vec4(rgb, 1.0);
    if(global.linearize < 0.5) return;
    else FragColor = pow(FragColor, vec4(2.2));
-}
+} 
