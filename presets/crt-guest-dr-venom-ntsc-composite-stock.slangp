@@ -6,8 +6,8 @@ scale_type_x0 = source
 scale_type_y0 = absolute
 scale_y0 = 240
 
-shader1 = ../ntsc/shaders/ntsc-pass1-composite-2phase.slang
-shader2 = ../ntsc/shaders/ntsc-pass2-2phase-gamma.slang
+shader1 = ../ntsc/shaders/ntsc-adaptive/ntsc-pass1.slang
+shader2 = ../ntsc/shaders/ntsc-adaptive/ntsc-pass2.slang
 
 filter_linear1 = false
 filter_linear2 = false

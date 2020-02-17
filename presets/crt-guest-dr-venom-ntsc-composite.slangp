@@ -1,7 +1,7 @@
 shaders = 12
 
-shader0 = ../ntsc/shaders/ntsc-pass1-composite-2phase.slang
-shader1 = ../ntsc/shaders/ntsc-pass2-2phase-gamma.slang
+shader0 = ../ntsc/shaders/ntsc-adaptive/ntsc-pass1.slang
+shader1 = ../ntsc/shaders/ntsc-adaptive/ntsc-pass2.slang
 
 filter_linear0 = false
 filter_linear1 = false

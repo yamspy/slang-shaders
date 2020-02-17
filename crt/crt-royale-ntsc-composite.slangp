@@ -19,15 +19,15 @@
 shaders = "14"
 
 # NTSC Shader Passes
-shader0 = "../ntsc/shaders/ntsc-pass1-svideo-3phase.slang"
-shader1 = "../ntsc/shaders/ntsc-pass2-3phase.slang"
+shader0 = "../ntsc/shaders/ntsc-adaptive/ntsc-pass1.slang"
+shader1 = "../ntsc/shaders/ntsc-adaptive/ntsc-pass2.slang"
 
 filter_linear0 = false
 filter_linear1 = false
 
 scale_type_x0 = absolute
 scale_type_y0 = source
-scale_x0 = 1536
+scale_x0 = 1024
 scale_y0 = 1.0
 frame_count_mod0 = 2
 float_framebuffer0 = true
