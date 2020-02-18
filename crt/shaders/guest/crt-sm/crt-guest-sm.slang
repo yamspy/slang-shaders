@@ -166,7 +166,7 @@ vec3 sw1(float x, vec3 color, float scan)
 	vec3 ex = vec3(x)*tmp;
 	vec3 res = exp2(-scan*ex*ex);
 	float mx2 = max(max(res.r,res.g),res.b);
-	float br = clamp(mix(0.30, 0.55, 2.0*(beam_min-1.0)),0.10, 0.65);
+	float br = clamp(mix(0.30, 0.50, 2.0*(beam_min-1.0)),0.10, 0.60);
 	return mix(vec3(mx2), res, 0.50)/(1.0 - br + br*mx1);
 }
 
@@ -181,7 +181,7 @@ vec3 sw2(float x, vec3 color, float scan)
 	xx = mix(xx, ex*xx, m);
 	vec3 res = exp2(-1.25*scan*xx);
 	float mx2 = max(max(res.r,res.g),res.b);
-	float br = clamp(mix(0.20, 0.55, 2.0*(beam_min-1.0)),0.10, 0.65);
+	float br = clamp(mix(0.20, 0.50, 2.0*(beam_min-1.0)),0.10, 0.60);
 	return mix(vec3(mx2), res, 0.50)/(1.0 - br + br*mx1);
 }
 
@@ -353,7 +353,7 @@ void main()
 	
 	
 	vec3 ctemp = (t1*color1 + t2*color2)*wt; vec3 orig = ctemp;	float pixbr = max(max(orig.r,orig.g),orig.b); vec3 one = vec3(1.0);
-	vec3 tmp1 = mix(orig, msctemp, 2.0);	
+	vec3 tmp1 = clamp(mix(orig, msctemp, 1.75),0.0,1.0);	
 	ctemp = w1+w2;
 	float w3 = max(max(ctemp.r,ctemp.g),ctemp.b);	
 	
