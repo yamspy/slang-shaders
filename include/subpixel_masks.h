@@ -1,5 +1,5 @@
 vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
-   vec3 weights = vec3(0.,0.,0.);
+   vec3 weights = vec3(1.,1.,1.);
    float intens = 1.;
    float inv = 1.-mask_intensity;
    vec3 green   = vec3(inv, intens, inv);
