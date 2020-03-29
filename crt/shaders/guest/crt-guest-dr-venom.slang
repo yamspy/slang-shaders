@@ -53,7 +53,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define BLOOM        params.BLOOM     // Bloom overscan percentage
 #pragma parameter brightboost "Bright Boost Dark Pixels" 1.40 0.50 4.00 0.05
 #define brightboost  params.brightboost     // adjust brightness
-#pragma parameter brightboost1 "Bright Boost Bright Pixels" 1.20 0.50 3.00 0.05
+#pragma parameter brightboost1 "Bright Boost Bright Pixels" 1.15 0.50 3.00 0.05
 #define brightboost1  params.brightboost1     // adjust brightness
 #pragma parameter gsl "Scanline Type" 0.0 0.0 2.0 1.0
 #define gsl          params.gsl      // Alternate scanlines
@@ -63,13 +63,13 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define scanline2    params.scanline2      // scanline param, vertical sharpness
 #pragma parameter beam_min "Scanline dark" 1.35 0.5 2.5 0.05
 #define beam_min     params.beam_min     // dark area beam min - narrow
-#pragma parameter beam_max "Scanline bright" 1.10 0.5 2.5 0.05
+#pragma parameter beam_max "Scanline bright" 1.05 0.5 2.5 0.05
 #define beam_max     params.beam_max     // bright area beam max - wide
 #pragma parameter beam_size "Increased bright scanline beam" 0.70 0.0 1.0 0.05
 #define beam_size    params.beam_size     // increased max. beam size
 #pragma parameter h_sharp "Horizontal sharpness" 5.25 1.5 20.0 0.25
 #define h_sharp      params.h_sharp     // pixel sharpness
-#pragma parameter s_sharp "Substractive sharpness (relative)" 0.35 0.0 1.0 0.05
+#pragma parameter s_sharp "Substractive sharpness (relative)" 0.40 0.0 1.0 0.05
 #define s_sharp      params.s_sharp     // substractive sharpness
 #pragma parameter csize "Corner size" 0.0 0.0 0.07 0.01
 #define csize        params.csize     // corner size
@@ -172,7 +172,8 @@ vec3 sw1(vec3 x, vec3 color, float scanline)
 	float br = clamp(0.8*beam_min - 1.0, 0.2, 0.45);
 	vec3 res = exp2(-scanline*ex*ex)/(1.0-br+br*mx);
 	mx = max(max(res.r,res.g),res.b);
-	return mix(vec3(mx), res, scans);		
+	float scans1 = scans; if (vertmask > 0.0) scans1=1.0;
+	return mix(vec3(mx), res, scans1);		
 }    
 
 vec3 sw2(vec3 x, vec3 color, float scanline)
@@ -183,7 +184,8 @@ vec3 sw2(vec3 x, vec3 color, float scanline)
 	vec3 ex = x*tmp;
 	vec3 res = exp2(-scanline*ex*ex)/(0.6 + 0.4*mx);
 	mx = max(max(res.r,res.g),res.b);
-	return mix(vec3(mx), res, scans);	
+	float scans1 = scans; if (vertmask > 0.0) scans1=0.75;	
+	return mix(vec3(mx), res, scans1);	
 } 
 
 // Shadow mask (1-4 from PD CRT Lottes shader).
@@ -203,8 +205,8 @@ vec3 Mask(vec2 pos, vec3 c)
 	{
 		pos.x = fract(pos.x*0.5);
 		float mc = 1.0 - CGWG;
-		if (pos.x < 0.5) { mask.r = 1.0; mask.g = mc; mask.b = 1.0; }
-		else { mask.r = mc; mask.g = 1.0; mask.b = mc; }
+		if (pos.x < 0.5) { mask.r = 1.1; mask.g = mc; mask.b = 1.1; }
+		else { mask.r = mc; mask.g = 1.1; mask.b = mc; }
 	}    
    
 	// Very compressed TV style shadow mask.
@@ -296,7 +298,7 @@ vec3 Mask(vec2 pos, vec3 c)
 		float maskTmp = min(1.6*max(mx-mcut,0.0)/(1.0-mcut) , mc);
 		mask = vec3(maskTmp);
 		pos.x = fract(pos.x/2.0);
-		if  (pos.x < 0.5) mask = vec3(1.0 + 0.6*(1.0-mx));
+		if  (pos.x < 0.5) mask = vec3(1.0);
 	}    
 	
 	return mask;
@@ -375,8 +377,8 @@ void main()
 	vec2 pos  = Warp(texcoord*(TextureSize.xy/InputSize.xy))*(InputSize.xy/TextureSize.xy);
 	vec2 pos0 = Warp(TEX0.xy*(TextureSize.xy/InputSize.xy))*(InputSize.xy/TextureSize.xy);
    
-	vec2 coffset = ((TATE < 0.5) ? vec2(0.0,0.5) : vec2(0.5, 0.0));
-	if ((interm == 1.0 || interm == 2.0) && inter <= mix(SourceSize.y, SourceSize.x, TATE)) coffset = vec2(0.0);	
+	vec2 coffset = vec2(0.5, 0.5);
+	if ((interm == 1.0 || interm == 2.0) && inter <= mix(SourceSize.y, SourceSize.x, TATE)) coffset = vec2(0.5, 0.0);	
 	
 	vec2 ps = SourceSize.zw;
 	vec2 OGL2Pos = pos * SourceSize.xy - coffset;
@@ -407,82 +409,83 @@ void main()
 	float zero = exp2(-h_sharp);   
 	float sharp1 = s_sharp * zero;
 	
-	float wl2 = 1.5 + fpx;
-	float wl1 = 0.5 + fpx;
-	float wct = 0.5 - fpx;
-	float wr1 = 1.5 - fpx;
-	float wr2 = 2.5 - fpx;
-	
+	float wl3 = 2.0 + fpx;
+	float wl2 = 1.0 + fpx;
+	float wl1 =       fpx;
+	float wr1 = 1.0 - fpx;
+	float wr2 = 2.0 - fpx;
+	float wr3 = 3.0 - fpx;
+
+	wl3*=wl3; wl3 = exp2(-h_sharp*wl3);	
 	wl2*=wl2; wl2 = exp2(-h_sharp*wl2);
 	wl1*=wl1; wl1 = exp2(-h_sharp*wl1);
-	wct*=wct; wct = exp2(-h_sharp*wct);
 	wr1*=wr1; wr1 = exp2(-h_sharp*wr1);
 	wr2*=wr2; wr2 = exp2(-h_sharp*wr2);
+	wr3*=wr3; wr3 = exp2(-h_sharp*wr3);
 	
 	float fp1 = 1.-fpx;
+
+	float twl3 = max(wl3 - sharp1, 0.0);
+	float twl2 = max(wl2 - sharp1, mix(0.0,mix(-0.17, -0.025, fp.x),float(s_sharp > 0.05)));
+	float twl1 = max(wl1 - sharp1, 0.0);
+	float twr1 = max(wr1 - sharp1, 0.0);	
+	float twr2 = max(wr2 - sharp1, mix(0.0,mix(-0.17, -0.025, 1.-fp.x),float(s_sharp > 0.05)));
+	float twr3 = max(wr3 - sharp1, 0.0);
 	
-	float twl2 = max(wl2 - sharp1, min(mix( -0.09, 0.09, fpx),0.0));
-	float twl1 = max(wl1 - sharp1, mix( -0.275, -0.09, fpx));
-	float twct = max(wct - sharp1,  0.0);
-	float twr1 = max(wr1 - sharp1, mix( -0.275, -0.09, fp1));
-	float twr2 = max(wr2 - sharp1, min(mix( -0.09, 0.09, fp1),0.0));
+	float wtt = 1.0/(twl3+twl2+twl1+twr1+twr2+twr3);
+	float wt  = 1.0/(wl2+wl1+wr1+wr2);
+	bool sharp = (s_sharp > 0.05);
 	
-	float wtt = 1.0/(twl2+twl1+twct+twr1+twr2);
-	float wt  = 1.0/(wl2+wl1+wct+wr1+wr2);
-	bool sharp = (s_sharp > 0.02);
-	
-	vec3 l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
-	vec3 l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
-	vec3 ct = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz;
+	vec3 l3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
+	vec3 l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
+	vec3 l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz;
 	vec3 r1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx).xyz;
 	vec3 r2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +off2).xyz;
+	vec3 r3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx+off2).xyz;
 	
-	vec3 sl2 = COMPAT_TEXTURE(Texture, pC4 -off2).xyz;
-	vec3 sl1 = COMPAT_TEXTURE(Texture, pC4 -offx).xyz;
-	vec3 sct = COMPAT_TEXTURE(Texture, pC4      ).xyz;
+	vec3 sl2 = COMPAT_TEXTURE(Texture, pC4 -offx).xyz;
+	vec3 sl1 = COMPAT_TEXTURE(Texture, pC4      ).xyz;
 	vec3 sr1 = COMPAT_TEXTURE(Texture, pC4 +offx).xyz;
 	vec3 sr2 = COMPAT_TEXTURE(Texture, pC4 +off2).xyz;
 	
-	vec3 color1 = clamp((l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt,0.0,1.0);
+	vec3 color1 = (l3*twl3 + l2*twl2 + l1*twl1 + r1*twr1 + r2*twr2 + r3*twr3)*wtt;
 	
-	vec3 e2 = l2; if (fpx > 0.5) e2 = r2;
-	vec3 colmin = min(min(l1,r1), min(ct,e2));
-	vec3 colmax = max(max(l1,r1), max(ct,e2));
+	vec3 colmin = min(min(l1,r1), min(l2,r2));
+	vec3 colmax = max(max(l1,r1), max(l2,r2));
 	
 	if (sharp) color1 = clamp(color1, colmin, colmax);
 	
 	vec3 gtmp = vec3(gamma_out*0.1); 
 	vec3 scolor1 = color1;
 	
-	scolor1 = (sl2*wl2 + sl1*wl1 + sct*wct + sr1*wr1 + sr2*wr2)*wt;
+	scolor1 = (sl2*wl2 + sl1*wl1 + sr1*wr1 + sr2*wr2)*wt;
 	scolor1 = pow(scolor1, gtmp);	vec3 mcolor1 = scolor1;
 	scolor1 = mix(color1, scolor1, spike);
 	
 	pC4+=offy;
 	
-	l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
-	l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
-	ct = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz; 
+	l3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
+	l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
+	l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz;
 	r1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx).xyz;
 	r2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +off2).xyz;
+	r3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx+off2).xyz;
 	
-	sl2 = COMPAT_TEXTURE(Texture, pC4 -off2).xyz;
-	sl1 = COMPAT_TEXTURE(Texture, pC4 -offx).xyz;
-	sct = COMPAT_TEXTURE(Texture, pC4      ).xyz; 
+	sl2 = COMPAT_TEXTURE(Texture, pC4 -offx).xyz;
+	sl1 = COMPAT_TEXTURE(Texture, pC4      ).xyz;
 	sr1 = COMPAT_TEXTURE(Texture, pC4 +offx).xyz;
 	sr2 = COMPAT_TEXTURE(Texture, pC4 +off2).xyz;
 	
-	vec3 color2 = clamp((l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt,0.0,1.0);
+	vec3 color2 = (l3*twl3 + l2*twl2 + l1*twl1 + r1*twr1 + r2*twr2 + r3*twr3)*wtt;
 	
-	e2 = l2; if (fpx > 0.5) e2 = r2;
-	colmin = min(min(l1,r1), min(ct,e2));
-	colmax = max(max(l1,r1), max(ct,e2));
+	colmin = min(min(l1,r1), min(l2,r2));
+	colmax = max(max(l1,r1), max(l2,r2));
 	
 	if (sharp) color2 = clamp(color2, colmin, colmax);
 
 	vec3 scolor2 = color2;
 	
-	scolor2 = (sl2*wl2 + sl1*wl1 + sct*wct + sr1*wr1 + sr2*wr2)*wt;
+	scolor2 = (sl2*wl2 + sl1*wl1 + sr1*wr1 + sr2*wr2)*wt;
 	scolor2 = pow(scolor2, gtmp);	vec3 mcolor2 = scolor2;
 	scolor2 = mix(color2, scolor2, spike);
 	
@@ -492,17 +495,17 @@ void main()
 	{
 		pC4-= 2.*offy;
 	
-		l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
-		l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
-		ct = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz; 
+		l3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -off2).xyz;
+		l2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 -offx).xyz;
+		l1 = COMPAT_TEXTURE(PassPrev4Texture, pC4      ).xyz;
 		r1 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx).xyz;
 		r2 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +off2).xyz;
+		r3 = COMPAT_TEXTURE(PassPrev4Texture, pC4 +offx+off2).xyz;
 	
-		color0 = clamp((l2*twl2 + l1*twl1 + ct*twct + r1*twr1 + r2*twr2)*wtt,0.0,1.0);
+		color0 = (l3*twl3 + l2*twl2 + l1*twl1 + r1*twr1 + r2*twr2 + r3*twr3)*wtt;
 	
-		e2 = l2; if (fpx > 0.5) e2 = r2;
-		colmin = min(min(l1,r1), min(ct,e2));
-		colmax = max(max(l1,r1), max(ct,e2));
+		colmin = min(min(l1,r1), min(l2,r2));
+		colmax = max(max(l1,r1), max(l2,r2));
 	
 		if (sharp) color0 = clamp(color0, colmin, colmax);
 	}
