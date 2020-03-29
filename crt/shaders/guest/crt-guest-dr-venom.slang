@@ -296,7 +296,7 @@ vec3 Mask(vec2 pos, vec3 c)
 		float maskTmp = min(1.6*max(mx-mcut,0.0)/(1.0-mcut) , mc);
 		mask = vec3(maskTmp);
 		pos.x = fract(pos.x/2.0);
-		if  (pos.x < 0.5) mask = vec3(1.0);
+		if  (pos.x < 0.5) mask = vec3(1.0 + 0.6*(1.0-mx));
 	}    
 	
 	return mask;
