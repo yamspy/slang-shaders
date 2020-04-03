@@ -1,22 +1,54 @@
+/*
+A collection of CRT mask effects that work with LCD subpixel structures for
+small details
+
+author: hunterk
+license: public domain
+
+How to use it:
+
+Multiply your image by the vec3 output:
+FragColor.rgb *= mask_weights(gl_FragCoord.xy, 1.0, 1);
+
+The function needs to be tiled across the screen using the physical pixels, e.g.
+gl_FragCoord (the "vec2 coord" input). In the case of slang shaders, we use
+(vTexCoord.st * OutputSize.xy).
+
+The "mask_intensity" (float value between 0.0 and 1.0) is how strong the mask
+effect should be. Full-strength red, green and blue subpixels on a white pixel
+are the ideal, and are achieved with an intensity of 1.0, though this darkens
+the image significantly and may not always be desirable.
+
+The "phosphor_layout" (int value between 0 and 19) determines which phophor
+layout to apply. 0 is no mask/passthru.
+
+Many of these mask arrays are adapted from cgwg's crt-geom-deluxe LUTs, and
+those have their filenames included for easy identification
+*/
+
 vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
    vec3 weights = vec3(1.,1.,1.);
-   float intens = 1.;
-   float inv = 1.-mask_intensity;
-   vec3 green   = vec3(inv, intens, inv);
-   vec3 magenta = vec3(intens,inv,intens);
-   vec3 black   = vec3(inv,inv,inv);
-   vec3 red     = vec3(intens,inv,inv);
-   vec3 yellow  = vec3(intens,inv,intens);
-   vec3 cyan    = vec3(inv,intens,intens);
-   vec3 blue    = vec3(inv,inv,intens);
+   float on = 1.;
+   float off = 1.-mask_intensity;
+   vec3 red     = vec3(on,  off, off);
+   vec3 green   = vec3(off, on,  off);
+   vec3 blue    = vec3(off, off, on );
+   vec3 magenta = vec3(on,  off, on );
+   vec3 yellow  = vec3(on,  on,  off);
+   vec3 cyan    = vec3(off, on,  on );
+   vec3 black   = vec3(off, off, off);
    int w, z = 0;
    
+   // This pattern is used by a few layouts, so we'll define it here
    vec3 aperture_weights = mix(magenta, green, floor(mod(coord.x, 2.0)));
+   
+   if(phosphor_layout == 0) return weights;
 
-   if(phosphor_layout == 1){
+   else if(phosphor_layout == 1){
       // classic aperture for RGB panels; good for 1080p, too small for 4K+
       // aka aperture_1_2_bgr
       weights  = aperture_weights;
+      return weights;
    }
 
    else if(phosphor_layout == 2){
@@ -24,6 +56,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       // aka delta_1_2x1_bgr
       vec3 inverse_aperture = mix(green, magenta, floor(mod(coord.x, 2.0)));
       weights               = mix(aperture_weights, inverse_aperture, floor(mod(coord.y, 2.0)));
+      return weights;
    }
 
    else if(phosphor_layout == 3){
@@ -42,17 +75,20 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
 
       // use the indexes to find which color to apply to the current pixel
       weights = slotmask[w][z];
+      return weights;
    }
 
-   if(phosphor_layout == 4){
+   else if(phosphor_layout == 4){
       // classic aperture for RBG panels; good for 1080p, too small for 4K+
       weights  = mix(yellow, blue, floor(mod(coord.x, 2.0)));
+      return weights;
    }
 
    else if(phosphor_layout == 5){
       // 2x2 shadow mask for RBG panels; good for 1080p, too small for 4K+
       vec3 inverse_aperture = mix(blue, yellow, floor(mod(coord.x, 2.0)));
       weights               = mix(mix(yellow, blue, floor(mod(coord.x, 2.0))), inverse_aperture, floor(mod(coord.y, 2.0)));
+      return weights;
    }
    
    else if(phosphor_layout == 6){
@@ -62,6 +98,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 4.0)));
       
       weights = ap4[z];
+      return weights;
    }
    
    else if(phosphor_layout == 7){
@@ -71,6 +108,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 5.0)));
       
       weights = ap3[z];
+      return weights;
    }
    
    else if(phosphor_layout == 8){
@@ -81,6 +119,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       w = int(floor(mod(coord.x, 7.)));
       
       weights = big_ap[w];
+      return weights;
    }
    
    else if(phosphor_layout == 9){
@@ -92,6 +131,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       w = int(floor(mod(coord.x, 4.)));
       
       weights = big_ap_rgb[w];
+      return weights;
    }
    
    else if(phosphor_layout == 10){
@@ -102,6 +142,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       w = int(floor(mod(coord.x, 4.)));
       
       weights = big_ap_rbg[w];
+      return weights;
    }
    
    else if(phosphor_layout == 11){
@@ -115,6 +156,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 4.0)));
       
       weights = delta1[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 12){
@@ -128,6 +170,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 4.0)));
       
       weights = delta[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 13){
@@ -143,6 +186,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 4.0)));
       
       weights = delta[w][z];
+      return weights;
    }
 
    else if(phosphor_layout == 14){
@@ -153,14 +197,12 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
          {black,   black, black, magenta, green, black}
       };
       
-      // find the vertical index
       w = int(floor(mod(coord.y, 3.0)));
 
-      // find the horizontal index
       z = int(floor(mod(coord.x, 6.0)));
 
-      // use the indexes to find which color to apply to the current pixel
       weights = slotmask[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 15){
@@ -176,6 +218,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 8.0)));
       
       weights = slot2[w][z];
+      return weights;
    }
 
    else if(phosphor_layout == 16){
@@ -186,14 +229,12 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
          {black,  black, yellow, blue}
       };
       
-      // find the vertical index
       w = int(floor(mod(coord.y, 3.0)));
 
-      // find the horizontal index
       z = int(floor(mod(coord.x, 4.0)));
 
-      // use the indexes to find which color to apply to the current pixel
       weights = slotmask[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 17){
@@ -209,6 +250,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 10.0)));
       
       weights = slot2[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 18){
@@ -224,6 +266,7 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 10.0)));
       
       weights = slot2[w][z];
+      return weights;
    }
    
    else if(phosphor_layout == 19){
@@ -241,7 +284,8 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 14.0)));
       
       weights = slot[w][z];
+      return weights;
    }
 
-   return weights;
+   else return weights;
 }
