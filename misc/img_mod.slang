@@ -140,6 +140,7 @@ void main()
 
 // apply grain (expects to run in gamma space)
    res = luma_grain(res, vTexCoord.xy, ia_GRAIN_STR, registers.FrameCount);
+// res = rgb_grain(res, vTexCoord.xy, ia_GRAIN_STR, registers.FrameCount);
 
 // saturation and luminance (expects to run in gamma space)
    res = sat_lum(res);
