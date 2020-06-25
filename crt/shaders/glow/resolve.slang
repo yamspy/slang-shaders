@@ -198,7 +198,7 @@ void main()
         FragColor.rgb = FragColor.rgb;
     else
 FragColor.rgb = vec3(0.0);
-FragColor.rgb *= corner(pp);
+FragColor.rgb *= (params.CURVATURE > 0.5) ? corner(pp) : 1.0;
 if (params.shadowMask > 0.0)
         FragColor.rgb = pow(pow(FragColor.rgb, vec3(2.2)) * Mask(vTexCoord.xy * global.OutputSize.xy * 1.000001), vec3(1.0 / 2.2));
 }
