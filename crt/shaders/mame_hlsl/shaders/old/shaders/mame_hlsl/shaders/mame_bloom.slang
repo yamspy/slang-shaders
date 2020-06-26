@@ -10,8 +10,6 @@ layout(push_constant) uniform Push
 {
 	vec4 SourceSize;
 	vec4 OutputSize;
-   vec4 OriginalSize;
-   vec4 FinalViewportSize;
 } params;
 
 #include "mame_parameters.inc"
