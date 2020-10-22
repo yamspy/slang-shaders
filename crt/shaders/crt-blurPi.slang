@@ -66,7 +66,6 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 void main(){
 
-	float time = mod(params.FrameCount / 60.0, params.OutputSize.y);
 
 	const vec2 off = params.blurRadius * dot_size;
 	float srcGain = 1.0f - 0.75f * params.blurGain;
