@@ -40,7 +40,15 @@ layout(push_constant) uniform Push
    float Phase_Y;
    float Phase_One;
    float Phase_Two;
+   float USE_RAW_param;
+   float USE_LUT_param;
 } params;
+
+#pragma parameter USE_RAW_param "(NES ONLY) Decode RAW Colors" 0.0 0.0 1.0 1.0
+#pragma parameter USE_LUT_param "(NES ONLY) Use RAW LUT For Speed" 0.0 0.0 1.0 1.0
+
+bool USE_RAW = bool(params.USE_RAW_param);
+bool USE_LUT = bool(params.USE_LUT_param);
 
 #pragma parameter Gamma "PAL Gamma" 2.5 0.0 10.0 0.03125
 #pragma parameter Brightness "PAL Brightness" 0.0 -1.0 2.0 0.03125
@@ -251,26 +259,42 @@ mat3(
 	float3( 0.701,-0.587,-0.114)*YUV_v //R-Y
 );
 
-#ifdef USE_RAW
-#ifndef USE_LUT
-const float Voltage_0 = 0.518;
-const float Voltage_1 = 1.962;
-const float DeltaV = (Voltage_1-Voltage_0);
-#else
-const float Voltage_0 = 0.15103768593097774;
-const float Voltage_1 = 1.;
-float DeltaV = (Voltage_1-Voltage_0);
-#endif
-
-#else
-const float DeltaV = 1.;
-#endif
-
 #ifdef USE_DELAY_LINE
 const float comb_line = 1.;
 #else
 const float comb_line = 2.;
 #endif
+
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+layout(location = 1) out float DeltaV;
+layout(location = 2) out float Voltage_0;
+layout(location = 3) out float Voltage_1;
+
+void main()
+{
+	gl_Position = global.MVP * Position;
+	vTexCoord = TexCoord;
+
+	if(USE_RAW)
+	{
+		Voltage_0 = (!USE_LUT) ? 0.518 : 0.15103768593097774;
+		Voltage_1 = (!USE_LUT) ? 1.962 : 1.;
+		DeltaV = (Voltage_1-Voltage_0);
+	}
+	else DeltaV = 1.;
+}
+
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 1) in float DeltaV;
+layout(location = 2) in float Voltage_0;
+layout(location = 3) in float Voltage_1;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+layout(set = 0, binding = 3) uniform sampler2D nes_lut;
 
 float RGB_y = Contrast_static/Ywidth_static/DeltaV;
 float RGB_u = comb_line*Contrast_static*Saturation_static/YUV_u/Uwidth_static/DeltaV;
@@ -285,33 +309,26 @@ mat3(
 
 const float pi = 3.1415926535897932384626433832795;
 
-#pragma stage vertex
-layout(location = 0) in vec4 Position;
-layout(location = 1) in vec2 TexCoord;
-layout(location = 0) out vec2 vTexCoord;
-
-void main()
-{
-   gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
-}
-
-#pragma stage fragment
-layout(location = 0) in vec2 vTexCoord;
-layout(location = 0) out vec4 FragColor;
-layout(set = 0, binding = 2) uniform sampler2D Source;
-
-#ifdef USE_RAW
-
 bool InColorPhase(int color, float phase)
 {
 	return fmod((color*2. + phase),24.) < 12.;
 }
 
-#ifndef USE_LUT
 // from nesdev wiki page NTSC_video
 float NTSCsignal(float3 pixel, float phase)
 {
+	float NTSC_out;
+	
+	// use LUT for RAW palette decoding for speed vs quality
+	NTSC_out = texture(nes_lut,float2(dot(pixel,float3(
+	15.*(8.)/512.,
+	3.*(16.*8.)/512.,
+	7./512.)
+	) + 0.5/(4.*16.*8.), frac(phase/24.))).r;
+	
+	// return early to avoid costly decoding in software
+	if(USE_LUT) return NTSC_out;
+		
 	// Voltage levels, relative to synch voltage
 	const float black=.518, white=1.962, attenuation=.746,
 		levels[8] = {.350, .518, .962,1.550,  // Signal low
@@ -340,26 +357,12 @@ float NTSCsignal(float3 pixel, float phase)
 	if( ((e.x != 0) && InColorPhase(0,phase))
 	||  ((e.y-e.x != 0) && InColorPhase(4,phase))
 	||  ((emphasis-e.y != 0) && InColorPhase(8,phase)) )
-		return signal * attenuation;
+		NTSC_out = signal * attenuation;
 	else
-		return signal;
+		NTSC_out = signal;
+	
+	return NTSC_out;
 }
-
-#else
-
-layout(set = 0, binding = 3) uniform sampler2D nes_lut;
-float NTSCsignal(float3 pixel, float phase)
-{
-	return texture(nes_lut,float2(dot(pixel,float3(
-		15.*(8.)/512.,
-		3.*(16.*8.)/512.,
-		7./512.)
-		) + 0.5/(4.*16.*8.), frac(phase/24.))).r;
-}
-
-#endif
-
-#endif
 
 float sinn(float x)
 {
@@ -373,9 +376,9 @@ float coss(float x)
 
 float3 monitor(sampler2D tex, float2 p)
 {
-#ifdef PARAMETER_UNIFORM
+//#ifdef PARAMETER_UNIFORM
 	const float2 size = float2(params.SizeX,params.SizeY);
-#endif
+//#endif
 	// align vertical coord to center of texel
 	float2 uv = float2(
 #ifdef COMPENSATE_WIDTH
@@ -415,34 +418,38 @@ float3 monitor(sampler2D tex, float2 p)
 		ss = -2.0;
 	}
 
-	float ysum = 0., usum = 0., vsum = 0.;
+	float ysum = 0., usum = 0., vsum = 0., sig = 0., sig1 = 0.;
 	for (int i=0; i<Mwidth; ++i)
 	{
+
 		float4 res = texture(tex, uv);
-#ifdef USE_RAW
-		float sig = NTSCsignal(res.xyz,params.HueShift*2.+alpha-res.g*ss*params.HueRotation)-Voltage_0;
-		// outside of texture is 0,0,0 which is white instead of black
-		if (uv.x <= 0.0 || uv.x >= border)
-			sig = 0;
+		
+		if(USE_RAW)
+		{
+			sig = NTSCsignal(res.xyz,params.HueShift*2.+alpha-res.g*ss*params.HueRotation)-Voltage_0;
+			// outside of texture is 0,0,0 which is white instead of black
+			if (uv.x <= 0.0 || uv.x >= border)
+				sig = 0;
 #ifdef USE_DELAY_LINE
-		float4 res1 = texture(tex, uv+sh);
-		float sig1 = NTSCsignal(res1.xyz,params.HueShift*2.+12012.0-alpha+res.g*ss*params.HueRotation)-Voltage_0;
-		if (uv.x + sh.x <= 0.0 || uv.x + sh.x >= border)
-			sig1 = 0;
+			float4 res1 = texture(tex, uv+sh);
+			sig1 = NTSCsignal(res1.xyz,params.HueShift*2.+12012.0-alpha+res.g*ss*params.HueRotation)-Voltage_0;
+			if (uv.x + sh.x <= 0.0 || uv.x + sh.x >= border)
+				sig1 = 0;
 #endif
-
-#else
-		float3 yuv = mul(RGB_to_YUV, res.xyz);
-		const float a1 = alpha+(params.HueShift+2.5)*2.-yuv.x*ss*params.HueRotation;
-		float sig = yuv.x+dot(yuv.yz,sign(float2(sinn(a1),coss(a1))));
+		}
+		else
+		{
+			float3 yuv = mul(RGB_to_YUV, res.xyz);
+			const float a1 = alpha+(params.HueShift+2.5)*2.-yuv.x*ss*params.HueRotation;
+			sig = yuv.x+dot(yuv.yz,sign(float2(sinn(a1),coss(a1))));
 #ifdef USE_DELAY_LINE
-		float4 res1 = texture(tex, uv+sh);
-		float3 yuv1 = mul(RGB_to_YUV, res1.xyz);
-		const float a2 = (params.HueShift+2.5)*2.+12012.0-alpha+yuv.x*ss*params.HueRotation;
-		float sig1 = yuv1.x+dot(yuv1.yz,sign(float2(sinn(a2),coss(a2))));
+			float4 res1 = texture(tex, uv+sh);
+			float3 yuv1 = mul(RGB_to_YUV, res1.xyz);
+			const float a2 = (params.HueShift+2.5)*2.+12012.0-alpha+yuv.x*ss*params.HueRotation;
+			sig1 = yuv1.x+dot(yuv1.yz,sign(float2(sinn(a2),coss(a2))));
 #endif
-
-#endif
+		}
+		
 		if (i < params.Ywidth)
 			ysum += sig;
 
@@ -461,11 +468,11 @@ float3 monitor(sampler2D tex, float2 p)
 		uv.x -= ustep;
 	}
 
-#ifdef PARAMETER_UNIFORM
+//#ifdef PARAMETER_UNIFORM
 	ysum *= params.Contrast/params.Ywidth;
 	usum *= params.Contrast*params.Saturation/params.Uwidth;
 	vsum *= params.Contrast*params.Saturation/params.Vwidth;
-#endif
+//#endif
 
 	float3 rgb = mul(float3(ysum+params.Brightness*Ywidth_static,usum,vsum), YUV_to_RGB);
 #if defined(USE_GAMMA) && !defined(USE_COLORIMETRY)
