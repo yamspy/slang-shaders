@@ -11,4 +11,4 @@ shader1 = shaders/ntsc-adaptive-tate/ntsc-tate-pass2.slang
 scale_type1 = source
 scale_x1 = 1.0
 scale_y1 = 0.5
-filter_linear1 = false
+filter_linear1 = true
