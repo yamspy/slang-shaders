@@ -15,9 +15,9 @@ layout(push_constant) uniform Push
 // Adapted from crt-easymode-halation by Easymode.
 
 // Parameter lines go here:
-#pragma parameter TAPSV "V. Glow Radius" 5.0 1.0 10.0 1.0 
+#pragma parameter TAPSV "V. Glow Radius" 4.0 1.0 10.0 1.0 
 #define TAPSV params.TAPSV
-#pragma parameter GLOW_FALLOFF_V "Vertical Glow Grade" 0.25 0.00 1.5 0.02 
+#pragma parameter GLOW_FALLOFF_V "Vertical Glow Grade" 0.35 0.00 1.5 0.02 
 #define GLOW_FALLOFF_V params.GLOW_FALLOFF_V
 
 layout(std140, set = 0, binding = 0) uniform UBO

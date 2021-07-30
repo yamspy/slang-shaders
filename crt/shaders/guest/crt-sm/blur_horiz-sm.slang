@@ -14,9 +14,9 @@ layout(push_constant) uniform Push
 // Lower values might need more taps.
 // Adapted from crt-easymode-halation by Easymode.
 
-#pragma parameter TAPSH "H. Glow Radius" 5.0 1.0 10.0 1.0 
+#pragma parameter TAPSH "H. Glow Radius" 4.0 1.0 10.0 1.0 
 #define TAPSH params.TAPSH
-#pragma parameter GLOW_FALLOFF_H "Horizontal Glow Grade" 0.25 0.00 1.5 0.02 
+#pragma parameter GLOW_FALLOFF_H "Horizontal Glow Grade" 0.35 0.00 1.5 0.02 
 #define GLOW_FALLOFF_H params.GLOW_FALLOFF_H
 
 layout(std140, set = 0, binding = 0) uniform UBO

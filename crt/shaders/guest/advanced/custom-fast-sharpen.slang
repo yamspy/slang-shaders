@@ -1,9 +1,9 @@
 #version 450
 
 /*
-   Smart Smoothing Difference Shader
+   Fast Sharpen Shader (Custom)
    
-   Copyright (C) 2019 guest(r) - guest.r@gmail.com
+   Copyright (C) 2005 - 2019 guest(r) - guest.r@gmail.com
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,10 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-   
 */
-
-#pragma name SmoothPass
 
 layout(push_constant) uniform Push
 {
@@ -29,13 +26,16 @@ layout(push_constant) uniform Push
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-   float STH;
+	float SHARPEN, CONTR, DETAILS;
 } params;
 
-#pragma parameter STH "Smart Smoothing Threshold" 0.7 0.4 1.2 0.05
-#define STH params.STH
-#define SourceSize params.SourceSize
-#define COMPAT_TEXTURE(c,d) texture(c,d)
+#pragma parameter SHARPEN  "Sharpen strength"       0.00 0.0 4.00 0.10 
+#pragma parameter CONTR    "Ammount of sharpening"  0.05 0.0 0.25 0.01 
+#pragma parameter DETAILS  "Details sharpened "     1.00 0.0 1.00 0.05 
+
+#define SHARPEN params.SHARPEN
+#define CONTR params.CONTR
+#define DETAILS params.DETAILS
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -58,27 +58,28 @@ layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
 
-float df (vec3 A, vec3 B)
-{
-	float diff = length(A-B);
-	float luma = clamp(length(0.5*min(A,B) + 0.25*(A+B) + 1e-8), 0.0001, 1.0);
-	float diff1 = diff/luma;
-	return 1.0 - clamp(7.0*(max(1.5*diff,diff1)-STH), 0.0, 1.0);
-}
 
 void main()
 {
-	vec2 dx  = vec2(SourceSize.z, 0.0);	
-	vec2 dy  = vec2(0.0, SourceSize.w);	
+	vec2 g01 = vec2(-1.0, 0.0)*params.SourceSize.zw;
+	vec2 g21 = vec2( 1.0, 0.0)*params.SourceSize.zw; 
 
-	vec3 l1 = COMPAT_TEXTURE(Source, vTexCoord.xy -dx).xyz;
-	vec3 ct = COMPAT_TEXTURE(Source, vTexCoord.xy    ).xyz;
-	vec3 r1 = COMPAT_TEXTURE(Source, vTexCoord.xy +dx).xyz;
+	vec3 c01 = texture(Source, vTexCoord + g01).rgb;
+	vec3 c21 = texture(Source, vTexCoord + g21).rgb;
+	vec3 c11 = texture(Source, vTexCoord      ).rgb;
 	
-	float dl = df(ct, l1);
-	float dr = df(ct, r1);
+	vec3 b11 = 0.5*(c01+c21); 
 	
-	float resx = dl; float resy = dr;
+	float contrast = max(max(c11.r,c11.g),c11.b);
+	contrast = mix(2.0*CONTR, CONTR, contrast);
 	
-	FragColor = vec4(resx,resy,1.0,1.0);
+	vec3 mn1 = min(c01,c21); mn1 = min(mn1,c11*(1.0-contrast));
+	vec3 mx1 = max(c01,c21); mx1 = max(mx1,c11*(1.0+contrast));
+	
+	vec3 dif = pow(mx1-mn1+0.0001, vec3(0.75,0.75,0.75));
+	vec3 sharpen = mix(vec3(SHARPEN*DETAILS), vec3(SHARPEN), dif);
+	
+	c11 = clamp(mix(c11,b11,-sharpen), mn1,mx1);
+	
+	FragColor = vec4(c11,1.0); 
 }

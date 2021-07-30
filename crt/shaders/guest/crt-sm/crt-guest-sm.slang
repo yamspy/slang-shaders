@@ -65,12 +65,14 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	float warpx;
 	float warpy;
 	float bloom;
+	float halation;
 	float autobrm;	
 	float sclip;
 } global;
 
 #pragma parameter bglow "Base Glow" 0.0 0.0 1.0 0.01
 #pragma parameter bloom "Bloom" 0.40 0.0 2.0 0.05
+#pragma parameter halation "Halation" 0.0 0.0 2.0 0.05
 #pragma parameter autobrm "Automatic Brightness (Mask)" 0.5 0.0 1.0 0.1
 #pragma parameter smart "1:Smart 2:Crop 3:Overscan Y Integer Scaling" 0.0 0.0 3.0 1.0
 #pragma parameter brightboost1 "Bright boost dark colors" 1.40 0.5 5.0 0.10
@@ -99,6 +101,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define brightboost1 params.brightboost1
 #define brightboost2 params.brightboost2
 #define bloom global.bloom
+#define halation global.halation
 #define stype params.stype
 #define scanline1 params.scanline1
 #define scanline2 params.scanline2
@@ -242,6 +245,8 @@ void main()
 	
 	vec2 OGL2Pos = tex * SourceSize1.xy - vec2(0.5,0.5);
 	vec2 fp = fract(OGL2Pos);
+	float fpx = fp.x;
+	float fp1 = 1.0-fpx;
 
 	vec2 pC4 = (floor(OGL2Pos) + vec2(0.5)) * SourceSize1.zw;	
 	
@@ -256,15 +261,20 @@ void main()
 	float wr1 = 1.0 - fp.x;
 	float wr2 = 2.0 - fp.x;
 
-	wl2*=wl2; wl2 = exp2(-h_sharp*wl2);		float sl2 = wl2;
-	wl1*=wl1; wl1 = exp2(-h_sharp*wl1);		float sl1 = wl1;
-	wr1*=wr1; wr1 = exp2(-h_sharp*wr1);		float sr1 = wr1;
-	wr2*=wr2; wr2 = exp2(-h_sharp*wr2);		float sr2 = wr2;
+	wl2*=wl2; wl2 = exp2(-h_sharp*wl2);
+	wl1*=wl1; wl1 = exp2(-h_sharp*wl1);
+	wr1*=wr1; wr1 = exp2(-h_sharp*wr1);
+	wr2*=wr2; wr2 = exp2(-h_sharp*wr2);
 
-	wl2 = max(wl2 - zero, mix(0.0,mix(-0.14, -0.035, fp.x),float(cubic > 0.05)));
+	wl2 = max(wl2 - zero, mix(0.0,mix(-0.14, 0.0, 1.0-fp1*fp1),float(cubic > 0.05)));
 	wl1 = max(wl1 - zero, 0.0);
 	wr1 = max(wr1 - zero, 0.0);	
-	wr2 = max(wr2 - zero, mix(0.0,mix(-0.14, -0.035, 1.-fp.x),float(cubic > 0.05)));
+	wr2 = max(wr2 - zero, mix(0.0,mix(-0.14, 0.0, 1.0-fpx*fpx),float(cubic > 0.05)));
+
+	float sl2 = max(wl2,0.0);
+	float sl1 = wl1;
+	float sr1 = wr1;
+	float sr2 = max(wr2,0.0);	
 
 	float wtt =  1.0/(wl2+wl1+wr1+wr2);
 	float wts =  1.0/(sl2+sl1+sr1+sr2);
@@ -281,11 +291,11 @@ void main()
 	
 	if (cubic > 0.05) color1 = clamp(color1, colmin, colmax);
 	
-	l1*=l1; l1*=l1; r1*=r1; r1*=r1; l2*=l2; l2*=l2; r2*=r2; r2*=r2;
+	l1*=l1; l1*=l1*l1; r1*=r1; r1*=r1*r1; l2*=l2; l2*=l2*l2; r2*=r2; r2*=r2*r2;
 	vec3 scolor1 = (sl2*l2+sl1*l1+sr1*r1+sr2*r2)*wts;
-	scolor1 = pow(scolor1, vec3(1.0/4.0)); vec3 mscolor1 = scolor1;
+	scolor1 = pow(scolor1, vec3(1.0/6.0)); vec3 mscolor1 = scolor1;
 	
-	scolor1 = mix(color1, scolor1, 1.1);
+	scolor1 = mix(color1, scolor1, 1.0);
 	
 	pC4+=dy;
 	l2 = COMPAT_TEXTURE(LinPass, pC4 - dx).rgb;
@@ -300,11 +310,11 @@ void main()
 	
 	if (cubic > 0.05) color2 = clamp(color2, colmin, colmax);
 	
-	l1*=l1; l1*=l1; r1*=r1; r1*=r1; l2*=l2; l2*=l2; r2*=r2; r2*=r2;
+	l1*=l1; l1*=l1*l1; r1*=r1; r1*=r1*r1; l2*=l2; l2*=l2*l2; r2*=r2; r2*=r2*r2;
 	vec3 scolor2 = (sl2*l2+sl1*l1+sr1*r1+sr2*r2)*wts;
-	scolor2 = pow(scolor2, vec3(1.0/4.0)); vec3 mscolor2 = scolor2;
+	scolor2 = pow(scolor2, vec3(1.0/6.0)); vec3 mscolor2 = scolor2;
 	
-	scolor2 = mix(color2, scolor2, 1.1);
+	scolor2 = mix(color2, scolor2, 1.0);
 	
 	float f1 = fp.y;
 	float f2 = 1.0 - fp.y;
@@ -353,11 +363,11 @@ void main()
 	
 	
 	vec3 ctemp = (t1*color1 + t2*color2)*wt; vec3 orig = ctemp;	float pixbr = max(max(orig.r,orig.g),orig.b); vec3 one = vec3(1.0);
-	vec3 tmp1 = clamp(mix(orig, msctemp, 1.75),0.0,1.0);	
+	vec3 tmp1 = clamp(mix(orig, msctemp, 1.25),0.0,1.0);	
 	ctemp = w1+w2;
 	float w3 = max(max(ctemp.r,ctemp.g),ctemp.b);	
 	
-	tmp1 = pow(tmp1, vec3(0.75));
+	tmp1 = pow(tmp1, vec3(0.65));
 	float pixbr1 = max(max(tmp1.r,tmp1.g),tmp1.b);
 	
 	float maskd = mix(min(maskdark,1.0), 0.25*max(maskbright,0.0), pixbr1); if (mask == 3.0 || mask == 4.0) maskd*=1.33; maskd = mix(1.0, 1.0/(1.0-0.5*maskd), autobrm);
@@ -436,6 +446,8 @@ void main()
 	vec3 Bloom = COMPAT_TEXTURE(Source, tex).rgb;
 	vec3 Bglow = COMPAT_TEXTURE(LinPass, tex).rgb;
 	Bglow = clamp(Bloom - Bglow,0.0,1.0);
+	vec3 hglow = 0.5*(Bloom + Bglow);
+	float maxb = max(max(hglow.r,hglow.g),hglow.b); maxb*=maxb;
 
 	vec3 Bloom1 = 2.0*Bloom*Bloom;
 	Bloom1 = min(Bloom1, 0.75);
@@ -451,6 +463,10 @@ void main()
 	color = color + Bloom1;
 	color = min(color,1.0);
 	color = declip(color, pow(w3, 1.0-sclip));		
+
+	float colmx = pixbr1;
+	Bloom = mix(0.5*(Bloom + Bloom*Bloom), Bloom*Bloom, colmx);	
+	color = color + 0.75*(0.75+maxb)*Bloom*(0.75+sqrt(colmx))*mix(1.0,w3,0.5*colmx)*mix(one,cmask,0.35 + 0.4*maxb)*halation; 
 
 	color = color + bglow*Bglow;
 	color = min(color, mix(cmask,one,sclip));
