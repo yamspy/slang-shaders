@@ -1,4 +1,4 @@
-shaders = 4
+shaders = 5
 
 shader0 = ../stock.slang
 filter_linear0 = false
@@ -24,6 +24,9 @@ scale3 = 1.0
 textures = "areaTex;searchTex"
 areaTex = shaders/smaa/AreaTex.png
 searchTex = shaders/smaa/SearchTex.png
+
+shader4 = ../stock.slang
+filter_linear4 = true
 
 parameters = "SMAA_EDT"
 SMAA_EDT = 0.0
