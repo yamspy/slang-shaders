@@ -1,3 +1,4 @@
+#version 450
 /* 
 Simple pixel perfect scanlines for use *only* with interger scaling mode. 
 Perfect for low res output and low performance machines.
@@ -9,9 +10,6 @@ Recommended setting for 720p 1 pixel width scalines at 2x or 3x scalings
 Recommended setting for 1080p 2 or 3 pixel width scalines at 4x or 5x scalings
 Recommended setting for 4K 4 or 5 pixel width scalines at 8x or 9x scalings
 */
-
-#version 450
-
 layout(push_constant) uniform Push
 {
 	vec4 SourceSize;
