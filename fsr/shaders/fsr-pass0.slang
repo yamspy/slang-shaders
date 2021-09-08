@@ -1,4 +1,5 @@
 #version 450
+// SPDX-License-Identifier: Unlicense
 #pragma name FSR_EASU
 
 // FSR - [EASU] EDGE ADAPTIVE SPATIAL UPSAMPLING
@@ -40,15 +41,9 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 #define FSR_EASU_F 1
 AU4 con0, con1, con2, con3;
 
-AF4 FsrEasuRF(AF2 p) {
-    return textureGather(Source, p, 0);
-}
-AF4 FsrEasuGF(AF2 p) {
-    return textureGather(Source, p, 1);
-}
-AF4 FsrEasuBF(AF2 p) {
-    return textureGather(Source, p, 2);
-}
+AF4 FsrEasuRF(AF2 p) { return textureGather(Source, p, 0); }
+AF4 FsrEasuGF(AF2 p) { return textureGather(Source, p, 1); }
+AF4 FsrEasuBF(AF2 p) { return textureGather(Source, p, 2); }
 
 #include "ffx_fsr1.h"
 
