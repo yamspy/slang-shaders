@@ -614,7 +614,7 @@ layout(push_constant) uniform Push
 
 ### Samplers
 Which samplers are used for textures are specified by the preset format.
-The sampler remains constant throughout the frame, there is currently no way to select samplers on a frame-by-frame basic.
+The sampler remains constant throughout the frame, there is currently no way to select samplers on a frame-by-frame basis.
 This is mostly to make it possible to use the spec in GLES2 as GLES2 has no concept of separate samplers and images.
 
 ### sRGB
