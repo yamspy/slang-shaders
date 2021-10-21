@@ -147,9 +147,9 @@ static const float gba_gamma = 3.5; //  Irrelevant but necessary to define.
     static const float border_size = clamp(border_size_static, 0.0, 0.5);           //  0.5 reaches to image center
     static const float border_darkness = max(0.0, border_darkness_static);
     static const float border_compress = max(1.0, border_compress_static);          //  < 1.0 darkens whole image
-	static const float interlace_detect = float(interlace_detect_static);
-    static const float interlace_bff = float(interlace_bff_static);
-    static const float interlace_1080i = float(interlace_1080i_static);
+    static const bool  interlace_detect = bool(interlace_detect_static);
+    static const bool  interlace_bff = bool(interlace_bff_static);
+    static const bool  interlace_1080i = bool(interlace_1080i_static);
 #else
 #pragma parameter crt_gamma "Simulated CRT Gamma" 2.5 1.0 5.0 0.025
 #define crt_gamma global.crt_gamma
