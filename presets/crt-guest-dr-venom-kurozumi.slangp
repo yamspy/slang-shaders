@@ -1,84 +1,74 @@
-shaders = "11"
+shaders = 10
 
-shader0 = "../crt/shaders/guest/lut/lut.slang"
-filter_linear0 = "false"
-scale_type0 = "source"
-scale0 = "1.000000"
-
-shader1 = "../crt/shaders/guest/color-profiles.slang"
-filter_linear1 = "false"
-scale_type1 = "source"
-scale1 = "1.000000"
-
-shader2 = "../crt/shaders/guest/d65-d50.slang"
-filter_linear2 = "false"
-alias2 = "WhitePointPass"
-scale_type2 = "source"
-scale2 = "1.000000"
-
-shader3 = "../crt/shaders/guest/afterglow.slang"
-filter_linear3 = "false"
-alias3 = "AfterglowPass"
-scale_type3 = "source"
-scale3 = "1.000000"
-
-shader4 = "../crt/shaders/guest/avg-lum0.slang"
-filter_linear4 = "false"
-scale_type4 = "source"
-scale4 = "1.000000"
-
-shader5 = "../crt/shaders/guest/avg-lum.slang"
-filter_linear5 = "false"
-mipmap_input5 = "true"
-alias5 = "AvgLumPass"
-scale_type5 = "source"
-scale5 = "1.000000"
-
-shader6 = "../crt/shaders/guest/linearize.slang"
-filter_linear6 = "false"
-alias6 = "LinearizePass"
-float_framebuffer6 = "true"
-scale_type6 = "source"
-scale6 = "1.000000"
-
-shader7 = "../crt/shaders/guest/blur_horiz.slang"
-filter_linear7 = "false"
-scale_type7 = "source"
-scale7 = "1.000000"
-
-shader8 = "../crt/shaders/guest/blur_vert.slang"
-filter_linear8 = "false"
-scale_type8 = "source"
-scale8 = "1.000000"
-alias8 = GlowPass
-
-shader9 = "../crt/shaders/guest/linearize_scanlines.slang"
-filter_linear9 = true
-scale_type9 = source
-scale9 = 1.0
-float_framebuffer9 = true
-
-shader10 = ../crt/shaders/guest/crt-guest-dr-venom.slang
-filter_linear10 = true
-scale_type10 = viewport
-scale_x10 = 1.0
-scale_y10 = 1.0
+shader0 = shaders/guest/lut/lut.slang
+filter_linear0 = false
+scale_type0 = source
+scale0 = 1.0
 
 textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3"
-SamplerLUT1 = "../crt/shaders/guest/lut/sony_trinitron1.png"
-SamplerLUT1_linear = "true"
-SamplerLUT1_wrap_mode = "clamp_to_border"
-SamplerLUT1_mipmap = "false"
+SamplerLUT1 = shaders/guest/lut/sony_trinitron1.png
+SamplerLUT1_linear = true 
+SamplerLUT2 = shaders/guest/lut/sony_trinitron2.png
+SamplerLUT2_linear = true 
+SamplerLUT3 = shaders/guest/lut/other1.png
+SamplerLUT3_linear = true 
 
-SamplerLUT2 = "../crt/shaders/guest/lut/sony_trinitron2.png"
-SamplerLUT2_linear = "true"
-SamplerLUT2_wrap_mode = "clamp_to_border"
-SamplerLUT2_mipmap = "false"
+shader1 = shaders/guest/color-profiles.slang
+filter_linear1 = true
+scale_type1 = source
+scale1 = 1.0
 
-SamplerLUT3 = "../crt/shaders/guest/lut/other1.png"
-SamplerLUT3_linear = "true"
-SamplerLUT3_wrap_mode = "clamp_to_border"
-SamplerLUT3_mipmap = "false"
+shader2 = shaders/guest/d65-d50.slang
+filter_linear2 = true
+scale_type2 = source
+scale2 = 1.0
+alias2 = WhitePointPass
+
+shader3 = shaders/guest/afterglow.slang
+filter_linear3 = true
+scale_type3 = source
+scale3 = 1.0
+alias3 = AfterglowPass
+
+shader4 = shaders/guest/avg-lum.slang
+filter_linear4 = true
+scale_type4 = source
+scale4 = 1.0
+mipmap_input4 = true
+float_framebuffer4 = true
+alias4 = AvgLumPass
+
+shader5 = shaders/guest/linearize.slang
+filter_linear5 = true
+scale_type5 = source
+scale5 = 1.0
+float_framebuffer5 = true
+alias5 = LinearizePass
+
+shader6 = shaders/guest/blur_horiz.slang
+filter_linear6 = true
+scale_type6 = source
+scale6 = 1.0
+float_framebuffer6 = true
+
+shader7 = shaders/guest/blur_vert.slang
+filter_linear7 = true
+scale_type7 = source
+scale7 = 1.0
+float_framebuffer7 = true
+alias7 = GlowPass
+
+shader8 = shaders/guest/linearize_scanlines.slang
+filter_linear8 = true
+scale_type8 = source
+scale8 = 1.0
+float_framebuffer8 = true
+
+shader9 = shaders/guest/crt-guest-dr-venom.slang
+filter_linear9 = true
+scale_type9 = viewport
+scale_x9 = 1.0
+scale_y9 = 1.0
 
 parameters = "TNTC;CP;CS;WP;wp_saturation;SW;AR;PR;AG;PG;AB;PB;sat;STH;GAMMA_INPUT;TAPSH;GLOW_FALLOFF_H;TAPSV;GLOW_FALLOFF_V;TATE;IOS;OS;BLOOM;brightboost;gsl;scanline1;scanline2;beam_min;beam_max;beam_size;h_sharp;s_sharp;h_smart;csize;bsize;warpX;warpY;glow;shadowMask;masksize;vertmask;slotmask;slotwidth;double_slot;mcut;maskDark;maskLight;CGWG;GTW;gamma_out"
 TNTC = "0.000000"
