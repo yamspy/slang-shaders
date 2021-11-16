@@ -29,11 +29,13 @@ shader4 = shaders/fsr-pass0.slang
 filter_linear4 = true
 scale_type4 = viewport
 scale4 = 1.0
+wrap_mode4 = clamp_to_edge
 
 shader5 = shaders/fsr-pass1.slang
 filter_linear5 = true
 scale_type5 = source
 scale5 = 1.0
+wrap_mode5 = clamp_to_edge
 
 parameters = "SMAA_EDT;SMAA_THRESHOLD;SMAA_MAX_SEARCH_STEPS;SMAA_MAX_SEARCH_STEPS_DIAG;SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR;SMAA_CORNER_ROUNDING;FSR_SHARPENING;FSR_FILMGRAIN;FSR_GRAINCOLOR;FSR_GRAINPDF"
 SMAA_EDT = 1.0
