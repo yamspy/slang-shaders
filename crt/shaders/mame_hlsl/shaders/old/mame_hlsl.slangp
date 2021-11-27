@@ -13,7 +13,7 @@ scale_type1 = source
 scale1 = 1.0
 filter_linear1 = true
 
-shader2 = ../interpolation/shaders/sharp-bilinear.slang
+shader2 = ../../../../../interpolation/shaders/sharp-bilinear.slang
 alias2 = PrescalePass
 scale_type2 = source
 filter_linear2 = true
@@ -70,7 +70,7 @@ filter_linear11 = true
 
 # mame's textures are available here: https://github.com/mamedev/mame/tree/master/artwork
 textures = "MaskTexture"
-MaskTexture = shaders/mame_hlsl/resources/aperture-grille.png
+MaskTexture = ../../resources/aperture-grille.png
 
 parameters = "AUTO_PRESCALE;chromaa_x;chromaa_y;chromab_x;chromab_y;chromac_x;chromac_y;ygain_r;ygain_g;ygain_b"
 chromaa_x = "0.630"
