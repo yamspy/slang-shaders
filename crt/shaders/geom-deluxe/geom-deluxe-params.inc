@@ -56,12 +56,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter angle_y "Tilt Y" 0.0 -1.0 1.0 0.01
 #pragma parameter cornersize "Rounded corner size" 0.01 0.00 0.10 0.01
 #pragma parameter cornersmooth "Border smoothness" 1000.0 100.0 2000.0 100.0
-#pragma parameter overscan_x "Overscan X" 1.0 0.8 1.2 0.02
-#pragma parameter overscan_y "Overscan Y" 1.0 0.8 1.2 0.02
+#pragma parameter overscan_x "Overscan X" 1.0 0.8 1.2 0.005
+#pragma parameter overscan_y "Overscan Y" 1.0 0.8 1.2 0.005
 #pragma parameter monitorgamma "Gamma of output display" 2.2 0.7 4.0 0.05
 #pragma parameter aspect_x "Aspect ratio X" 1.0 0.3 1.0 0.01
 #pragma parameter aspect_y "Aspect ratio Y" 0.75 0.3 1.0 0.01
-#pragma parameter scanline_weight "CRTGeom Scanline Weight" 0.3 0.1 0.5 0.05
+#pragma parameter scanline_weight "CRTGeom Scanline Weight" 0.3 0.1 0.5 0.01
 #pragma parameter geom_lum "CRTGeom Luminance" 0.0 0.0 1.0 0.01
 #pragma parameter interlace_detect "CRTGeom Interlacing Simulation" 1.0 0.0 1.0 1.0
 
