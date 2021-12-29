@@ -1,10 +1,12 @@
 /* 
-A group of shaders that tries to emulate a sony PVM type aperture grille screen but with full brightness. 
+A group of shaders that tries to emulate a Sony PVM type aperture grille screen but with full brightness. 
 
 The novel thing about this group of shaders is that it transforms the image output by the 'console/arcade/computer' into HDR space first i.e brightens it first and then applies 
 an aperture grille afterwards which is kind of what a CRT would actually do - its kind of a kin to the electron beam (but nothing like it lol). 
 
 My HDR 700 monitors does seem to get reasonably close to the brightness of my PVM's - its not quite there but its close.
+
+Currently geared towards a Sony PVM 20L4.
 
 To use:
 Please Enable HDR in RetroArch, 
@@ -75,4 +77,7 @@ mipmap_input3 = "false"
 alias3 = ""
 float_framebuffer3 = "false"
 srgb_framebuffer3 = "false"
-ScanlineWidth = "1.000000"
+
+ScanlineWidth = "0.600000"
+Contrast = "4.500000"
+PaperWhiteNits = "500.000000"
