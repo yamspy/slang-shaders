@@ -27,16 +27,14 @@ layout(push_constant) uniform Push
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-    float ScanlineWidth;
-    float ScreenWidth;
-    float ScreenHeight; 
-    float ResolutionPattern;
+   float ScanlineWidth;
+   float ResolutionPattern;
+   float Sharpness;
 } params;
 
-#pragma parameter ScanlineWidth     "Scanline Width"     0.5    0.0 1.0    0.01 
-#pragma parameter ScreenWidth       "Screen Width"       3840.0 0.0 7680.0 1.0
-#pragma parameter ScreenHeight      "Screen Height"      2160.0 0.0 4320.0 1.0
-#pragma parameter ResolutionPattern "Resolution Pattern" 1.0    0.0 8.0    1.0
+#pragma parameter ScanlineWidth     "Scanline Width"     0.95   0.0 1.0    0.01 
+#pragma parameter ResolutionPattern "Resolution Pattern" 2.0    0.0 8.0    1.0
+#pragma parameter Sharpness         "Sharpness"          1.8    0.0 5.0    0.1
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -72,7 +70,6 @@ float ModInteger(float a, float b)
 
 #define kGuassianMin   vec3(1.1)
 #define kGuassianMax   vec3(3.0)
-#define Sharpness      2.5
 
 #define kRed     vec3(1.0, 0.0, 0.0)
 #define kGreen   vec3(0.0, 1.0, 0.0)
@@ -108,8 +105,8 @@ void main()
 
    const float Gaussian = pow(kEuler, -0.5 * pow(ScanlineDistance/0.3, 2.0)); /* Gaussian distribution */
 
-   float Ratio = (vTexCoord.x * params.SourceSize.x) - (floor(vTexCoord.x * params.SourceSize.x)); 
-   Ratio = clamp(((Ratio - 0.5) * Sharpness) + 0.5, 0.0f, 1.0);
+   float HorizInterp = (vTexCoord.x * params.SourceSize.x) - (floor(vTexCoord.x * params.SourceSize.x)); 
+   HorizInterp = clamp(((HorizInterp - 0.5) * params.Sharpness) + 0.5, 0.0f, 1.0);
 
    const vec2 SourceTexCoord0 = vec2(vTexCoord.x, ScanlinePosition / params.OutputSize.y);
 
@@ -121,8 +118,8 @@ void main()
    const vec3 HDRColour1 = texture(Source, SourceTexCoord1).xyz;
    const vec3 SDRColour1 = texture(StockPass, SourceTexCoord1).xyz;
    
-   const vec3 HDRColour  = mix(HDRColour0, HDRColour1, vec3(Ratio));
-   const vec3 SDRColour  = mix(SDRColour0, SDRColour1, vec3(Ratio));
+   const vec3 HDRColour  = mix(HDRColour0, HDRColour1, vec3(HorizInterp));
+   const vec3 SDRColour  = mix(SDRColour0, SDRColour1, vec3(HorizInterp));
    
    vec3 Luminance = Ramp3(vec3(Gaussian), (SDRColour * kGuassianMax) + kGuassianMin); 
 
