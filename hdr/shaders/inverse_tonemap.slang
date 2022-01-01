@@ -21,8 +21,8 @@ layout(push_constant) uniform Push
    float MaxNits;
 } params;
 
-#pragma parameter Contrast          "Contrast"              5.0      0.0 10.0    0.01
-#pragma parameter PaperWhiteNits    "Paper White Luminance" 400.0    0.0 10000.0 10.0
+#pragma parameter Contrast          "Contrast"              3.75     0.0 10.0    0.01
+#pragma parameter PaperWhiteNits    "Paper White Luminance" 450.0    0.0 10000.0 10.0
 #pragma parameter MaxNits           "Peak Luminance"        700.0    0.0 10000.0 10.0
 
 layout(std140, set = 0, binding = 0) uniform UBO
