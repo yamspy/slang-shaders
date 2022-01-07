@@ -34,7 +34,7 @@ layout(push_constant) uniform Push
 
 #pragma parameter ScanlineWidth     "Scanline Width"     0.95   0.0 1.0    0.01 
 #pragma parameter ResolutionPattern "Resolution Pattern" 2.0    0.0 8.0    1.0
-#pragma parameter Sharpness         "Sharpness"          1.8    0.0 5.0    0.1
+#pragma parameter Sharpness         "Sharpness"          2.4    0.0 5.0    0.1
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
