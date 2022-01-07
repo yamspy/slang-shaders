@@ -49,7 +49,7 @@ layout(location = 0) out vec2 vTexCoord;
 void main()
 {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
+   vTexCoord = TexCoord * vec2(1.00001);  // To resolve rounding issues when sampling
 }
 
 #pragma stage fragment
