@@ -98,7 +98,7 @@ void main()
 	float whichmask = fract(floor(vTexCoord.x*params.OutputSize.x*-0.4999));
 	float mask = 1.0 + float(whichmask < 0.5) * -MASK_DARK;
 #else
-	float whichmask = fract(floor(vTexCoord.x*params.OutputSize.x)*-0.3333));
+	float whichmask = fract(floor(vTexCoord.x*params.OutputSize.x)*-0.3333);
 	float mask = 1.0 + float(whichmask <= 0.33333) * -MASK_DARK;
 #endif
 	vec3 colour = texture(Source, p).rgb;
