@@ -1,5 +1,3 @@
-#version 450
-
 /*
     zfast_crt_standard - A simple, fast CRT shader.
 
@@ -52,10 +50,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 //#define FRAGMENT
 //#define VERTEX
 
-//This can't be an option without slowing the shader down
-//Comment this out for a coarser 3 pixel mask...which is currently broken
-//on SNES Classic Edition due to Mali 400 gpu precision
-#define FINEMASK
 //Some drivers don't return black with texture coordinates out of bounds
 //SNES Classic is too slow to black these areas out when using fullscreen
 //overlays.  But you can uncomment the below to black them out if necessary
