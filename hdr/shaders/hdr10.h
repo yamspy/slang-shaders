@@ -22,13 +22,7 @@ vec3 LinearToST2084(vec3 normalizedLinearValue)
 /* Convert into HDR10 */
 vec3 Hdr10(vec3 hdr_linear, float paper_white_nits, float expand_gamut)
 {
-   vec3 rec2020 = hdr_linear * k709to2020;
-
-   if(expand_gamut > 0.0f)
-   {
-      rec2020 = hdr_linear * kExpanded709to2020;
-   }
-
+   vec3 rec2020       = expand_gamut > 0.0f ? hdr_linear * kExpanded709to2020 : hdr_linear * k709to2020;
    vec3 linearColour  = rec2020 * (paper_white_nits / kMaxNitsFor2084);
    vec3 hdr10         = LinearToST2084(linearColour);
 
