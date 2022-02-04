@@ -6,62 +6,111 @@ A shader that tries to emulate a sony PVM type aperture grille screen but with f
 The novel thing about this shader is that it relies on the HDR shaders to brighten up the image so that when 
 we apply this shader which emulates the apperture grille the resulting screen isn't left too dark.  
 
-I think you'd need a HDR 1000 monitor to get close to CRT levels of brightness but my HDR 700 does an alright job of it.
+I think you need at least a DisplayHDR 600 monitor but to get close to CRT levels of brightness I think DisplayHDR 1000.
 
-Please Enable HDR in RetroArch NOTE: when the hdr10 and inverse_tonemap shaders are envoked the Peak Luminance and Paper White Luminance in the menu do nothing instead set those values through the shader parameters instead 
+Please Enable HDR in RetroArch 1.10+
 
-Set Peak Luminance to the peak luminance of your monitor and set Paper White Luminance to roughly half dependent on the game and the monitor.   
+NOTE: when this shader is envoked the Contrast, Peak Luminance and Paper White Luminance in the HDR menu do nothing instead set those values through the shader parameters 
+
+For this shader set Peak Luminance AND Paper White Luminance to the peak luminance of your monitor.   
 
 Also try to use a integer scaling - its just better - overscaling is fine.
 
 This shader doesn't do any geometry warping or bouncing of light around inside the screen etc - I think these effects just add unwanted noise, I know people disagree. Please feel free to make you own and add them
 
-Dont use this shader directly - use the crt\crt-sony-pvm-4k-hdr.slangp to have the proper chain of effects.
+Dont use this shader directly - use the hdr\crt-sony-pvm-4k-hdr.slangp and variants to have the proper chain of effects.
+
+THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD-OLED or LCD (and variants thereof screens are fine) 
 */
 
 #pragma format A2B10G10R10_UNORM_PACK32
 
+#define WHITE_BALANCE_CONTROL 0
+
 #include "inverse_tonemap.h"
 #include "hdr10.h"
 
+#if WHITE_BALANCE_CONTROL
+//#include "white_balance.h"
+#endif // WHITE_BALANCE_CONTROL
+
 layout(push_constant) uniform Push
 {
-	vec4 SourceSize;
-	vec4 OriginalSize;
-	vec4 OutputSize;
-	uint FrameCount;
-   float PaperWhiteNits;
    float MaxNits;
+   float LCDResolution;
+   float LCDSubpixel;
    float ExpandGamut;
-   float CRTGamma;
-   float ScanlineMin;
-   float ScanlineMax;
-   float ResolutionPattern;
-   float HorizontalSharpness;
-   float HorizontalAttack;
-   float VerticalAttack;
    float RedConvergence;
    float GreenConvergence;
    float BlueConvergence;
+
+   float CRTResolution;
+   float Contrast;
+   float HorizontalSharpness;
+   float HorizontalAttack;
+   float RedScanlineMin;
+   float RedScanlineMax;
+   float RedScanlineAttack;
+   float GreenScanlineMin;
+   float GreenScanlineMax;
+   float GreenScanlineAttack;
+   float BlueScanlineMin;
+   float BlueScanlineMax;
+   float BlueScanlineAttack;
+#if WHITE_BALANCE_CONTROL
+   float WhiteTemperature;
+   float WhiteTint;
+#endif // WHITE_BALANCE_CONTROL
 } params;
 
-#pragma parameter PaperWhiteNits       "Paper White Luminance" 650.0 0.0   10000.0  10.0
-#pragma parameter MaxNits              "Peak Luminance"        700.0 0.0   10000.0  10.0
-#pragma parameter ExpandGamut          "ExpandGamut"           1.0   0.0   1.0      1.0
-#pragma parameter CRTGamma             "CRTGamma"              1.8   0.0   5.0      0.05
-#pragma parameter ScanlineMin          "Scanline Min"          0.55  0.0   2.0      0.01 
-#pragma parameter ScanlineMax          "Scanline Max"          0.90  0.0   2.0      0.01 
-#pragma parameter ResolutionPattern    "Resolution Pattern"    3.0   0.0   8.0      1.0
-#pragma parameter HorizontalSharpness  "Horizontal Sharpness"  1.5   0.0   5.0      0.1
-#pragma parameter HorizontalAttack     "Horizontal Attack"     0.60  0.0   1.0      0.05
-#pragma parameter VerticalAttack       "Vertical Attack"       0.65  0.0   1.0      0.05
-#pragma parameter RedConvergence       "Red Convergence"       0.0   -10.0 10.0     0.05
-#pragma parameter GreenConvergence     "Green Convergence"     0.0   -10.0 10.0     0.05
-#pragma parameter BlueConvergence      "Blue Convergence"      0.0   -10.0 10.0     0.05
+
+#pragma parameter Title                "SONY PVM/BVM HDR SHADER"                           0.0      0.0   0.0      0.0
+#pragma parameter Space0               " "                                                 0.0      0.0   0.0      0.0
+#pragma parameter Support0             "SUPPORTED: RGB/BGR LCD, QD-OLED Displays"          0.0      0.0   0.0      0.0
+#pragma parameter Support1             "NOT SUPPORTED: WRGB OLED Displays"                 0.0      0.0   0.0      0.0
+#pragma parameter Support2             "MIN SPEC: DisplayHDR 600, 4K"                      0.0      0.0   0.0      0.0
+#pragma parameter Support3             "REC SPEC: DisplayHDR 1000, 4K+"                    0.0      0.0   0.0      0.0
+#pragma parameter Space1               " "                                                 0.0      0.0   0.0      0.0
+#pragma parameter Instructions0        "ENABLE HDR: On"                                    0.0      0.0   0.0      0.0
+#pragma parameter Instructions1        "VERTICAL SCALING: Integer 4K - 10x, 8K - 20x"      0.0      0.0   0.0      0.0
+#pragma parameter Instructions2        "HORIZONTAL SCALING: Core Provided Apect Ratio"     0.0      0.0   0.0      0.0
+#pragma parameter Space2               " "                                                 0.0      0.0   0.0      0.0
+#pragma parameter UserSettings         "USER SETTINGS:"                                    0.0      0.0   0.0      0.0
+#pragma parameter MaxNits              "    Display's Peak Luminance"                      700.0    0.0   10000.0  10.0
+#pragma parameter LCDResolution        "    Display's Resolution: 4K/8K"                   0.0      0.0   1.0      1.0
+#pragma parameter LCDSubpixel          "    Display's Subpixel Layout: RGB/BGR"            0.0      0.0   1.0      1.0
+#pragma parameter ExpandGamut          "    Original/Vivid"                                0.0      0.0   1.0      1.0
+#pragma parameter RedConvergence       "    Red Convergence"                               -1.20    -10.0 10.0     0.05
+#pragma parameter GreenConvergence     "    Green Convergence"                             0.0      -10.0 10.0     0.05
+#pragma parameter BlueConvergence      "    Blue Convergence"                              -0.1     -10.0 10.0     0.05
+#pragma parameter Space3               " "                                                 0.0      0.0   0.0      0.0
+#pragma parameter DeveloperSettings    "DEVELOPER SETTINGS:"                               0.0      0.0   0.0      0.0
+#pragma parameter CRTResolution        "    CRT Resolution: 600TVL/800TVL/1000TVL"         0.0      0.0   2.0      1.0
+#pragma parameter Contrast             "    Contrast"                                      -0.3     -3.0  3.0      0.05
+#pragma parameter HorizontalSharpness  "    Horizontal Sharpness"                          1.5      0.0   5.0      0.1
+#pragma parameter HorizontalAttack     "    Horizontal Attack"                             0.45     0.0   1.0      0.05
+#pragma parameter RedScanlineMin       "    Red Scanline Min"                              0.55     0.0   2.0      0.01 
+#pragma parameter RedScanlineMax       "    Red Scanline Max"                              0.75     0.0   2.0      0.01 
+#pragma parameter RedScanlineAttack    "    Red Scanline Attack"                           0.65     0.0   1.0      0.01
+#pragma parameter GreenScanlineMin     "    Green Scanline Min"                            0.65     0.0   2.0      0.01 
+#pragma parameter GreenScanlineMax     "    Green Scanline Max"                            0.90     0.0   2.0      0.01 
+#pragma parameter GreenScanlineAttack  "    Green Scanline Attack"                         0.13     0.0   1.0      0.01
+#pragma parameter BlueScanlineMin      "    Blue Scanline Min"                             0.72     0.0   2.0      0.01 
+#pragma parameter BlueScanlineMax      "    Blue Scanline Max"                             1.15     0.0   2.0      0.01 
+#pragma parameter BlueScanlineAttack   "    Blue Scanline Attack"                          1.0      0.0   1.0      0.01
+
+#if WHITE_BALANCE_CONTROL
+//#pragma parameter WhiteTemperature     "White Temperature"                             6500.0   0.0   13000.0  50.0
+//#pragma parameter WhiteTint            "White Tint"                                    0.0      -1.0   1.0      0.01
+#endif // WHITE_BALANCE_CONTROL
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
 	mat4 MVP;
+	vec4 SourceSize;
+	vec4 OriginalSize;
+	vec4 OutputSize;
+	uint FrameCount;
 } global;
 
 #pragma stage vertex
@@ -77,7 +126,7 @@ void main()
    gl_Position = global.MVP * Position;
    vTexCoord = TexCoord * vec2(1.00001);  // To resolve rounding issues when sampling
 
-   ScanlineSize         = params.OutputSize.y / params.SourceSize.y; 
+   ScanlineSize         = global.OutputSize.y / global.SourceSize.y; 
    InverseScanlineSize  = 1.0f / ScanlineSize;
 
    Convergence          = vec3(params.RedConvergence, params.GreenConvergence, params.BlueConvergence);
@@ -102,6 +151,7 @@ float ModInteger(float a, float b)
 #define kMax   1.0f
 
 #define kLumaRatio 0.5f
+#define kBeamWidth 0.5f
 
 #define kRed     vec3(1.0, 0.0, 0.0)
 #define kGreen   vec3(0.0, 1.0, 0.0)
@@ -112,7 +162,54 @@ float ModInteger(float a, float b)
 #define kBlack   vec3(0.0, 0.0, 0.0)
 #define kWhite   vec3(1.0, 1.0, 1.0)
 
-const float PatternSize[10] = {2.0f, 3.0f, 4.0f, 4.0f, 5.0f, 5.0f, 6.0f, 7.0f, 9.0f, 12.0f};
+#define kRedBGR     vec3(0.0, 0.0, 1.0)
+#define kGreenBGR   vec3(0.0, 1.0, 0.0)
+#define kBlueBGR    vec3(1.0, 0.0, 0.0)
+#define kMagentaBGR vec3(1.0, 0.0, 1.0)
+#define kYellowBGR  vec3(0.0, 1.0, 1.0)
+#define kCyanBGR    vec3(1.0, 1.0, 0.0)
+
+#define kBGRAxis           2
+#define kTVLAxis           3
+#define kResolutionAxis    2
+#define kMaxMaskSize       7
+
+#define kNotSupported   { kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+
+#define kRGBX           { kRed, kGreen, kBlue, kBlack, kBlack, kBlack, kBlack }
+#define kBGRX           { kBlueBGR, kGreenBGR, kRedBGR, kBlack, kBlack, kBlack, kBlack }
+
+#define kRYCBX          { kRed, kYellow, kCyan, kBlue, kBlack, kBlack, kBlack }
+#define kBCYRX          { kBlueBGR, kCyanBGR, kYellowBGR, kRedBGR, kBlack, kBlack, kBlack }
+
+#define kRRGGBBX        { kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack }
+#define kBBGGRRX        { kBlueBGR, kBlueBGR, kGreenBGR, kGreenBGR, kRedBGR, kRedBGR, kBlack }
+
+const uint kPhosphorMaskSize  [kResolutionAxis][kTVLAxis][kBGRAxis] = { 
+   {  // 4K
+      { 4, 4 },   // 600 TVL
+      { 1, 1 },   // 800 TVL
+      { 1, 1 }    // 1000 TVL
+   },
+   { // 8K
+      { 7, 7 },   // 600 TVL
+      { 5, 5 },   // 800 TVL
+      { 4, 4 }    // 1000 TVL
+   }
+};
+
+const vec3 kPhosphorMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxMaskSize] = {
+   { // 4K
+      { kRGBX, kBGRX },                   // 600 TVL
+      { kNotSupported, kNotSupported },   // 800 TVL
+      { kNotSupported, kNotSupported }    // 1000 TVL
+   },
+   { // 8K
+      { kRRGGBBX, kBBGGRRX },             // 600 TVL
+      { kRYCBX, kRYCBX },                 // 800 TVL
+      { kRGBX, kBGRX }                    // 1000 TVL
+   }
+};
 
 const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
 					                -3.0f,  3.0f,  0.0f,  0.0f,
@@ -121,7 +218,7 @@ const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
 
 const vec4 kFallOffControlPoints    = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 const vec4 kAttackControlPoints     = vec4(0.0f, 1.0f, 1.0f, 1.0f);
-//const vec4 kScanlineControlPoints   = vec4(1.0f, 1.0f, 0.0f, 0.0f);
+//const vec4 kScanlineControlPoints = vec4(1.0f, 1.0f, 0.0f, 0.0f);
 
 vec4 HorizControlPoints(const bool falloff)
 {
@@ -136,12 +233,22 @@ float Bezier(const float t0, const vec4 control_points)
 
 float ToLinear1(float channel)
 {
-	return (channel > 0.04045f) ? pow(abs(channel) * (1.0f / 1.055f) + (0.055f / 1.055f), params.CRTGamma) : channel * (1.0f / 12.92f);
+	return (channel > 0.04045f) ? pow(abs(channel) * (1.0f / 1.055f) + (0.055f / 1.055f), 2.4f) : channel * (1.0f / 12.92f);
 }
 
 vec3 ToLinear(vec3 colour)
 {
 	return vec3(ToLinear1(colour.r), ToLinear1(colour.g), ToLinear1(colour.b));
+}
+
+float Contrast1(float linear, float channel)
+{
+	return (channel > 0.04045f) ? linear * pow(abs(channel) * (1.0f / 1.055f) + (0.055f / 1.055f), params.Contrast) : channel * (1.0f / 12.92f);
+}
+
+vec3 Contrast(vec3 linear, vec3 colour)
+{
+	return vec3(Contrast1(linear.r, colour.r), Contrast1(linear.g, colour.g), Contrast1(linear.b, colour.b));
 }
 
 vec3 Ramp(const vec3 luminance, const vec3 colour)
@@ -151,63 +258,82 @@ vec3 Ramp(const vec3 luminance, const vec3 colour)
 
 vec3 ScanlineColour(const float current_position, const float current_center, const float source_tex_coord_x, const float narrowed_source_pixel_offset, inout float next_prev )
 {
-   const float current_source_position_y  = (vTexCoord.y * params.SourceSize.y) - next_prev;
+   const float current_source_position_y  = (vTexCoord.y * global.SourceSize.y) - next_prev;
    const float current_source_center_y    = floor(current_source_position_y) + 0.5f; 
    
-   const float source_tex_coord_y         = current_source_center_y / params.SourceSize.y; 
+   const float source_tex_coord_y         = current_source_center_y / global.SourceSize.y; 
 
    const vec2 source_tex_coord_0          = vec2(source_tex_coord_x, source_tex_coord_y);
-   const vec2 source_tex_coord_1          = vec2(source_tex_coord_x + (1.0f / params.SourceSize.x), source_tex_coord_y);
+   const vec2 source_tex_coord_1          = vec2(source_tex_coord_x + (1.0f / global.SourceSize.x), source_tex_coord_y);
 
-   const float scanline_position        = current_source_center_y * ScanlineSize;
-   const vec3 scanline_delta            = vec3(scanline_position) - (vec3(current_center) - Convergence);  
-   const vec3 scanline_distance         = abs(scanline_delta * InverseScanlineSize * 2.0f);
+   const float scanline_position          = current_source_center_y * ScanlineSize;
+   const vec3 scanline_delta              = vec3(scanline_position) - (vec3(current_center) - Convergence);  
+   
+   vec3 beam_distance                     = abs(scanline_delta) - kBeamWidth;
+   beam_distance                          = vec3(beam_distance.x < 0.0f ? 0.0f : beam_distance.x, 
+                                                 beam_distance.y < 0.0f ? 0.0f : beam_distance.y, 
+                                                 beam_distance.z < 0.0f ? 0.0f : beam_distance.z);
+   const vec3 scanline_distance           = beam_distance * InverseScanlineSize * 2.0f;
 
    next_prev = scanline_delta.x > 0.0f ? 1.0f : -1.0f;
 
-   const vec3 sdr_colour_0 = ToLinear(texture(Source, source_tex_coord_0).xyz);
-   const vec3 sdr_colour_1 = ToLinear(texture(Source, source_tex_coord_1).xyz);
+   const vec3 sdr_colour_0    = texture(Source, source_tex_coord_0).xyz;
+   const vec3 sdr_colour_1    = texture(Source, source_tex_coord_1).xyz;
 
-   const vec3 hdr_colour_0 = InverseTonemap(sdr_colour_0, params.MaxNits, params.PaperWhiteNits, kLumaRatio);
-   const vec3 hdr_colour_1 = InverseTonemap(sdr_colour_1, params.MaxNits, params.PaperWhiteNits, kLumaRatio);
+   const vec3 sdr_linear_0    = ToLinear(sdr_colour_0);
+   const vec3 sdr_linear_1    = ToLinear(sdr_colour_1);
+
+   const vec3 sdr_constrast_0 = Contrast(sdr_linear_0, sdr_colour_0);
+   const vec3 sdr_constrast_1 = Contrast(sdr_linear_1, sdr_colour_1);
+
+#if WHITE_BALANCE_CONTROL
+   //const vec3 sdr_balanced_0  = WhiteBalance(sdr_constrast_0, params.WhiteTemperature, params.WhiteTint); 
+   //const vec3 sdr_balanced_1  = WhiteBalance(sdr_constrast_1, params.WhiteTemperature, params.WhiteTint);
+#else
+   const vec3 sdr_balanced_0  = sdr_constrast_0;
+   const vec3 sdr_balanced_1  = sdr_constrast_1;
+#endif // WHITE_BALANCE_CONTROL
+
+   // HACK: To get maximum brightness we just set paper white luminance to max luminance
+   const vec3 hdr_colour_0    = InverseTonemap(sdr_balanced_0, params.MaxNits, params.MaxNits, kLumaRatio);
+   const vec3 hdr_colour_1    = InverseTonemap(sdr_balanced_1, params.MaxNits, params.MaxNits, kLumaRatio);
 
    /* Horizontal interpolation between pixels */ 
 
-   const vec3 horiz_interp = vec3(Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_colour_0.x > sdr_colour_1.x)), 
-                                  Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_colour_0.y > sdr_colour_1.y)), 
-                                  Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_colour_0.z > sdr_colour_1.z)));  
+   const vec3 horiz_interp = vec3(Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_linear_0.x > sdr_linear_1.x)), 
+                                  Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_linear_0.y > sdr_linear_1.y)), 
+                                  Bezier(narrowed_source_pixel_offset, HorizControlPoints(sdr_linear_0.z > sdr_linear_1.z)));  
 
    const vec3 hdr_colour  = mix(hdr_colour_0, hdr_colour_1, horiz_interp);
-   const vec3 sdr_colour  = mix(sdr_colour_0, sdr_colour_1, horiz_interp);
+   const vec3 sdr_colour  = mix(sdr_linear_0, sdr_linear_1, horiz_interp);
 
-   //const vec3 scanline_width = mix(vec3(0.2f), vec3(0.4f), sdr_colour) * params.ScanlineWidth;
-   //const vec3 luminance = pow(vec3(kEuler), vec3(-0.5f) * pow(scanline_distance / scanline_width, vec3(2.0f))); /* Gaussian distribution */
+   const float red_scanline_distance   = clamp(scanline_distance.x / ((sdr_colour.r * (params.RedScanlineMax - params.RedScanlineMin)) + params.RedScanlineMin),       0.0f, 1.0f);
+   const float green_scanline_distance = clamp(scanline_distance.y / ((sdr_colour.g * (params.GreenScanlineMax - params.GreenScanlineMin)) + params.GreenScanlineMin), 0.0f, 1.0f);
+   const float blue_scanline_distance  = clamp(scanline_distance.z / ((sdr_colour.b * (params.BlueScanlineMax - params.BlueScanlineMin)) + params.BlueScanlineMin),    0.0f, 1.0f);
 
-   const vec3 narrowed_scanline_distance = clamp(scanline_distance / (sdr_colour * vec3(params.ScanlineMax - params.ScanlineMin) + vec3(params.ScanlineMin)), vec3(0.0f), vec3(1.0f));
+   const vec4 red_control_points    = vec4(1.0f, 1.0f, sdr_colour.r * params.RedScanlineAttack,    0.0f);
+   const vec4 green_control_points  = vec4(1.0f, 1.0f, sdr_colour.g * params.GreenScanlineAttack,  0.0f);
+   const vec4 blue_control_points   = vec4(1.0f, 1.0f, sdr_colour.b * params.BlueScanlineAttack,   0.0f);
 
-   const vec4 scanline_control_points = vec4(1.0f, 1.0f, params.VerticalAttack, 0.0f);
-
-   const vec3 luminance = vec3(Bezier(narrowed_scanline_distance.x, scanline_control_points),
-                               Bezier(narrowed_scanline_distance.y, scanline_control_points),
-                               Bezier(narrowed_scanline_distance.z, scanline_control_points));
+   const vec3 luminance = vec3(Bezier(red_scanline_distance, red_control_points),
+                               Bezier(green_scanline_distance, green_control_points),
+                               Bezier(blue_scanline_distance, blue_control_points));
 
    return luminance * hdr_colour;
 }
 
 void main()
 {
-   uint resolution_pattern = uint(params.ResolutionPattern);
+   const vec2 current_position               = vTexCoord * global.OutputSize.xy;
+   const float current_center                = floor(current_position.y) + 0.5f;
 
-   const vec2 current_position = vTexCoord * params.OutputSize.xy;
-   const float current_center  = floor(current_position.y) + 0.5f;
-
-   const float current_source_position_x  = (vTexCoord.x * params.SourceSize.x) /* / PatternSize[resolution_pattern] */;
-   const float current_source_center_x    = floor(current_source_position_x) + 0.5f; 
+   const float current_source_position_x     = vTexCoord.x * global.SourceSize.x;
+   const float current_source_center_x       = floor(current_source_position_x) + 0.5f; 
    
-   const float source_tex_coord_x         = (current_source_center_x /* * PatternSize[resolution_pattern]*/) / params.SourceSize.x; 
+   const float source_tex_coord_x            = current_source_center_x / global.SourceSize.x; 
 
-   const float source_pixel_offset          = current_source_position_x - floor(current_source_position_x);
-   const float narrowed_source_pixel_offset = clamp(((source_pixel_offset - 0.5f) * params.HorizontalSharpness) + 0.5f, 0.0f, 1.0f);
+   const float source_pixel_offset           = current_source_position_x - floor(current_source_position_x);
+   const float narrowed_source_pixel_offset  = clamp(((source_pixel_offset - 0.5f) * params.HorizontalSharpness) + 0.5f, 0.0f, 1.0f);
 
    float next_prev = 0.0f;
 
@@ -216,113 +342,18 @@ void main()
 
    vec3 scanline_colour = scanline_colour0 + scanline_colour1;
 
-   /* Various resolution patterns - remember your LCD 4K screen will likely be 16:9 whereas
-   the CRT TV will likely be 4:3 and so higher TVL values will be required on your 16:9 screen
-   to get an equivalent TVL seen on a 4:3 CRT TV. 
-   Pattern 1's 960TVL at 16:9 is about right for a 800TVL at 4:3.
-   */
-
-   switch(resolution_pattern)
    {
-      case 0:  /* 2 pattern - 1440TVL (16:9) horiz resolution (too high?) on a 4K screen */
-      {
-         const vec3 mask[2] = vec3[]( kYellow, kCyan );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[0]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 1:  /* 3 pattern - 960TVL (16:9) horiz resolution on a 4K screen */
-      {  
-         const vec3 mask[3] = vec3[]( kRed, kGreen, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[1]));
-         scanline_colour *= mask[pattern_x];
-      
-         break;
-      }
-      case 2:  /* 4 pattern - 720TVL (16:9) horiz resolution on a 4K screen */
-      {
-         const vec3 mask[4] = vec3[]( kRed, kYellow, kCyan, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[2]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 3:  /* 4 pattern - 720TVL (16:9) horiz resolution on a 4K screen */
-      {
-         const vec3 mask[4] = vec3[]( kRed, kGreen, kBlue, kBlack );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[3]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 4:  /* 5 BRG pattern - 576TVL (16:9) horiz resolution on a 4K screen */
-      {       
-         const vec3 mask[5] = vec3[]( kRed, kMagenta, kBlue, kGreen, kGreen );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[4]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 5:  /* 5 pattern - 576TVL (16:9) horiz resolution on a 4K screen */
-      {      
-         const vec3 mask[5] = vec3[]( kRed, kYellow, kGreen, kCyan, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[5]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 6:  /* 6 pattern - 480TVL (16:9) horiz resolution on a 4K screen */
-      {
-         const vec3 mask[6] = vec3[]( kRed, kRed, kGreen, kGreen, kBlue, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[6]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 7:  /* 7 pattern - 410TVL (16:9) horiz resolution on a 4K screen */
-      {
-         const vec3 mask[7] = vec3[]( kRed, kRed, kYellow, kGreen, kCyan, kBlue, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[7]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 8:  /* 9 pattern - 640TVL (16:9) horiz resolution on a *8K* screen */
-      {
-         const vec3 mask[9] = vec3[]( kBlack, kRed, kRed, kBlack, kGreen, kGreen, kBlack, kBlue, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[8]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      case 9:  /* 12 pattern - 480TVL (16:9) horiz resolution on a *8K* screen */
-      {
-         const vec3 mask[12] = vec3[]( kBlack, kRed, kRed, kRed, kBlack, kGreen, kGreen, kGreen, kBlack, kBlue, kBlue, kBlue );
-      
-         uint pattern_x = uint(ModInteger(floor(current_position.x), PatternSize[9]));
-         scanline_colour *= mask[pattern_x];
-         
-         break;
-      }
-      default:
-      {
-         scanline_colour = vec3(0.0);
-         
-         break;
-      }
+      uint lcd_subpixel_layout = uint(params.LCDSubpixel);
+      uint crt_resolution      = uint(params.CRTResolution);
+      uint lcd_resolution      = uint(params.LCDResolution);
+
+      uint pattern_x = uint(ModInteger(floor(current_position.x), kPhosphorMaskSize[lcd_resolution][crt_resolution][lcd_subpixel_layout]));
+
+      scanline_colour *= kPhosphorMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][pattern_x];      
    }
 
-   const vec3 hdr10 = Hdr10(scanline_colour, params.PaperWhiteNits, params.ExpandGamut);
+   // HACK: To get maximum brightness we just set paper white luminance to max luminance
+   const vec3 hdr10 = Hdr10(scanline_colour, params.MaxNits, params.ExpandGamut);
 
    //FragColor = vec4(scanline_colour, 1.0);
    FragColor = vec4(hdr10, 1.0);
