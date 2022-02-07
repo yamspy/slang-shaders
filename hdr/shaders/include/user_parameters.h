@@ -18,6 +18,6 @@
 #pragma parameter LCDSubpixel             "    Display's Subpixel Layout: RGB/BGR"            0.0      0.0   1.0      1.0
 #pragma parameter Contrast                "    Contrast"                                      -0.3     -3.0  3.0      0.05
 #pragma parameter ExpandGamut             "    Original/Vivid"                                0.0      0.0   1.0      1.0
-#pragma parameter RedConvergence          "    Red Convergence"                               -0.50    -10.0 10.0     0.05
+#pragma parameter RedConvergence          "    Red Convergence"                               0.00     -10.0 10.0     0.05
 #pragma parameter GreenConvergence        "    Green Convergence"                             0.00     -10.0 10.0     0.05
 #pragma parameter BlueConvergence         "    Blue Convergence"                              0.00     -10.0 10.0     0.05

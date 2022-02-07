@@ -19,17 +19,26 @@ const vec4 kAttackControlPoints     = vec4(0.0f, 1.0f, 1.0f, 1.0f);
 
 vec4 RedBeamControlPoints(const bool falloff)
 {
-   return falloff ? kFallOffControlPoints + vec4(0.0f, 0.0f, params.RedBeamAttack, 0.0f) : kAttackControlPoints - vec4(0.0f, params.RedBeamAttack, 0.0f, 0.0f);
+   float inner_attack = clamp(params.RedBeamAttack, 0.0f, 1.0);
+   float outer_attack = clamp(params.RedBeamAttack - 1.0f, 0.0f, 1.0);
+
+   return falloff ? kFallOffControlPoints + vec4(0.0f, outer_attack, inner_attack, 0.0f) : kAttackControlPoints - vec4(0.0f, inner_attack, outer_attack, 0.0f);
 }
 
 vec4 GreenBeamControlPoints(const bool falloff)
 {
-   return falloff ? kFallOffControlPoints + vec4(0.0f, 0.0f, params.GreenBeamAttack, 0.0f) : kAttackControlPoints - vec4(0.0f, params.GreenBeamAttack, 0.0f, 0.0f);
+   float inner_attack = clamp(params.GreenBeamAttack, 0.0f, 1.0);
+   float outer_attack = clamp(params.GreenBeamAttack - 1.0f, 0.0f, 1.0);
+
+   return falloff ? kFallOffControlPoints + vec4(0.0f, outer_attack, inner_attack, 0.0f) : kAttackControlPoints - vec4(0.0f, inner_attack, outer_attack, 0.0f);
 }
 
 vec4 BlueBeamControlPoints(const bool falloff)
 {
-   return falloff ? kFallOffControlPoints + vec4(0.0f, 0.0f, params.BlueBeamAttack, 0.0f) : kAttackControlPoints - vec4(0.0f, params.BlueBeamAttack, 0.0f, 0.0f);
+   float inner_attack = clamp(params.BlueBeamAttack, 0.0f, 1.0);
+   float outer_attack = clamp(params.BlueBeamAttack - 1.0f, 0.0f, 1.0);
+
+   return falloff ? kFallOffControlPoints + vec4(0.0f, outer_attack, inner_attack, 0.0f) : kAttackControlPoints - vec4(0.0f, inner_attack, outer_attack, 0.0f);
 }
 
 float Bezier(const float t0, const vec4 control_points)

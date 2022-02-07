@@ -1,12 +1,12 @@
 /* 
-A shader that specifically tries to emulate Bang & Olufsen with a slot mask screen but with full brightness. 
+A shader that specifically tries to emulate Bang & Olufsen Beovision with a slot mask screen but with full brightness. 
 
 The novel thing about this shader is that it transforms the image output by the 'console/arcade/computer' into HDR space first i.e brightens it first and then applies 
 an slot mask afterwards which is kind of what a CRT would actually do - its kind of a kin to the electron beam (but nothing like it lol). 
 
 My DisplayHDR 600 monitor does seem to get reasonably close to the brightness of my PVM - its not quite there but its close.  I think DisplayHDR 1000 and above will be able to match.
 
-Currently defaults towards a XXXX CRT MAKE MODEL XXXX.
+Currently defaults towards a Bang & Olufsen Beovision MX8000.
 
 To use:
 Please Enable HDR in RetroArch 1.10+
@@ -34,3 +34,21 @@ mipmap_input0 = "false"
 alias0 = ""
 float_framebuffer0 = "false"
 srgb_framebuffer0 = "false"
+RedConvergence = "0.000000"
+GreenConvergence = "0.000000"
+BlueConvergence = "0.000000"
+RedScanlineMin = "0.650000"
+RedScanlineMax = "0.900000"
+RedScanlineAttack = "0.500000"
+GreenScanlineMin = "0.650000"
+GreenScanlineMax = "0.900000"
+GreenScanlineAttack = "0.500000"
+BlueScanlineMin = "0.650000"
+BlueScanlineMax = "0.900000"
+BlueScanlineAttack = "0.500000"
+RedBeamSharpness = "1.600000"
+RedBeamAttack = "1.7500000"
+GreenBeamSharpness = "1.600000"
+GreenBeamAttack = "1.750000"
+BlueBeamSharpness = "1.600000"
+BlueBeamAttack = "1.750000"
