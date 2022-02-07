@@ -1,19 +1,19 @@
 /* 
-A shader that specifically tries to emulate Sony PVM's with an aperture grille screen but with full brightness. 
+A shader that specifically tries to emulate Bang & Olufsen with a slot mask screen but with full brightness. 
 
 The novel thing about this shader is that it transforms the image output by the 'console/arcade/computer' into HDR space first i.e brightens it first and then applies 
-an aperture grille afterwards which is kind of what a CRT would actually do - its kind of a kin to the electron beam (but nothing like it lol). 
+an slot mask afterwards which is kind of what a CRT would actually do - its kind of a kin to the electron beam (but nothing like it lol). 
 
 My DisplayHDR 600 monitor does seem to get reasonably close to the brightness of my PVM - its not quite there but its close.  I think DisplayHDR 1000 and above will be able to match.
 
-Currently defaults towards a Sony PVM 2730QM a reasonably old mid 1980's 27" 600TVL pro monitor.
+Currently defaults towards a XXXX CRT MAKE MODEL XXXX.
 
 To use:
 Please Enable HDR in RetroArch 1.10+
 
 NOTE: when this shader is envoked the Contrast, Peak Luminance and Paper White Luminance in the HDR menu do nothing instead set those values through the shader parameters 
 
-For this shader set Paper White Luminance to above 700 and Peak Luminance to the peak luminance of your monitor.  
+For this shader set Paper White Luminance to above 700 and Peak Luminance to the peak luminance of your monitor.   
 
 Also try to use a integer scaling - its just better - overscaling is fine/great.
 
@@ -27,7 +27,7 @@ THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD
 shaders = "1"
 feedback_pass = "0"
 
-shader0 = "shaders/crt-aperture-grille-hdr.slang"
+shader0 = "shaders/crt-slot-mask-hdr.slang"
 filter_linear0 = "false"
 wrap_mode0 = "clamp_to_border"
 mipmap_input0 = "false"
