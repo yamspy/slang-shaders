@@ -1,7 +1,4 @@
 
-#pragma parameter Space3                  " "                                                 0.0      0.0   0.0      0.0
-#pragma parameter DeveloperSettings       "DEVELOPER SETTINGS:"                               0.0      0.0   0.0      0.0
-#pragma parameter CRTResolution           "    CRT Resolution: 600TVL/800TVL/1000TVL"         0.0      0.0   2.0      1.0
 #pragma parameter DeveloperSettings0      "    VERTICAL SETTINGS:"                            0.0      0.0   0.0      0.0
 #pragma parameter RedScanlineMin          "        Red Scanline Min"                          0.50     0.0   2.0      0.01 
 #pragma parameter RedScanlineMax          "        Red Scanline Max"                          1.00     0.0   2.0      0.01 

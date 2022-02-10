@@ -36,10 +36,18 @@ THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - RG
 layout(push_constant) uniform Push
 {
 #include "include\user_properties.h"
+
+   float CRTResolution;
+   
 #include "include\developer_properties.h"
 } params;
 
 #include "include\user_parameters.h"
+
+#pragma parameter Space3                  " "                                                 0.0      0.0   0.0      0.0
+#pragma parameter DeveloperSettings       "DEVELOPER SETTINGS:"                               0.0      0.0   0.0      0.0
+#pragma parameter CRTResolution           "    CRT Resolution: 600TVL/800TVL/1000TVL"         0.0      0.0   2.0      1.0
+
 #include "include\developer_parameters.h"
 
 layout(std140, set = 0, binding = 0) uniform UBO

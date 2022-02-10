@@ -1,7 +1,6 @@
 
 
    // Developer Settings
-   float CRTResolution;
    
    // Vertical Settings
    float RedScanlineMin;
