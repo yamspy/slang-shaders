@@ -1,11 +1,8 @@
 
-#include "inverse_tonemap.h"
-
 #define kPi    3.1415926536f
 #define kEuler 2.718281828459f
 #define kMax   1.0f
 
-#define kLumaRatio 0.5f
 #define kBeamWidth 0.5f
 
 const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
@@ -82,8 +79,17 @@ vec3 ScanlineColour(const float current_position, const float current_center, co
    const vec2 source_tex_coord_0          = vec2(source_tex_coord_x, source_tex_coord_y);
    const vec2 source_tex_coord_1          = vec2(source_tex_coord_x + (1.0f / global.SourceSize.x), source_tex_coord_y);
 
+   const vec2 red_tex_coord_0             = source_tex_coord_0 + vec2(HorizontalConvergence.x, 0.0f);
+   const vec2 red_tex_coord_1             = source_tex_coord_1 + vec2(HorizontalConvergence.x, 0.0f);
+
+   const vec2 green_tex_coord_0           = source_tex_coord_0 + vec2(HorizontalConvergence.y, 0.0f);
+   const vec2 green_tex_coord_1           = source_tex_coord_1 + vec2(HorizontalConvergence.y, 0.0f);
+
+   const vec2 blue_tex_coord_0            = source_tex_coord_0 + vec2(HorizontalConvergence.z, 0.0f);
+   const vec2 blue_tex_coord_1            = source_tex_coord_1 + vec2(HorizontalConvergence.z, 0.0f);
+
    const float scanline_position          = current_source_center_y * ScanlineSize;
-   const vec3 scanline_delta              = vec3(scanline_position) - (vec3(current_center) - Convergence);  
+   const vec3 scanline_delta              = vec3(scanline_position) - (vec3(current_center) - VerticalConvergence);  
    
    vec3 beam_distance                     = abs(scanline_delta) - kBeamWidth;
    beam_distance                          = vec3(beam_distance.x < 0.0f ? 0.0f : beam_distance.x, 
@@ -93,8 +99,20 @@ vec3 ScanlineColour(const float current_position, const float current_center, co
 
    next_prev = scanline_delta.x > 0.0f ? 1.0f : -1.0f;
 
-   const vec3 sdr_colour_0    = texture(Source, source_tex_coord_0).xyz;
-   const vec3 sdr_colour_1    = texture(Source, source_tex_coord_1).xyz;
+   const float red_0          = texture(Source, red_tex_coord_0).x;
+   const float red_1          = texture(Source, red_tex_coord_1).x;
+
+   const float green_0        = texture(Source, green_tex_coord_0).y;
+   const float green_1        = texture(Source, green_tex_coord_1).y;
+
+   const float blue_0         = texture(Source, blue_tex_coord_0).z;
+   const float blue_1         = texture(Source, blue_tex_coord_1).z;
+
+   const vec3 sdr_colour_0    = vec3(red_0, green_0, blue_0);
+   const vec3 sdr_colour_1    = vec3(red_1, green_1, blue_1);
+
+   //const vec3 sdr_colour_0  = texture(Source, source_tex_coord_0).xyz;
+   //const vec3 sdr_colour_1  = texture(Source, source_tex_coord_1).xyz;
 
    const vec3 sdr_linear_0    = ToLinear(sdr_colour_0);
    const vec3 sdr_linear_1    = ToLinear(sdr_colour_1);
@@ -111,8 +129,8 @@ vec3 ScanlineColour(const float current_position, const float current_center, co
 #endif // WHITE_BALANCE_CONTROL
 
    // HACK: To get maximum brightness we just set paper white luminance to max luminance
-   const vec3 hdr_colour_0    = InverseTonemap(sdr_balanced_0, params.MaxNits, params.PaperWhiteNits, kLumaRatio);
-   const vec3 hdr_colour_1    = InverseTonemap(sdr_balanced_1, params.MaxNits, params.PaperWhiteNits, kLumaRatio);
+   const vec3 hdr_colour_0    = InverseTonemapConditional(sdr_balanced_0);
+   const vec3 hdr_colour_1    = InverseTonemapConditional(sdr_balanced_1);
 
    /* Horizontal interpolation between pixels */ 
    const vec3 horiz_interp = vec3(Bezier(narrowed_source_pixel_offset.x, RedBeamControlPoints(sdr_linear_0.x > sdr_linear_1.x)), 
