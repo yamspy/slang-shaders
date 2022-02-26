@@ -27,10 +27,11 @@ THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD
 shaders = "1"
 feedback_pass = "0"
 
-shader0 = "shaders/crt-shadow-mask-hdr.slang"
+shader0 = "shaders/crt-hdr.slang"
 filter_linear0 = "false"
 wrap_mode0 = "clamp_to_border"
 mipmap_input0 = "false"
 alias0 = ""
 float_framebuffer0 = "false"
 srgb_framebuffer0 = "false"
+CRTScreenType = "1.000000"
