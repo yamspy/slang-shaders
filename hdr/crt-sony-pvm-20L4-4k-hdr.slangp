@@ -1,6 +1,6 @@
 #reference "crt-sony-pvm-4k-hdr.slangp"
 CRTResolution = "1.000000"
-RedVerticalConvergence = "0.500000"
+RedVerticalConvergence = "0.250000"
 GreenVerticalConvergence = "0.000000"
 BlueVerticalConvergence = "0.000000"
 RedScanlineMin = "0.250000"

@@ -69,35 +69,34 @@ vec3 Ramp(const vec3 luminance, const vec3 colour)
     return clamp(luminance * colour, 0.0, 1.0); 
 }
 
-vec3 ScanlineColour(const float current_position, const float current_center, const float source_tex_coord_x, const vec3 narrowed_source_pixel_offset, inout float next_prev )
+vec3 ScanlineColour(const vec3 source_tex_coord_x, const vec3 narrowed_source_pixel_offset, inout vec3 next_prev)
 {
-   const float current_source_position_y  = (vTexCoord.y * global.SourceSize.y) - next_prev;
-   const float current_source_center_y    = floor(current_source_position_y) + 0.5f; 
+   const vec3 current_source_position_y   = (vec3(vTexCoord.y * global.SourceSize.y) - VerticalConvergence) + next_prev;
+   const vec3 current_source_center_y     = floor(current_source_position_y) + 0.5f; 
    
-   const float source_tex_coord_y         = current_source_center_y / global.SourceSize.y; 
+   const vec3 source_tex_coord_y          = current_source_center_y / global.SourceSize.y; 
 
-   const vec2 source_tex_coord_0          = vec2(source_tex_coord_x, source_tex_coord_y);
-   const vec2 source_tex_coord_1          = vec2(source_tex_coord_x + (1.0f / global.SourceSize.x), source_tex_coord_y);
+   const vec3 scanline_delta              = fract(current_source_position_y) - 0.5f;
 
-   const vec2 red_tex_coord_0             = source_tex_coord_0 + vec2(HorizontalConvergence.x, 0.0f);
-   const vec2 red_tex_coord_1             = source_tex_coord_1 + vec2(HorizontalConvergence.x, 0.0f);
-
-   const vec2 green_tex_coord_0           = source_tex_coord_0 + vec2(HorizontalConvergence.y, 0.0f);
-   const vec2 green_tex_coord_1           = source_tex_coord_1 + vec2(HorizontalConvergence.y, 0.0f);
-
-   const vec2 blue_tex_coord_0            = source_tex_coord_0 + vec2(HorizontalConvergence.z, 0.0f);
-   const vec2 blue_tex_coord_1            = source_tex_coord_1 + vec2(HorizontalConvergence.z, 0.0f);
-
-   const float scanline_position          = current_source_center_y * ScanlineSize;
-   const vec3 scanline_delta              = vec3(scanline_position) - (vec3(current_center) - VerticalConvergence);  
-   
-   vec3 beam_distance                     = abs(scanline_delta) - kBeamWidth;
+   // Slightly increase the beam width to get maximum brightness
+   vec3 beam_distance                     = abs(scanline_delta - next_prev) - (kBeamWidth * InverseScanlineSize);
    beam_distance                          = vec3(beam_distance.x < 0.0f ? 0.0f : beam_distance.x, 
                                                  beam_distance.y < 0.0f ? 0.0f : beam_distance.y, 
                                                  beam_distance.z < 0.0f ? 0.0f : beam_distance.z);
-   const vec3 scanline_distance           = beam_distance * InverseScanlineSize * 2.0f;
+   const vec3 scanline_distance           = beam_distance * 2.0f;
 
-   next_prev = scanline_delta.x > 0.0f ? 1.0f : -1.0f;
+   next_prev.x = scanline_delta.x > 0.0f ? 1.0f : -1.0f;
+   next_prev.y = scanline_delta.y > 0.0f ? 1.0f : -1.0f;
+   next_prev.z = scanline_delta.z > 0.0f ? 1.0f : -1.0f;
+
+   const vec2 red_tex_coord_0             = vec2(source_tex_coord_x.x, source_tex_coord_y.x);
+   const vec2 red_tex_coord_1             = vec2(source_tex_coord_x.x + (1.0f / global.SourceSize.x), source_tex_coord_y.x);
+
+   const vec2 green_tex_coord_0           = vec2(source_tex_coord_x.y, source_tex_coord_y.y);
+   const vec2 green_tex_coord_1           = vec2(source_tex_coord_x.y + (1.0f / global.SourceSize.x), source_tex_coord_y.y);
+
+   const vec2 blue_tex_coord_0            = vec2(source_tex_coord_x.z, source_tex_coord_y.z);
+   const vec2 blue_tex_coord_1            = vec2(source_tex_coord_x.z + (1.0f / global.SourceSize.x), source_tex_coord_y.z);
 
    const float red_0          = texture(Source, red_tex_coord_0).x;
    const float red_1          = texture(Source, red_tex_coord_1).x;
@@ -155,24 +154,28 @@ vec3 ScanlineColour(const float current_position, const float current_center, co
    return luminance * hdr_colour;
 }
 
-vec3 GenerateScanline(const vec2 current_position)
+vec3 GenerateScanline()
 {
-   const float current_center                = floor(current_position.y) + 0.5f;
-
-   const float current_source_position_x     = vTexCoord.x * global.SourceSize.x;
-   const float current_source_center_x       = floor(current_source_position_x) + 0.5f; 
+   const vec3 current_source_position_x      = vec3(vTexCoord.x * global.SourceSize.x) - HorizontalConvergence;
+   const vec3 current_source_center_x        = floor(current_source_position_x) + 0.5f; 
    
-   const float source_tex_coord_x            = current_source_center_x / global.SourceSize.x; 
+   const vec3 source_tex_coord_x             = current_source_center_x / global.SourceSize.x; 
 
-   const float source_pixel_offset           = current_source_position_x - floor(current_source_position_x);
+   const vec3 source_pixel_offset            = fract(current_source_position_x);
 
    const vec3 beam_sharpness                 = vec3(params.RedBeamSharpness, params.GreenBeamSharpness, params.BlueBeamSharpness);
-   const vec3 narrowed_source_pixel_offset   = clamp(((vec3(source_pixel_offset) - vec3(0.5f)) * beam_sharpness) + vec3(0.5f), vec3(0.0f), vec3(1.0f));
+   const vec3 narrowed_source_pixel_offset   = clamp(((source_pixel_offset - vec3(0.5f)) * beam_sharpness) + vec3(0.5f), vec3(0.0f), vec3(1.0f));
 
-   float next_prev = 0.0f;
+   vec3 next_prev = vec3(0.0f);
 
-   const vec3 scanline_colour0 = ScanlineColour(current_position.y, current_center, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
-   const vec3 scanline_colour1 = ScanlineColour(current_position.y, current_center, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
+   const vec3 scanline_colour0 = ScanlineColour(source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
 
-   return scanline_colour0 + scanline_colour1;
+   // Optionally sample the neighbouring scanline
+   vec3 scanline_colour1 = vec3(0.0f);
+   if(params.RedScanlineMax > 1.0f || params.GreenScanlineMax > 1.0f || params.BlueScanlineMax > 1.0f)
+   {
+      scanline_colour1 = ScanlineColour(source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
+   }
+
+   return scanline_colour0 * params.Brightness + scanline_colour1;
 }

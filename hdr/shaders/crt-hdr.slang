@@ -41,6 +41,7 @@ layout(push_constant) uniform Push
    float PaperWhiteNits;
    float LCDResolution;
    float LCDSubpixel;
+   float Brightness;
    float Contrast;
    float ExpandGamut;
    float RedVerticalConvergence;
@@ -97,14 +98,15 @@ layout(push_constant) uniform Push
 #pragma parameter PaperWhiteNits                "    Display's Paper White Luminance"                 700.0    0.0   10000.0  10.0
 #pragma parameter LCDResolution                 "    Display's Resolution: 4K/8K"                     0.0      0.0   1.0      1.0
 #pragma parameter LCDSubpixel                   "    Display's Subpixel Layout: RGB/BGR"              0.0      0.0   1.0      1.0
+#pragma parameter Brightness                    "    Brightness"                                      1.0      0.0   2.0      0.01
 #pragma parameter Contrast                      "    Contrast"                                        -0.3     -3.0  3.0      0.05
 #pragma parameter ExpandGamut                   "    Original/Vivid"                                  0.0      0.0   1.0      1.0
-#pragma parameter RedVerticalConvergence        "    Red Vertical Convergence"                        0.00     -10.0 10.0     0.05
-#pragma parameter GreenVerticalConvergence      "    Green Vertical Convergence"                      0.00     -10.0 10.0     0.05
-#pragma parameter BlueVerticalConvergence       "    Blue Vertical Convergence"                       0.00     -10.0 10.0     0.05
-#pragma parameter RedHorizontalConvergence      "    Red Horizontal Convergence"                      0.00     -10.0 10.0     0.05
-#pragma parameter GreenHorizontalConvergence    "    Green Horizontal Convergence"                    0.00     -10.0 10.0     0.05
-#pragma parameter BlueHorizontalConvergence     "    Blue Horizontal Convergence"                     0.00     -10.0 10.0     0.05
+#pragma parameter RedVerticalConvergence        "    Red Vertical Convergence"                        0.00     -10.0 10.0     0.01
+#pragma parameter GreenVerticalConvergence      "    Green Vertical Convergence"                      0.00     -10.0 10.0     0.01
+#pragma parameter BlueVerticalConvergence       "    Blue Vertical Convergence"                       0.00     -10.0 10.0     0.01
+#pragma parameter RedHorizontalConvergence      "    Red Horizontal Convergence"                      0.00     -10.0 10.0     0.01
+#pragma parameter GreenHorizontalConvergence    "    Green Horizontal Convergence"                    0.00     -10.0 10.0     0.01
+#pragma parameter BlueHorizontalConvergence     "    Blue Horizontal Convergence"                     0.00     -10.0 10.0     0.01
 
 #pragma parameter Space3                        " "                                                   0.0      0.0   0.0      0.0
 #pragma parameter DeveloperSettings             "DEVELOPER SETTINGS:"                                 0.0      0.0   0.0      0.0
@@ -162,7 +164,7 @@ void main()
    InverseScanlineSize  = 1.0f / ScanlineSize;
 
    VerticalConvergence     = vec3(params.RedVerticalConvergence, params.GreenVerticalConvergence, params.BlueVerticalConvergence);
-   HorizontalConvergence   = vec3(params.RedHorizontalConvergence, params.GreenHorizontalConvergence, params.BlueHorizontalConvergence) / global.SourceSize.x;
+   HorizontalConvergence   = vec3(params.RedHorizontalConvergence, params.GreenHorizontalConvergence, params.BlueHorizontalConvergence);
 }
 
 #pragma stage fragment
@@ -402,7 +404,7 @@ void main()
 {
    const vec2 current_position = vTexCoord * global.OutputSize.xy;
 
-   vec3 scanline_colour = GenerateScanline(current_position);
+   vec3 scanline_colour = GenerateScanline();
 
    uint screen_type           = uint(params.CRTScreenType);
    uint crt_resolution        = uint(params.CRTResolution);
