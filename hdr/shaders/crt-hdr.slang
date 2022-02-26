@@ -80,62 +80,100 @@ layout(push_constant) uniform Push
 #endif // WHITE_BALANCE_CONTROL
 } params;
 
-#pragma parameter Title                         "SONY PVM/BVM HDR SHADER"                             0.0      0.0   0.0      0.0
-#pragma parameter Space0                        " "                                                   0.0      0.0   0.0      0.0
-#pragma parameter Support0                      "SUPPORTED: RGB/BGR LCD, QD-OLED Displays"            0.0      0.0   0.0      0.0
-#pragma parameter Support1                      "NOT SUPPORTED: WRGB OLED Displays"                   0.0      0.0   0.0      0.0
-#pragma parameter Support2                      "MIN SPEC: DisplayHDR 600, 4K, RetroArch v1.10"       0.0      0.0   0.0      0.0
-#pragma parameter Support3                      "REC SPEC: DisplayHDR 1000, 4K+, RetroArch v1.10"     0.0      0.0   0.0      0.0
-#pragma parameter Space1                        " "                                                   0.0      0.0   0.0      0.0
-#pragma parameter Instructions0                 "HDR: Enable HDR: On"                                 0.0      0.0   0.0      0.0
-#pragma parameter Instructions1                 "SCALING: Integer Scale: ON"                          0.0      0.0   0.0      0.0
-#pragma parameter Instructions2                 "SCALING: Integer Overscale: ON"                      0.0      0.0   0.0      0.0
-#pragma parameter Instructions3                 "SCALING: Apect Ratio: Core Provided"                 0.0      0.0   0.0      0.0
-#pragma parameter Space2                        " "                                                   0.0      0.0   0.0      0.0
-#pragma parameter UserSettings                  "USER SETTINGS:"                                      0.0      0.0   0.0      0.0
-#pragma parameter HDR                           "    SDR/HDR"                                         1.0      0.0   1.0      1.0
-#pragma parameter MaxNits                       "    Display's Peak Luminance"                        700.0    0.0   10000.0  10.0
-#pragma parameter PaperWhiteNits                "    Display's Paper White Luminance"                 700.0    0.0   10000.0  10.0
-#pragma parameter LCDResolution                 "    Display's Resolution: 4K/8K"                     0.0      0.0   1.0      1.0
-#pragma parameter LCDSubpixel                   "    Display's Subpixel Layout: RGB/BGR"              0.0      0.0   1.0      1.0
-#pragma parameter Brightness                    "    Brightness"                                      1.0      0.0   2.0      0.01
-#pragma parameter Contrast                      "    Contrast"                                        -0.3     -3.0  3.0      0.05
-#pragma parameter ExpandGamut                   "    Original/Vivid"                                  0.0      0.0   1.0      1.0
-#pragma parameter RedVerticalConvergence        "    Red Vertical Convergence"                        0.00     -10.0 10.0     0.01
-#pragma parameter GreenVerticalConvergence      "    Green Vertical Convergence"                      0.00     -10.0 10.0     0.01
-#pragma parameter BlueVerticalConvergence       "    Blue Vertical Convergence"                       0.00     -10.0 10.0     0.01
-#pragma parameter RedHorizontalConvergence      "    Red Horizontal Convergence"                      0.00     -10.0 10.0     0.01
-#pragma parameter GreenHorizontalConvergence    "    Green Horizontal Convergence"                    0.00     -10.0 10.0     0.01
-#pragma parameter BlueHorizontalConvergence     "    Blue Horizontal Convergence"                     0.00     -10.0 10.0     0.01
 
-#pragma parameter Space3                        " "                                                   0.0      0.0   0.0      0.0
-#pragma parameter DeveloperSettings             "DEVELOPER SETTINGS:"                                 0.0      0.0   0.0      0.0
-#pragma parameter CRTScreenType                 "    CRT Type: Aperture Grille/Shadow Mask/Slot Mask" 0.0      0.0   2.0      1.0
-#pragma parameter CRTResolution                 "    CRT Resolution: 600TVL/800TVL/1000TVL"           0.0      0.0   2.0      1.0
+#pragma parameter Title                         "SONY PVM/BVM HDR SHADER"                                   0.0      0.0   0.0001   0.0
+#pragma parameter Space0                        " "                                                         0.0      0.0   0.0001   0.0
+#pragma parameter Support0                      "SUPPORTED: RGB/BGR LCD, QD-OLED Displays"                  0.0      0.0   0.0001   0.0
+#pragma parameter Support1                      "NOT SUPPORTED: WRGB OLED Displays"                         0.0      0.0   0.0001   0.0
+#pragma parameter Support2                      "MIN SPEC: DisplayHDR 600, 4K, RetroArch v1.10"             0.0      0.0   0.0001   0.0
+#pragma parameter Support3                      "REC SPEC: DisplayHDR 1000, 4K+, RetroArch v1.10"           0.0      0.0   0.0001   0.0
+#pragma parameter Space1                        " "                                                         0.0      0.0   0.0001   0.0
+#pragma parameter Instructions0                 "HDR: Enable HDR: On"                                       0.0      0.0   0.0001   0.0
+#pragma parameter Instructions1                 "SCALING: Integer Scale: ON"                                0.0      0.0   0.0001   0.0
+#pragma parameter Instructions2                 "SCALING: Integer Overscale: ON"                            0.0      0.0   0.0001   0.0
+#pragma parameter Instructions3                 "SCALING: Apect Ratio: Core Provided"                       0.0      0.0   0.0001   0.0
+#pragma parameter Space2                        " "                                                         0.0      0.0   0.0001   0.0
+#pragma parameter UserSettings                  "USER SETTINGS:"                                            0.0      0.0   0.0001   0.0
+#pragma parameter HDR                           "    SDR | HDR"                                             1.0      0.0   1.0      1.0
+#pragma parameter MaxNits                       "    Display's Peak Luminance"                              700.0    0.0   10000.0  10.0
+#pragma parameter PaperWhiteNits                "    Display's Paper White Luminance"                       700.0    0.0   10000.0  10.0
+#pragma parameter LCDResolution                 "    Display's Resolution: 4K | 8K"                         0.0      0.0   1.0      1.0
+#pragma parameter LCDSubpixel                   "    Display's Subpixel Layout: RGB | BGR"                  0.0      0.0   1.0      1.0
+#pragma parameter Brightness                    "    Brightness"                                            1.0      0.0   2.0      0.01
+#pragma parameter Contrast                      "    Contrast"                                              -0.3     -3.0  3.0      0.05
+#pragma parameter ExpandGamut                   "    Original/Vivid"                                        0.0      0.0   1.0      1.0
+#pragma parameter RedVerticalConvergence        "    Red Vertical Convergence"                              0.00     -10.0 10.0     0.01
+#pragma parameter GreenVerticalConvergence      "    Green Vertical Convergence"                            0.00     -10.0 10.0     0.01
+#pragma parameter BlueVerticalConvergence       "    Blue Vertical Convergence"                             0.00     -10.0 10.0     0.01
+#pragma parameter RedHorizontalConvergence      "    Red Horizontal Convergence"                            0.00     -10.0 10.0     0.01
+#pragma parameter GreenHorizontalConvergence    "    Green Horizontal Convergence"                          0.00     -10.0 10.0     0.01
+#pragma parameter BlueHorizontalConvergence     "    Blue Horizontal Convergence"                           0.00     -10.0 10.0     0.01
 
-#pragma parameter DeveloperSettings0            "    VERTICAL SETTINGS:"                              0.0      0.0   0.0      0.0
-#pragma parameter RedScanlineMin                "        Red Scanline Min"                            0.50     0.0   2.0      0.01 
-#pragma parameter RedScanlineMax                "        Red Scanline Max"                            1.00     0.0   2.0      0.01 
-#pragma parameter RedScanlineAttack             "        Red Scanline Attack"                         0.20     0.0   1.0      0.01
-#pragma parameter GreenScanlineMin              "        Green Scanline Min"                          0.50     0.0   2.0      0.01 
-#pragma parameter GreenScanlineMax              "        Green Scanline Max"                          1.00     0.0   2.0      0.01 
-#pragma parameter GreenScanlineAttack           "        Green Scanline Attack"                       0.20     0.0   1.0      0.01
-#pragma parameter BlueScanlineMin               "        Blue Scanline Min"                           0.50     0.0   2.0      0.01 
-#pragma parameter BlueScanlineMax               "        Blue Scanline Max"                           1.00     0.0   2.0      0.01 
-#pragma parameter BlueScanlineAttack            "        Blue Scanline Attack"                        0.20     0.0   1.0      0.01
-#pragma parameter DeveloperSettings1            "    HORIZONTAL SETTINGS:"                            0.0      0.0   0.0      0.0
-#pragma parameter RedBeamSharpness              "        Red Beam Sharpness"                          1.75     0.0   5.0      0.05
-#pragma parameter RedBeamAttack                 "        Red Beam Attack"                             0.50     0.0   2.0      0.01
-#pragma parameter GreenBeamSharpness            "        Green Beam Sharpness"                        1.75     0.0   5.0      0.05
-#pragma parameter GreenBeamAttack               "        Green Beam Attack"                           0.50     0.0   2.0      0.01
-#pragma parameter BlueBeamSharpness             "        Blue Beam Sharpness"                         1.75     0.0   5.0      0.05
-#pragma parameter BlueBeamAttack                "        Blue Beam Attack"                            0.50     0.0   2.0      0.01
+#pragma parameter Space3                        " "                                                         0.0      0.0   0.0001   0.0
+#pragma parameter DeveloperSettings             "DEVELOPER SETTINGS:"                                       0.0      0.0   0.0001   0.0
+#pragma parameter CRTScreenType                 "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   2.0      1.0
+#pragma parameter CRTResolution                 "    CRT Resolution: 600TVL | 800TVL | 1000TVL"             0.0      0.0   2.0      1.0
 
+#pragma parameter DeveloperSettings0            "    VERTICAL SETTINGS:"                                    0.0      0.0   0.0001   0.0
+#pragma parameter RedScanlineMin                "        Red Scanline Min"                                  0.50     0.0   2.0      0.01 
+#pragma parameter RedScanlineMax                "        Red Scanline Max"                                  1.00     0.0   2.0      0.01 
+#pragma parameter RedScanlineAttack             "        Red Scanline Attack"                               0.20     0.0   1.0      0.01
+#pragma parameter GreenScanlineMin              "        Green Scanline Min"                                0.50     0.0   2.0      0.01 
+#pragma parameter GreenScanlineMax              "        Green Scanline Max"                                1.00     0.0   2.0      0.01 
+#pragma parameter GreenScanlineAttack           "        Green Scanline Attack"                             0.20     0.0   1.0      0.01
+#pragma parameter BlueScanlineMin               "        Blue Scanline Min"                                 0.50     0.0   2.0      0.01 
+#pragma parameter BlueScanlineMax               "        Blue Scanline Max"                                 1.00     0.0   2.0      0.01 
+#pragma parameter BlueScanlineAttack            "        Blue Scanline Attack"                              0.20     0.0   1.0      0.01
+#pragma parameter DeveloperSettings1            "    HORIZONTAL SETTINGS:"                                  0.0      0.0   0.0001   0.0
+#pragma parameter RedBeamSharpness              "        Red Beam Sharpness"                                1.75     0.0   5.0      0.05
+#pragma parameter RedBeamAttack                 "        Red Beam Attack"                                   0.50     0.0   2.0      0.01
+#pragma parameter GreenBeamSharpness            "        Green Beam Sharpness"                              1.75     0.0   5.0      0.05
+#pragma parameter GreenBeamAttack               "        Green Beam Attack"                                 0.50     0.0   2.0      0.01
+#pragma parameter BlueBeamSharpness             "        Blue Beam Sharpness"                               1.75     0.0   5.0      0.05
+#pragma parameter BlueBeamAttack                "        Blue Beam Attack"                                  0.50     0.0   2.0      0.01
 
 #if WHITE_BALANCE_CONTROL
 //#pragma parameter WhiteTemperature     "White Temperature"                             6500.0   0.0   13000.0  50.0
 //#pragma parameter WhiteTint            "White Tint"                                    0.0      -1.0   1.0      0.01
 #endif // WHITE_BALANCE_CONTROL
+
+
+#define HCRT_HDR                            params.HDR
+#define HCRT_MAX_NITS                       params.MaxNits
+#define HCRT_PAPER_WHITE_NITS               params.PaperWhiteNits
+#define HCRT_LCD_RESOLUTION                 params.LCDResolution 
+#define HCRT_LCD_SUBPIXEL                   params.LCDSubpixel
+#define HCRT_BRIGHTNESS                     params.Brightness
+#define HCRT_CONTRAST                       params.Contrast
+#define HCRT_EXPAND_GAMUT                   params.ExpandGamut
+#define HCRT_RED_VERTICAL_CONVERGENCE       params.RedVerticalConvergence
+#define HCRT_GREEN_VERTICAL_CONVERGENCE     params.GreenVerticalConvergence
+#define HCRT_BLUE_VERTICAL_CONVERGENCE      params.BlueVerticalConvergence
+#define HCRT_RED_HORIZONTAL_CONVERGENCE     params.RedHorizontalConvergence
+#define HCRT_GREEN_HORIZONTAL_CONVERGENCE   params.GreenHorizontalConvergence
+#define HCRT_BLUE_HORIZONTAL_CONVERGENCE    params.BlueHorizontalConvergence
+
+#define HCRT_CRT_SCREEN_TYPE                params.CRTScreenType
+#define HCRT_CRT_RESOLUTION                 params.CRTResolution
+
+#define HCRT_RED_SCANLINE_MIN               params.RedScanlineMin
+#define HCRT_RED_SCANLINE_MAX               params.RedScanlineMax
+#define HCRT_RED_SCANLINE_ATTACK            params.RedScanlineAttack
+#define HCRT_GREEN_SCANLINE_MIN             params.GreenScanlineMin
+#define HCRT_GREEN_SCANLINE_MAX             params.GreenScanlineMax
+#define HCRT_GREEN_SCANLINE_ATTACK          params.GreenScanlineAttack
+#define HCRT_BLUE_SCANLINE_MIN              params.BlueScanlineMin
+#define HCRT_BLUE_SCANLINE_MAX              params.BlueScanlineMax
+#define HCRT_BLUE_SCANLINE_ATTACK           params.BlueScanlineAttack
+
+#define HCRT_RED_BEAM_SHARPNESS             params.RedBeamSharpness
+#define HCRT_RED_BEAM_ATTACK                params.RedBeamAttack
+#define HCRT_GREEN_BEAM_SHARPNESS           params.GreenBeamSharpness
+#define HCRT_GREEN_BEAM_ATTACK              params.GreenBeamAttack
+#define HCRT_BLUE_BEAM_SHARPNESS            params.BlueBeamSharpness
+#define HCRT_BLUE_BEAM_ATTACK               params.BlueBeamAttack
+
+#define COMPAT_TEXTURE(c, d) texture(c, d)
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -150,29 +188,15 @@ layout(std140, set = 0, binding = 0) uniform UBO
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
 layout(location = 0) out vec2 vTexCoord;
-layout(location = 1) out float ScanlineSize;
-layout(location = 2) out float InverseScanlineSize;
-layout(location = 3) out vec3 VerticalConvergence;
-layout(location = 4) out vec3 HorizontalConvergence;
 
 void main()
 {
    gl_Position = global.MVP * Position;
    vTexCoord = TexCoord * vec2(1.00001);  // To resolve rounding issues when sampling
-
-   ScanlineSize         = global.OutputSize.y / global.SourceSize.y; 
-   InverseScanlineSize  = 1.0f / ScanlineSize;
-
-   VerticalConvergence     = vec3(params.RedVerticalConvergence, params.GreenVerticalConvergence, params.BlueVerticalConvergence);
-   HorizontalConvergence   = vec3(params.RedHorizontalConvergence, params.GreenHorizontalConvergence, params.BlueHorizontalConvergence);
 }
 
 #pragma stage fragment
 layout(location = 0) in vec2 vTexCoord;
-layout(location = 1) in float ScanlineSize;
-layout(location = 2) in float InverseScanlineSize;
-layout(location = 3) in vec3 VerticalConvergence;
-layout(location = 4) in vec3 HorizontalConvergence;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
 
@@ -376,9 +400,9 @@ float ModInteger(float a, float b)
 
 vec3 InverseTonemapConditional(const vec3 sdr_balanced)
 {
-   if(params.HDR > 0.0f)
+   if(HCRT_HDR > 0.0f)
    {
-      return InverseTonemap(sdr_balanced, params.MaxNits, params.PaperWhiteNits, kLumaRatio);
+      return InverseTonemap(sdr_balanced, HCRT_MAX_NITS, HCRT_PAPER_WHITE_NITS, kLumaRatio);
    }
    else
    {
@@ -388,9 +412,9 @@ vec3 InverseTonemapConditional(const vec3 sdr_balanced)
 
 vec3 Hdr10Conditional(const vec3 scanline_colour)
 {
-   if(params.HDR > 0.0f)
+   if(HCRT_HDR > 0.0f)
    {
-      return Hdr10(scanline_colour, params.PaperWhiteNits, params.ExpandGamut);
+      return Hdr10(scanline_colour, HCRT_PAPER_WHITE_NITS, HCRT_EXPAND_GAMUT);
    }
    else
    {
@@ -402,14 +426,14 @@ vec3 Hdr10Conditional(const vec3 scanline_colour)
 
 void main()
 {
-   const vec2 current_position = vTexCoord * global.OutputSize.xy;
+   const vec2 current_position   = vTexCoord * global.OutputSize.xy;
 
-   vec3 scanline_colour = GenerateScanline();
+   vec3 scanline_colour          = GenerateScanline(global.SourceSize.xy);
 
-   uint screen_type           = uint(params.CRTScreenType);
-   uint crt_resolution        = uint(params.CRTResolution);
-   uint lcd_resolution        = uint(params.LCDResolution);
-   uint lcd_subpixel_layout   = uint(params.LCDSubpixel);
+   uint screen_type              = uint(HCRT_CRT_SCREEN_TYPE);
+   uint crt_resolution           = uint(HCRT_CRT_RESOLUTION);
+   uint lcd_resolution           = uint(HCRT_LCD_RESOLUTION);
+   uint lcd_subpixel_layout      = uint(HCRT_LCD_SUBPIXEL);
 
    switch(screen_type)
    {
