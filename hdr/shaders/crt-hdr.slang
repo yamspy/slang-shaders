@@ -417,7 +417,8 @@ vec3 Hdr10Conditional(const vec3 scanline_colour)
 
 void main()
 {
-   vec3 scanline_colour             = GenerateScanline(global.SourceSize.xy);
+   const float scanline_size        = global.OutputSize.y / global.SourceSize.y;
+   vec3 scanline_colour             = GenerateScanline(global.SourceSize.xy, scanline_size);
 
    const uint screen_type           = uint(HCRT_CRT_SCREEN_TYPE);
    const uint crt_resolution        = uint(HCRT_CRT_RESOLUTION);

@@ -46,7 +46,7 @@ vec3 InverseTonemapConditional(const vec3 linear)
    }
 }
 
-vec3 ScanlineColour(const vec2 source_size, const vec3 source_tex_coord_x, const vec3 narrowed_source_pixel_offset, inout vec3 next_prev)
+vec3 ScanlineColour(const vec2 source_size, const float scanline_size, const vec3 source_tex_coord_x, const vec3 narrowed_source_pixel_offset, inout vec3 next_prev)
 {
    const vec3 current_source_position_y   = (vec3(vTexCoord.y * source_size.y) - vec3(HCRT_RED_VERTICAL_CONVERGENCE, HCRT_GREEN_VERTICAL_CONVERGENCE, HCRT_BLUE_VERTICAL_CONVERGENCE)) + next_prev;
    const vec3 current_source_center_y     = floor(current_source_position_y) + 0.5f; 
@@ -54,8 +54,6 @@ vec3 ScanlineColour(const vec2 source_size, const vec3 source_tex_coord_x, const
    const vec3 source_tex_coord_y          = current_source_center_y / source_size.y; 
 
    const vec3 scanline_delta              = fract(current_source_position_y) - 0.5f;
-
-   const float scanline_size              = global.OutputSize.y / source_size.y;
 
    // Slightly increase the beam width to get maximum brightness
    vec3 beam_distance                     = abs(scanline_delta - next_prev) - (kBeamWidth / scanline_size);
@@ -115,7 +113,7 @@ vec3 ScanlineColour(const vec2 source_size, const vec3 source_tex_coord_x, const
    return luminance * hdr_colour;
 }
 
-vec3 GenerateScanline(const vec2 source_size)
+vec3 GenerateScanline(const vec2 source_size, const float scanline_size)
 {
    const vec3 current_source_position_x      = vec3(vTexCoord.x * source_size.x) - vec3(HCRT_RED_HORIZONTAL_CONVERGENCE, HCRT_GREEN_HORIZONTAL_CONVERGENCE, HCRT_BLUE_HORIZONTAL_CONVERGENCE);
    const vec3 current_source_center_x        = floor(current_source_position_x) + 0.5f; 
@@ -129,13 +127,13 @@ vec3 GenerateScanline(const vec2 source_size)
 
    vec3 next_prev = vec3(0.0f);
 
-   const vec3 scanline_colour0 = ScanlineColour(source_size, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
+   const vec3 scanline_colour0 = ScanlineColour(source_size, scanline_size, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
 
    // Optionally sample the neighbouring scanline
    vec3 scanline_colour1 = vec3(0.0f);
    if(HCRT_RED_SCANLINE_MAX > 1.0f || HCRT_GREEN_SCANLINE_MAX > 1.0f || HCRT_BLUE_SCANLINE_MAX > 1.0f)
    {
-      scanline_colour1 = ScanlineColour(source_size, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
+      scanline_colour1 = ScanlineColour(source_size, scanline_size, source_tex_coord_x, narrowed_source_pixel_offset, next_prev);
    }
 
    return scanline_colour0 + scanline_colour1;
