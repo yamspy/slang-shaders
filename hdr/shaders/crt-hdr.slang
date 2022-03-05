@@ -25,14 +25,6 @@ THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - RG
 
 #pragma format A2B10G10R10_UNORM_PACK32
 
-#define WHITE_BALANCE_CONTROL 0
-
-#include "include\hdr10.h"
-
-#if WHITE_BALANCE_CONTROL
-//#include "include\white_balance.h"
-#endif // WHITE_BALANCE_CONTROL
-
 layout(push_constant) uniform Push
 {
    // User Settings
@@ -74,11 +66,20 @@ layout(push_constant) uniform Push
    float hcrt_blue_beam_sharpness;
    float hcrt_blue_beam_attack;
 
-#if WHITE_BALANCE_CONTROL
-   float hcrt_white_temperature;
-   float hcrt_white_tint;
-#endif // WHITE_BALANCE_CONTROL
 } params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+	mat4 MVP;
+	vec4 SourceSize;
+	vec4 OriginalSize;
+	vec4 OutputSize;
+	uint FrameCount;
+
+   float hcrt_colour_system;
+   float hcrt_colour_space;
+   float hcrt_white_temperature;
+} global;
 
 
 #pragma parameter hcrt_title                         "SONY PVM/BVM HDR SHADER"                                   0.0      0.0   0.0001   0.0
@@ -99,8 +100,8 @@ layout(push_constant) uniform Push
 #pragma parameter hcrt_paper_white_nits              "    Display's Paper White Luminance"                       700.0    0.0   10000.0  10.0
 #pragma parameter hcrt_lcd_resolution                "    Display's Resolution: 4K | 8K"                         0.0      0.0   1.0      1.0
 #pragma parameter hcrt_lcd_subpixel                  "    Display's Subpixel Layout: RGB | BGR"                  0.0      0.0   1.0      1.0
-#pragma parameter hcrt_brightness                    "    Brightness"                                            1.0      0.0   2.0      0.01
-#pragma parameter hcrt_contrast                      "    Contrast"                                              -0.3     -3.0  3.0      0.05
+#pragma parameter hcrt_brightness                    "    Brightness"                                            0.0      -1.0  1.0      0.05
+#pragma parameter hcrt_contrast                      "    Contrast"                                              0.0      -1.0  1.0      0.05
 #pragma parameter hcrt_expand_gamut                  "    Original/Vivid"                                        0.0      0.0   1.0      1.0
 #pragma parameter hcrt_red_vertical_convergence      "    Red Vertical Convergence"                              0.00     -10.0 10.0     0.01
 #pragma parameter hcrt_green_vertical_convergence    "    Green Vertical Convergence"                            0.00     -10.0 10.0     0.01
@@ -113,6 +114,9 @@ layout(push_constant) uniform Push
 #pragma parameter hcrt_developer_settings            "DEVELOPER SETTINGS:"                                       0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_crt_screen_type               "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   2.0      1.0
 #pragma parameter hcrt_crt_resolution                "    CRT Resolution: 600TVL | 800TVL | 1000TVL"             0.0      0.0   2.0      1.0
+#pragma parameter hcrt_colour_system                 "    CRT Colour System: PAL | NTSC-U | NTSC-J"              1.0      0.0   2.0      1.0
+#pragma parameter hcrt_colour_space                  "    Colour Space: Rec.601/Rec.709 | sRGB"                  0.0      0.0   1.0      1.0
+#pragma parameter hcrt_white_temperature             "    White Point: (PAL:D65, NTSC-U:D65, NTSC-J:D93)"        0.0      -5000.0  12000.0      100.0
 
 #pragma parameter hcrt_developer_settings0           "    VERTICAL SETTINGS:"                                    0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_red_scanline_min              "        Red Scanline Min"                                  0.50     0.0   2.0      0.01 
@@ -132,11 +136,6 @@ layout(push_constant) uniform Push
 #pragma parameter hcrt_blue_beam_sharpness           "        Blue Beam Sharpness"                               1.75     0.0   5.0      0.05
 #pragma parameter hcrt_blue_beam_attack              "        Blue Beam Attack"                                  0.50     0.0   2.0      0.01
 
-#if WHITE_BALANCE_CONTROL
-//#pragma parameter hcrt_whitetemperature     "White Temperature"                             6500.0   0.0   13000.0  50.0
-//#pragma parameter hcrt_whitetint            "White Tint"                                    0.0      -1.0   1.0      0.01
-#endif // WHITE_BALANCE_CONTROL
-
 
 #define HCRT_HDR                            params.hcrt_hdr
 #define HCRT_MAX_NITS                       params.hcrt_max_nits
@@ -155,6 +154,9 @@ layout(push_constant) uniform Push
 
 #define HCRT_CRT_SCREEN_TYPE                params.hcrt_crt_screen_type
 #define HCRT_CRT_RESOLUTION                 params.hcrt_crt_resolution
+#define HCRT_CRT_COLOUR_SPACE               global.hcrt_colour_space
+#define HCRT_CRT_COLOUR_SYSTEM              global.hcrt_colour_system
+#define HCRT_WHITE_TEMPERATURE              global.hcrt_white_temperature
 
 #define HCRT_RED_SCANLINE_MIN               params.hcrt_red_scanline_min
 #define HCRT_RED_SCANLINE_MAX               params.hcrt_red_scanline_max
@@ -174,15 +176,6 @@ layout(push_constant) uniform Push
 #define HCRT_BLUE_BEAM_ATTACK               params.hcrt_blue_beam_attack
 
 #define COMPAT_TEXTURE(c, d) texture(c, d)
-
-layout(std140, set = 0, binding = 0) uniform UBO
-{
-	mat4 MVP;
-	vec4 SourceSize;
-	vec4 OriginalSize;
-	vec4 OutputSize;
-	uint FrameCount;
-} global;
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -394,21 +387,21 @@ float ModInteger(float a, float b)
     return floor(m + 0.5);
 }
 
-#include "include\inverse_tonemap.h"
+const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
+                               -3.0f,  3.0f,  0.0f,  0.0f,
+                                3.0f, -6.0f,  3.0f,  0.0f,
+                               -1.0f,  3.0f, -3.0f,  1.0f );
 
-#define kLumaRatio 0.5f
-
-vec3 InverseTonemapConditional(const vec3 sdr_balanced)
+float Bezier(const float t0, const vec4 control_points)
 {
-   if(HCRT_HDR > 0.0f)
-   {
-      return InverseTonemap(sdr_balanced, HCRT_MAX_NITS, HCRT_PAPER_WHITE_NITS, kLumaRatio);
-   }
-   else
-   {
-      return sdr_balanced;
-   }
+   vec4 t = vec4(1.0, t0, t0*t0, t0*t0*t0);
+   return dot(t, control_points * kCubicBezier);
 }
+
+#include "include\hdr10.h"
+#include "include\inverse_tonemap.h"
+#include "include\colour_grade.h"
+#include "include\scanline_generation.h"
 
 vec3 Hdr10Conditional(const vec3 scanline_colour)
 {
@@ -422,18 +415,16 @@ vec3 Hdr10Conditional(const vec3 scanline_colour)
    }
 }
 
-#include "include\scanline_generation.h"
-
 void main()
 {
-   vec3 scanline_colour          = GenerateScanline(global.SourceSize.xy);
+   vec3 scanline_colour             = GenerateScanline(global.SourceSize.xy);
 
-   uint screen_type              = uint(HCRT_CRT_SCREEN_TYPE);
-   uint crt_resolution           = uint(HCRT_CRT_RESOLUTION);
-   uint lcd_resolution           = uint(HCRT_LCD_RESOLUTION);
-   uint lcd_subpixel_layout      = uint(HCRT_LCD_SUBPIXEL);
+   const uint screen_type           = uint(HCRT_CRT_SCREEN_TYPE);
+   const uint crt_resolution        = uint(HCRT_CRT_RESOLUTION);
+   const uint lcd_resolution        = uint(HCRT_LCD_RESOLUTION);
+   const uint lcd_subpixel_layout   = uint(HCRT_LCD_SUBPIXEL);
 
-   const vec2 current_position   = vTexCoord * global.OutputSize.xy;
+   const vec2 current_position      = vTexCoord * global.OutputSize.xy;
 
    switch(screen_type)
    {
