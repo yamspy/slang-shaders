@@ -17,7 +17,7 @@ const mat3 sRGB_to_XYZ = mat3(
     0.35758456587791443, 0.71516913175582890, 0.119194857776165010,
     0.18045382201671600, 0.07218152284622192, 0.950390160083770800);
 
-// Phosphor transforms found in Grade.slang
+// Phosphor transforms found in Dogway's Grade.slang shader
 
 // SMPTE-C - Measured Average Phosphor (1979-1994)
 const mat3 P22_transform = mat3(
@@ -77,7 +77,7 @@ vec3 WhiteBalance(float temperature, vec3 colour)
 
 float r601r709ToLinear_1(const float channel)
 {
-	return (channel > 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), 1.0f / 0.45f) : channel * (1.0f / 4.5f);
+	return (channel >= 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), (1.0f / 0.45f) + HCRT_GAMMA) : channel * (1.0f / 4.5f);
 }
 
 vec3 r601r709ToLinear(const vec3 colour)
@@ -85,48 +85,19 @@ vec3 r601r709ToLinear(const vec3 colour)
 	return vec3(r601r709ToLinear_1(colour.r), r601r709ToLinear_1(colour.g), r601r709ToLinear_1(colour.b));
 }
 
-const vec4 kTopBrightnessControlPoints    = vec4(0.0f, 1.0f, 1.0f, 1.0f);
-const vec4 kMidBrightnessControlPoints    = vec4(0.0f, 1.0f / 3.0f, (1.0f / 3.0f) * 2.0f, 1.0f);
-const vec4 kBottomBrightnessControlPoints = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-vec3 Brightness(const vec3 colour)
+float LinearTor601r709_1(const float channel)
 {
-   if(HCRT_BRIGHTNESS >= 0.0f)
-   {
-      return vec3(Bezier(colour.r, mix(kMidBrightnessControlPoints, kTopBrightnessControlPoints, HCRT_BRIGHTNESS)),
-                  Bezier(colour.g, mix(kMidBrightnessControlPoints, kTopBrightnessControlPoints, HCRT_BRIGHTNESS)),
-                  Bezier(colour.b, mix(kMidBrightnessControlPoints, kTopBrightnessControlPoints, HCRT_BRIGHTNESS)));
-   }
-   else
-   {
-      return vec3(Bezier(colour.r, mix(kMidBrightnessControlPoints, kBottomBrightnessControlPoints, abs(HCRT_BRIGHTNESS))),
-                  Bezier(colour.g, mix(kMidBrightnessControlPoints, kBottomBrightnessControlPoints, abs(HCRT_BRIGHTNESS))),
-                  Bezier(colour.b, mix(kMidBrightnessControlPoints, kBottomBrightnessControlPoints, abs(HCRT_BRIGHTNESS))));
-   }
+	return (channel >= 0.018f) ? pow(channel * 1.099f, 0.45f) - 0.099f : channel * 4.5f;
 }
-const vec4 kTopContrastControlPoints    = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-const vec4 kMidContrastControlPoints    = vec4(0.0f, 1.0f / 3.0f, (1.0f / 3.0f) * 2.0f, 1.0f);
-const vec4 kBottomContrastControlPoints = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-vec3 Contrast(const vec3 colour)
+vec3 LinearTor601r709(const vec3 colour)
 {
-   if(HCRT_CONTRAST >= 0.0f)
-   {
-      return vec3(Bezier(colour.r, mix(kMidContrastControlPoints, kTopContrastControlPoints, HCRT_CONTRAST)),
-                  Bezier(colour.g, mix(kMidContrastControlPoints, kTopContrastControlPoints, HCRT_CONTRAST)),
-                  Bezier(colour.b, mix(kMidContrastControlPoints, kTopContrastControlPoints, HCRT_CONTRAST)));
-   }
-   else
-   {
-      return vec3(Bezier(colour.r, mix(kMidContrastControlPoints, kBottomContrastControlPoints, abs(HCRT_CONTRAST))),
-                  Bezier(colour.g, mix(kMidContrastControlPoints, kBottomContrastControlPoints, abs(HCRT_CONTRAST))),
-                  Bezier(colour.b, mix(kMidContrastControlPoints, kBottomContrastControlPoints, abs(HCRT_CONTRAST))));
-   }
+	return vec3(LinearTor601r709_1(colour.r), LinearTor601r709_1(colour.g), LinearTor601r709_1(colour.b));
 }
 
 float sRGBToLinear_1(const float channel)
 {
-	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f) : channel * (1.0f / 12.92f);
+	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
 }
 
 vec3 sRGBToLinear(const vec3 colour)
@@ -134,17 +105,85 @@ vec3 sRGBToLinear(const vec3 colour)
 	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
 }
 
+float LinearTosRGB_1(const float channel)
+{
+	return (channel > 0.0031308f) ? (1.055f * pow(channel, 1.0f / 2.4f)) - 0.055f : channel * 12.92f;
+}
+
+vec3 LinearTosRGB(const vec3 colour)
+{
+	return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
+}
+
+// XYZ Yxy transforms found in Dogway's Grade.slang shader
+
+vec3 XYZtoYxy(const vec3 XYZ)
+{
+   const float XYZrgb   = XYZ.r + XYZ.g + XYZ.b;
+   const float Yxyg     = (XYZrgb <= 0.0f) ? 0.3805f : XYZ.r / XYZrgb;
+   const float Yxyb     = (XYZrgb <= 0.0f) ? 0.3769f : XYZ.g / XYZrgb;
+   return vec3(XYZ.g, Yxyg, Yxyb);
+}
+
+vec3 YxytoXYZ(const vec3 Yxy)
+{
+   const float Xs    = Yxy.r * (Yxy.g / Yxy.b);
+   const float Xsz   = (Yxy.r <= 0.0f) ? 0.0f : 1.0f;
+   const vec3 XYZ    = vec3(Xsz, Xsz, Xsz) * vec3(Xs, Yxy.r, (Xs / Yxy.g) - Xs - Yxy.r);
+   return XYZ;
+}
+
+const vec4 kTopBrightnessControlPoints    = vec4(0.0f, 1.0f, 1.0f, 1.0f);
+const vec4 kMidBrightnessControlPoints    = vec4(0.0f, 1.0f / 3.0f, (1.0f / 3.0f) * 2.0f, 1.0f);
+const vec4 kBottomBrightnessControlPoints = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+float Brightness(const float luminance)
+{
+   if(HCRT_BRIGHTNESS >= 0.0f)
+   {
+      return Bezier(luminance, mix(kMidBrightnessControlPoints, kTopBrightnessControlPoints, HCRT_BRIGHTNESS));
+   }
+   else
+   {
+      return Bezier(luminance, mix(kMidBrightnessControlPoints, kBottomBrightnessControlPoints, abs(HCRT_BRIGHTNESS)));
+   }
+}
+
+const vec4 kTopContrastControlPoints    = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+const vec4 kMidContrastControlPoints    = vec4(0.0f, 1.0f / 3.0f, (1.0f / 3.0f) * 2.0f, 1.0f);
+const vec4 kBottomContrastControlPoints = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+float Contrast(const float luminance)
+{
+   if(HCRT_CONTRAST >= 0.0f)
+   {
+      return Bezier(luminance, mix(kMidContrastControlPoints, kTopContrastControlPoints, HCRT_CONTRAST));
+   }
+   else
+   {
+      return Bezier(luminance, mix(kMidContrastControlPoints, kBottomContrastControlPoints, abs(HCRT_CONTRAST)));
+   }
+}
+
 vec3 ColourGrade(const vec3 colour)
 {
    const uint colour_system   = uint(HCRT_CRT_COLOUR_SYSTEM);
+
+   const vec3 linear          = HCRT_CRT_COLOUR_SPACE == 0.0f ? r601r709ToLinear(colour) : sRGBToLinear(colour);
+
+   const vec3 xyz             = sRGB_to_XYZ * linear;
+   const vec3 Yxy             = XYZtoYxy(xyz);
+   const float Y_gamma        = clamp(LinearTosRGB_1(Yxy.x), 0.0f, 1.0f);
    
-   const vec3 brightness      = Brightness(colour);
+   const float Y_brightness   = Brightness(Y_gamma);
 
-   const vec3 contrast        = Contrast(brightness);
+   const float Y_contrast     = Contrast(Y_brightness);
 
-   const vec3 linear          = HCRT_CRT_COLOUR_SPACE == 0.0f ? r601r709ToLinear(contrast) : sRGBToLinear(contrast);
+   const vec3 contrast_linear = vec3(sRGBToLinear_1(Y_contrast), Yxy.y, Yxy.z);
+   const vec3 contrast_xyz    = YxytoXYZ(contrast_linear);
+   const vec3 contrast        = clamp(XYZ_to_sRGB * contrast_xyz, 0.0f, 1.0f);
 
-   const vec3 gamut           = kPhosphorGamut[colour_system] * linear;
+   const vec3 gamut           = kPhosphorGamut[colour_system] * contrast;
 
    const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, gamut);
 
