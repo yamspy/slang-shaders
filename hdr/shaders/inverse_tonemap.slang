@@ -1,7 +1,7 @@
 #version 450
 
 /* 
-Part of the crt-sony-pvm-4k-hdr shader group. Does the exact same thing as RetroArch does internally to inverse tonemap from a SDR image to HDR.
+Part of the crt-sony-megatron shader group. Does the exact same thing as RetroArch does internally to inverse tonemap from a SDR image to HDR.
 
 This is used to do this mapping BEFORE screen effects are applied.
 

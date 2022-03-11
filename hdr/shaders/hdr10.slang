@@ -1,7 +1,7 @@
 #version 450
 
 /* 
-Part of the crt-sony-pvm-4k-hdr shader group. Does the exact same thing as RetroArch does internally to map into HDR10 space.
+Part of the crt-sony-megatron shader group. Does the exact same thing as RetroArch does internally to map into HDR10 space.
 
 This is used to do this mapping BEFORE screen effects are applied.
 
