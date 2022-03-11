@@ -33,8 +33,8 @@ layout(push_constant) uniform Push
    float hcrt_paper_white_nits;
    float hcrt_lcd_resolution;
    float hcrt_lcd_subpixel;
-   float hcrt_brightness;
-   float hcrt_contrast;
+   float hcrt_colour_system;
+   float hcrt_colour_space;
    float hcrt_expand_gamut;
    float hcrt_red_vertical_convergence;
    float hcrt_green_vertical_convergence;
@@ -76,9 +76,10 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	vec4 OutputSize;
 	uint FrameCount;
 
-   float hcrt_colour_system;
-   float hcrt_colour_space;
    float hcrt_white_temperature;
+   float hcrt_brightness;
+   float hcrt_contrast;
+   float hcrt_saturation;
    float hcrt_gamma;
 } global;
 
@@ -96,14 +97,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter hcrt_instructions3                 "SCALING: Apect Ratio: Core Provided"                       0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_space2                        " "                                                         0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_user_settings                 "USER SETTINGS:"                                            0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_hdr                           "    SDR | HDR"                                             1.0      0.0   1.0      1.0
-#pragma parameter hcrt_max_nits                      "    Display's Peak Luminance"                              700.0    0.0   10000.0  10.0
-#pragma parameter hcrt_paper_white_nits              "    Display's Paper White Luminance"                       700.0    0.0   10000.0  10.0
+#pragma parameter hcrt_hdr                           "    HDR | SDR"                                             0.0      0.0   1.0      1.0
+#pragma parameter hcrt_max_nits                      "    HDR: Display's Peak Luminance"                         700.0    0.0   10000.0  10.0
+#pragma parameter hcrt_paper_white_nits              "    HDR: Display's Paper White Luminance"                  700.0    0.0   10000.0  10.0
+#pragma parameter hcrt_colour_space                  "    SDR: Display's Colour Space: sRGB | DCI-P3"            0.0      0.0   1.0      1.0
 #pragma parameter hcrt_lcd_resolution                "    Display's Resolution: 4K | 8K"                         0.0      0.0   1.0      1.0
 #pragma parameter hcrt_lcd_subpixel                  "    Display's Subpixel Layout: RGB | BGR"                  0.0      0.0   1.0      1.0
-#pragma parameter hcrt_brightness                    "    Brightness"                                            0.0      -1.0  1.0      0.01
-#pragma parameter hcrt_contrast                      "    Contrast"                                              0.0      -1.0  1.0      0.01
-#pragma parameter hcrt_gamma                         "    Gamma"                                                 0.0      -1.0   1.0     0.01
 #pragma parameter hcrt_red_vertical_convergence      "    Red Vertical Convergence"                              0.00     -10.0 10.0     0.01
 #pragma parameter hcrt_green_vertical_convergence    "    Green Vertical Convergence"                            0.00     -10.0 10.0     0.01
 #pragma parameter hcrt_blue_vertical_convergence     "    Blue Vertical Convergence"                             0.00     -10.0 10.0     0.01
@@ -116,9 +115,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter hcrt_crt_screen_type               "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   2.0      1.0
 #pragma parameter hcrt_crt_resolution                "    CRT Resolution: 600TVL | 800TVL | 1000TVL"             0.0      0.0   2.0      1.0
 #pragma parameter hcrt_colour_system                 "    CRT Colour System: PAL | NTSC-U | NTSC-J"              1.0      0.0   2.0      1.0
-#pragma parameter hcrt_colour_space                  "    Colour Space: Rec.601/Rec.709 | sRGB"                  0.0      0.0   1.0      1.0
 #pragma parameter hcrt_white_temperature             "    White Point: (PAL:D65, NTSC-U:D65, NTSC-J:D93)"        0.0      -5000.0  12000.0      100.0
-#pragma parameter hcrt_expand_gamut                  "    Original/Vivid"                                        0.0      0.0   1.0      1.0
+#pragma parameter hcrt_expand_gamut                  "    HDR: Original/Vivid"                                   0.0      0.0   1.0      1.0
+#pragma parameter hcrt_brightness                    "    Brightness"                                            0.0      -1.0  1.0      0.01
+#pragma parameter hcrt_contrast                      "    Contrast"                                              0.0      -1.0  1.0      0.01
+#pragma parameter hcrt_saturation                    "    Saturation"                                            0.0      -1.0   1.0     0.01
+#pragma parameter hcrt_gamma                         "    Gamma"                                                 0.0      -1.0   1.0     0.01
 
 #pragma parameter hcrt_developer_settings0           "    VERTICAL SETTINGS:"                                    0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_red_scanline_min              "        Red Scanline Min"                                  0.50     0.0   2.0      0.01 
@@ -144,8 +146,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_PAPER_WHITE_NITS               params.hcrt_paper_white_nits
 #define HCRT_LCD_RESOLUTION                 params.hcrt_lcd_resolution 
 #define HCRT_LCD_SUBPIXEL                   params.hcrt_lcd_subpixel
-#define HCRT_BRIGHTNESS                     params.hcrt_brightness
-#define HCRT_CONTRAST                       params.hcrt_contrast
 #define HCRT_EXPAND_GAMUT                   params.hcrt_expand_gamut
 #define HCRT_RED_VERTICAL_CONVERGENCE       params.hcrt_red_vertical_convergence
 #define HCRT_GREEN_VERTICAL_CONVERGENCE     params.hcrt_green_vertical_convergence
@@ -156,9 +156,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #define HCRT_CRT_SCREEN_TYPE                params.hcrt_crt_screen_type
 #define HCRT_CRT_RESOLUTION                 params.hcrt_crt_resolution
-#define HCRT_CRT_COLOUR_SPACE               global.hcrt_colour_space
-#define HCRT_CRT_COLOUR_SYSTEM              global.hcrt_colour_system
+#define HCRT_CRT_COLOUR_SYSTEM              params.hcrt_colour_system
+#define HCRT_OUTPUT_COLOUR_SPACE            params.hcrt_colour_space
 #define HCRT_WHITE_TEMPERATURE              global.hcrt_white_temperature
+#define HCRT_BRIGHTNESS                     global.hcrt_brightness
+#define HCRT_CONTRAST                       global.hcrt_contrast
+#define HCRT_SATURATION                     global.hcrt_saturation
 #define HCRT_GAMMA                          global.hcrt_gamma
 
 #define HCRT_RED_SCANLINE_MIN               params.hcrt_red_scanline_min
@@ -401,23 +404,49 @@ float Bezier(const float t0, const vec4 control_points)
    return dot(t, control_points * kCubicBezier);
 }
 
+// SDR Colour output spaces
+float sRGBToLinear_1(const float channel)
+{
+	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
+}
+
+vec3 sRGBToLinear(const vec3 colour)
+{
+	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
+}
+
+float LinearTosRGB_1(const float channel)
+{
+	return (channel > 0.0031308f) ? (1.055f * pow(channel, 1.0f / 2.4f)) - 0.055f : channel * 12.92f;
+}
+
+vec3 LinearTosRGB(const vec3 colour)
+{
+	return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
+}
+
+vec3 LinearToDCIP3(const vec3 colour)
+{
+	return pow(colour, vec3(1.0f / 2.6f));
+}
+
 #include "include\hdr10.h"
 #include "include\inverse_tonemap.h"
 #include "include\colour_grade.h"
 #include "include\scanline_generation.h"
 
-vec3 Hdr10Conditional(const vec3 scanline_colour)
+vec3 GammaCorrect(const vec3 scanline_colour)
 {
    if(HCRT_HDR > 0.0f)
    {
-      return Hdr10(scanline_colour, HCRT_PAPER_WHITE_NITS, HCRT_EXPAND_GAMUT);
+      return HCRT_OUTPUT_COLOUR_SPACE == 0.0f ? LinearTosRGB(scanline_colour) : LinearToDCIP3(scanline_colour);
    }
    else
    {
-      return scanline_colour;
+      return Hdr10(scanline_colour, HCRT_PAPER_WHITE_NITS, HCRT_EXPAND_GAMUT);
    }
 }
-
+ 
 void main()
 {
    const float scanline_size        = global.OutputSize.y / global.SourceSize.y;
@@ -467,8 +496,7 @@ void main()
       }
    }
 
-   const vec3 hdr10 = Hdr10Conditional(scanline_colour);
+   const vec3 hdr10 = GammaCorrect(scanline_colour);
 
-   //FragColor = vec4(scanline_colour, 1.0);
    FragColor = vec4(hdr10, 1.0);
 }

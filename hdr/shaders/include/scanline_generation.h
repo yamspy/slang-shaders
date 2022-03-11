@@ -38,11 +38,11 @@ vec3 InverseTonemapConditional(const vec3 linear)
 {
    if(HCRT_HDR > 0.0f)
    {
-      return InverseTonemap(linear, HCRT_MAX_NITS, HCRT_PAPER_WHITE_NITS, kLumaRatio);
+      return linear;
    }
    else
    {
-      return linear;
+      return InverseTonemap(linear, HCRT_MAX_NITS, HCRT_PAPER_WHITE_NITS, kLumaRatio);
    }
 }
 
@@ -112,7 +112,7 @@ vec3 ScanlineColour(const vec2 source_size, const float scanline_size, const vec
 
    return luminance * hdr_colour;
 }
-
+ 
 vec3 GenerateScanline(const vec2 source_size, const float scanline_size)
 {
    const vec3 current_source_position_x      = vec3(vTexCoord.x * source_size.x) - vec3(HCRT_RED_HORIZONTAL_CONVERGENCE, HCRT_GREEN_HORIZONTAL_CONVERGENCE, HCRT_BLUE_HORIZONTAL_CONVERGENCE);
