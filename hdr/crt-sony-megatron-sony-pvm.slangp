@@ -1,4 +1,7 @@
 /* 
+Sony Megatron Colour Video Monitor
+Author: Major Pain The Cactus
+
 A shader that specifically tries to emulate Sony PVM's with an aperture grille screen but with full brightness. 
 
 The novel thing about this shader is that it transforms the image output by the 'console/arcade/computer' into HDR space first i.e brightens it first and then applies 
@@ -10,6 +13,7 @@ Currently defaults towards a Sony PVM 2730QM a reasonably old mid 1980's 27" 600
 
 To use:
 Please Enable HDR in RetroArch 1.10+
+[UPDATE] This shader supports SDR as well - just enable it in the shader parameters
 
 NOTE: when this shader is envoked the Contrast, Peak Luminance and Paper White Luminance in the HDR menu do nothing instead set those values through the shader parameters 
 
@@ -21,13 +25,13 @@ This shader doesn't do any geometry warping or bouncing of light around inside t
 
 Works only with the D3D11/D3D12/Vulkan drivers currently
 
-THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD-OLED or LCD (and variants thereof screens are fine) 
+THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD-OLED or LCD (and variants thereof screens are fine) - It will work just wont look right
 */
 
 shaders = "1"
 feedback_pass = "0"
 
-shader0 = "shaders/crt-hdr.slang"
+shader0 = "shaders/crt-sony-megatron.slang"
 filter_linear0 = "false"
 wrap_mode0 = "clamp_to_border"
 mipmap_input0 = "false"

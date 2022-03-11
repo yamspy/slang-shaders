@@ -1,4 +1,4 @@
-#reference "crt-sony-pvm-4k-hdr.slangp"
+#reference "crt-sony-megatron-sony-pvm.slangp"
 
 hcrt_crt_resolution = "1.000000"
 hcrt_red_vertical_convergence = "0.250000"
