@@ -95,26 +95,6 @@ vec3 LinearTor601r709(const vec3 colour)
 	return vec3(LinearTor601r709_1(colour.r), LinearTor601r709_1(colour.g), LinearTor601r709_1(colour.b));
 }
 
-float sRGBToLinear_1(const float channel)
-{
-	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
-}
-
-vec3 sRGBToLinear(const vec3 colour)
-{
-	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
-}
-
-float LinearTosRGB_1(const float channel)
-{
-	return (channel > 0.0031308f) ? (1.055f * pow(channel, 1.0f / 2.4f)) - 0.055f : channel * 12.92f;
-}
-
-vec3 LinearTosRGB(const vec3 colour)
-{
-	return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
-}
-
 // XYZ Yxy transforms found in Dogway's Grade.slang shader
 
 vec3 XYZtoYxy(const vec3 XYZ)
@@ -165,11 +145,19 @@ float Contrast(const float luminance)
    }
 }
 
+vec3 Saturation(const vec3 colour)
+{
+   const float luma           = dot(colour, vec3(0.2125, 0.7154, 0.0721));
+   const float saturation     = 0.5f + HCRT_SATURATION * 0.5f;
+
+   return clamp(mix(vec3(luma), colour, vec3(saturation) * 2.0f), 0.0f, 1.0f);
+}
+
 vec3 ColourGrade(const vec3 colour)
 {
    const uint colour_system   = uint(HCRT_CRT_COLOUR_SYSTEM);
 
-   const vec3 linear          = HCRT_CRT_COLOUR_SPACE == 0.0f ? r601r709ToLinear(colour) : sRGBToLinear(colour);
+   const vec3 linear          = r601r709ToLinear(colour);
 
    const vec3 xyz             = sRGB_to_XYZ * linear;
    const vec3 Yxy             = XYZtoYxy(xyz);
@@ -183,7 +171,9 @@ vec3 ColourGrade(const vec3 colour)
    const vec3 contrast_xyz    = YxytoXYZ(contrast_linear);
    const vec3 contrast        = clamp(XYZ_to_sRGB * contrast_xyz, 0.0f, 1.0f);
 
-   const vec3 gamut           = kPhosphorGamut[colour_system] * contrast;
+   const vec3 saturation      = Saturation(contrast);
+
+   const vec3 gamut           = kPhosphorGamut[colour_system] * saturation;
 
    const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, gamut);
 
