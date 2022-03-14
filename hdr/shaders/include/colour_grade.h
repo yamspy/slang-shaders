@@ -62,6 +62,17 @@ const mat3 kCoolTemperature = mat3(
    vec3(-2666.3474220535695,     -2173.1012343082230,     2575.2827530017594),
 	vec3(    0.55995389139931482,     0.70381203140554553,    1.8993753891711275));
 
+const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
+                               -3.0f,  3.0f,  0.0f,  0.0f,
+                                3.0f, -6.0f,  3.0f,  0.0f,
+                               -1.0f,  3.0f, -3.0f,  1.0f );
+
+float Bezier(const float t0, const vec4 control_points)
+{
+   vec4 t = vec4(1.0, t0, t0*t0, t0*t0*t0);
+   return dot(t, control_points * kCubicBezier);
+}
+
 vec3 WhiteBalance(float temperature, vec3 colour)
 {
    const mat3 m = (temperature < kD65) ? kWarmTemperature : kCoolTemperature;
@@ -93,6 +104,32 @@ float LinearTor601r709_1(const float channel)
 vec3 LinearTor601r709(const vec3 colour)
 {
 	return vec3(LinearTor601r709_1(colour.r), LinearTor601r709_1(colour.g), LinearTor601r709_1(colour.b));
+}
+
+// SDR Colour output spaces
+float sRGBToLinear_1(const float channel)
+{
+	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
+}
+
+vec3 sRGBToLinear(const vec3 colour)
+{
+	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
+}
+
+float LinearTosRGB_1(const float channel)
+{
+	return (channel > 0.0031308f) ? (1.055f * pow(channel, 1.0f / 2.4f)) - 0.055f : channel * 12.92f;
+}
+
+vec3 LinearTosRGB(const vec3 colour)
+{
+	return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
+}
+
+vec3 LinearToDCIP3(const vec3 colour)
+{
+	return pow(colour, vec3(1.0f / 2.6f));
 }
 
 // XYZ Yxy transforms found in Dogway's Grade.slang shader
@@ -153,12 +190,8 @@ vec3 Saturation(const vec3 colour)
    return clamp(mix(vec3(luma), colour, vec3(saturation) * 2.0f), 0.0f, 1.0f);
 }
 
-vec3 ColourGrade(const vec3 colour)
+vec3 BrightnessContrastSaturation(const vec3 linear)
 {
-   const uint colour_system   = uint(HCRT_CRT_COLOUR_SYSTEM);
-
-   const vec3 linear          = r601r709ToLinear(colour);
-
    const vec3 xyz             = sRGB_to_XYZ * linear;
    const vec3 Yxy             = XYZtoYxy(xyz);
    const float Y_gamma        = clamp(LinearTosRGB_1(Yxy.x), 0.0f, 1.0f);
@@ -173,7 +206,18 @@ vec3 ColourGrade(const vec3 colour)
 
    const vec3 saturation      = Saturation(contrast);
 
-   const vec3 gamut           = kPhosphorGamut[colour_system] * saturation;
+   return saturation;
+}
+
+vec3 ColourGrade(const vec3 colour)
+{
+   const uint colour_system   = uint(HCRT_CRT_COLOUR_SYSTEM);
+
+   const vec3 linear          = r601r709ToLinear(colour);
+
+   const vec3 graded          = BrightnessContrastSaturation(linear); 
+
+   const vec3 gamut           = kPhosphorGamut[colour_system] * graded;
 
    const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, gamut);
 
