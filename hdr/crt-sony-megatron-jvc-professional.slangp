@@ -28,16 +28,32 @@ Works only with the D3D11/D3D12/Vulkan drivers currently
 THIS SHADER DOES NOT SUPPORT WRGB OLED (Due to the sub pixel layout of WRGB - QD-OLED or LCD (and variants thereof screens are fine) - It will work just wont look right 
 */
 
-shaders = "1"
+shaders = "3"
 feedback_pass = "0"
 
-shader0 = "shaders/crt-sony-megatron.slang"
+shader0 = "shaders/crt-sony-megatron-source-pass.slang"
 filter_linear0 = "false"
+scale_type0 = "source"
+scale0 = "1.0"
 wrap_mode0 = "clamp_to_border"
 mipmap_input0 = "false"
-alias0 = ""
-float_framebuffer0 = "false"
-srgb_framebuffer0 = "false"
+alias0 = "SourceSDR"
+
+shader1 = "shaders/crt-sony-megatron-hdr-pass.slang"
+filter_linear1 = "false"
+scale_type1 = "source"
+scale1 = "1.0"
+wrap_mode1 = "clamp_to_border"
+mipmap_input1 = "false"
+alias1 = "SourceHDR"
+
+shader2 = "shaders/crt-sony-megatron.slang"
+filter_linear2 = "false"
+wrap_mode2 = "clamp_to_border"
+mipmap_input2 = "false"
+alias2 = ""
+float_framebuffer2 = "false"
+srgb_framebuffer2 = "false"
 
 hcrt_crt_screen_type = "1.000000"
 hcrt_crt_resolution = "2.000000"

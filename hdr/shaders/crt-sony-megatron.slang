@@ -29,13 +29,15 @@ layout(push_constant) uniform Push
 {
    // User Settings
    float hcrt_hdr;
+   float hcrt_colour_space;
    float hcrt_max_nits;
    float hcrt_paper_white_nits;
+   float hcrt_expand_gamut;
+   float hcrt_gamma;
+
    float hcrt_lcd_resolution;
    float hcrt_lcd_subpixel;
-   float hcrt_colour_system;
-   float hcrt_colour_space;
-   float hcrt_expand_gamut;
+
    float hcrt_red_vertical_convergence;
    float hcrt_green_vertical_convergence;
    float hcrt_blue_vertical_convergence;
@@ -75,78 +77,19 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-
-   float hcrt_white_temperature;
-   float hcrt_brightness;
-   float hcrt_contrast;
-   float hcrt_saturation;
-   float hcrt_gamma;
 } global;
 
-
-#pragma parameter hcrt_title                         "SONY PVM/BVM HDR SHADER"                                   0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_space0                        " "                                                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support0                      "SUPPORTED: RGB/BGR LCD, QD-OLED Displays"                  0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support1                      "NOT SUPPORTED: WRGB OLED Displays"                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support2                      "MIN SPEC: DisplayHDR 600, 4K, RetroArch v1.10"             0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support3                      "REC SPEC: DisplayHDR 1000, 4K+, RetroArch v1.10"           0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_space1                        " "                                                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_instructions0                 "HDR: Enable HDR: On"                                       0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_instructions1                 "SCALING: Integer Scale: ON"                                0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_instructions2                 "SCALING: Integer Overscale: ON"                            0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_instructions3                 "SCALING: Apect Ratio: Core Provided"                       0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_space2                        " "                                                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_user_settings                 "USER SETTINGS:"                                            0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_hdr                           "    HDR | SDR"                                             0.0      0.0   1.0      1.0
-#pragma parameter hcrt_max_nits                      "    HDR: Display's Peak Luminance"                         700.0    0.0   10000.0  10.0
-#pragma parameter hcrt_paper_white_nits              "    HDR: Display's Paper White Luminance"                  700.0    0.0   10000.0  10.0
-#pragma parameter hcrt_colour_space                  "    SDR: Display's Colour Space: sRGB | DCI-P3"            0.0      0.0   1.0      1.0
-#pragma parameter hcrt_lcd_resolution                "    Display's Resolution: 4K | 8K"                         0.0      0.0   1.0      1.0
-#pragma parameter hcrt_lcd_subpixel                  "    Display's Subpixel Layout: RGB | BGR"                  0.0      0.0   1.0      1.0
-#pragma parameter hcrt_red_vertical_convergence      "    Red Vertical Convergence"                              0.00     -10.0 10.0     0.01
-#pragma parameter hcrt_green_vertical_convergence    "    Green Vertical Convergence"                            0.00     -10.0 10.0     0.01
-#pragma parameter hcrt_blue_vertical_convergence     "    Blue Vertical Convergence"                             0.00     -10.0 10.0     0.01
-#pragma parameter hcrt_red_horizontal_convergence    "    Red Horizontal Convergence"                            0.00     -10.0 10.0     0.01
-#pragma parameter hcrt_green_horizontal_convergence  "    Green Horizontal Convergence"                          0.00     -10.0 10.0     0.01
-#pragma parameter hcrt_blue_horizontal_convergence   "    Blue Horizontal Convergence"                           0.00     -10.0 10.0     0.01
-
-#pragma parameter hcrt_space3                        " "                                                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_developer_settings            "DEVELOPER SETTINGS:"                                       0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_crt_screen_type               "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   2.0      1.0
-#pragma parameter hcrt_crt_resolution                "    CRT Resolution: 600TVL | 800TVL | 1000TVL"             0.0      0.0   2.0      1.0
-#pragma parameter hcrt_colour_system                 "    CRT Colour System: PAL | NTSC-U | NTSC-J"              1.0      0.0   2.0      1.0
-#pragma parameter hcrt_white_temperature             "    White Point: (PAL:D65, NTSC-U:D65, NTSC-J:D93)"        0.0      -5000.0  12000.0      100.0
-#pragma parameter hcrt_expand_gamut                  "    HDR: Original/Vivid"                                   0.0      0.0   1.0      1.0
-#pragma parameter hcrt_brightness                    "    Brightness"                                            0.0      -1.0  1.0      0.01
-#pragma parameter hcrt_contrast                      "    Contrast"                                              0.0      -1.0  1.0      0.01
-#pragma parameter hcrt_saturation                    "    Saturation"                                            0.0      -1.0   1.0     0.01
-#pragma parameter hcrt_gamma                         "    Gamma"                                                 0.0      -1.0   1.0     0.01
-
-#pragma parameter hcrt_developer_settings0           "    VERTICAL SETTINGS:"                                    0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_red_scanline_min              "        Red Scanline Min"                                  0.50     0.0   2.0      0.01 
-#pragma parameter hcrt_red_scanline_max              "        Red Scanline Max"                                  1.00     0.0   2.0      0.01 
-#pragma parameter hcrt_red_scanline_attack           "        Red Scanline Attack"                               0.20     0.0   1.0      0.01
-#pragma parameter hcrt_green_scanline_min            "        Green Scanline Min"                                0.50     0.0   2.0      0.01 
-#pragma parameter hcrt_green_scanline_max            "        Green Scanline Max"                                1.00     0.0   2.0      0.01 
-#pragma parameter hcrt_green_scanline_attack         "        Green Scanline Attack"                             0.20     0.0   1.0      0.01
-#pragma parameter hcrt_blue_scanline_min             "        Blue Scanline Min"                                 0.50     0.0   2.0      0.01 
-#pragma parameter hcrt_blue_scanline_max             "        Blue Scanline Max"                                 1.00     0.0   2.0      0.01 
-#pragma parameter hcrt_blue_scanline_attack          "        Blue Scanline Attack"                              0.20     0.0   1.0      0.01
-#pragma parameter hcrt_developer_settings1           "    HORIZONTAL SETTINGS:"                                  0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_red_beam_sharpness            "        Red Beam Sharpness"                                1.75     0.0   5.0      0.05
-#pragma parameter hcrt_red_beam_attack               "        Red Beam Attack"                                   0.50     0.0   2.0      0.01
-#pragma parameter hcrt_green_beam_sharpness          "        Green Beam Sharpness"                              1.75     0.0   5.0      0.05
-#pragma parameter hcrt_green_beam_attack             "        Green Beam Attack"                                 0.50     0.0   2.0      0.01
-#pragma parameter hcrt_blue_beam_sharpness           "        Blue Beam Sharpness"                               1.75     0.0   5.0      0.05
-#pragma parameter hcrt_blue_beam_attack              "        Blue Beam Attack"                                  0.50     0.0   2.0      0.01
-
+#include "include/parameters.h"
 
 #define HCRT_HDR                            params.hcrt_hdr
+#define HCRT_OUTPUT_COLOUR_SPACE            params.hcrt_colour_space
 #define HCRT_MAX_NITS                       params.hcrt_max_nits
 #define HCRT_PAPER_WHITE_NITS               params.hcrt_paper_white_nits
+#define HCRT_EXPAND_GAMUT                   params.hcrt_expand_gamut
+#define HCRT_GAMMA                          params.hcrt_gamma
+
 #define HCRT_LCD_RESOLUTION                 params.hcrt_lcd_resolution 
 #define HCRT_LCD_SUBPIXEL                   params.hcrt_lcd_subpixel
-#define HCRT_EXPAND_GAMUT                   params.hcrt_expand_gamut
 #define HCRT_RED_VERTICAL_CONVERGENCE       params.hcrt_red_vertical_convergence
 #define HCRT_GREEN_VERTICAL_CONVERGENCE     params.hcrt_green_vertical_convergence
 #define HCRT_BLUE_VERTICAL_CONVERGENCE      params.hcrt_blue_vertical_convergence
@@ -156,13 +99,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #define HCRT_CRT_SCREEN_TYPE                params.hcrt_crt_screen_type
 #define HCRT_CRT_RESOLUTION                 params.hcrt_crt_resolution
-#define HCRT_CRT_COLOUR_SYSTEM              params.hcrt_colour_system
-#define HCRT_OUTPUT_COLOUR_SPACE            params.hcrt_colour_space
-#define HCRT_WHITE_TEMPERATURE              global.hcrt_white_temperature
-#define HCRT_BRIGHTNESS                     global.hcrt_brightness
-#define HCRT_CONTRAST                       global.hcrt_contrast
-#define HCRT_SATURATION                     global.hcrt_saturation
-#define HCRT_GAMMA                          global.hcrt_gamma
 
 #define HCRT_RED_SCANLINE_MIN               params.hcrt_red_scanline_min
 #define HCRT_RED_SCANLINE_MAX               params.hcrt_red_scanline_max
@@ -197,16 +133,31 @@ void main()
 #pragma stage fragment
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
-layout(set = 0, binding = 2) uniform sampler2D Source;
+layout(set = 0, binding = 2) uniform sampler2D SourceSDR;
+layout(set = 0, binding = 3) uniform sampler2D SourceHDR;
 
-#define kRed     vec3(1.0, 0.0, 0.0)
-#define kGreen   vec3(0.0, 1.0, 0.0)
-#define kBlue    vec3(0.0, 0.0, 1.0)
-#define kMagenta vec3(1.0, 0.0, 1.0)
-#define kYellow  vec3(1.0, 1.0, 0.0)
-#define kCyan    vec3(0.0, 1.0, 1.0)
-#define kBlack   vec3(0.0, 0.0, 0.0)
-#define kWhite   vec3(1.0, 1.0, 1.0)
+
+#define kChannelMask          3
+#define kFirstChannelShift    2
+#define kSecondChannelShift   4
+
+#define kRedId   0
+#define kGreenId 1
+#define kBlueId  2
+
+#define kRed     (1 | (kRedId << kFirstChannelShift))
+#define kGreen   (1 | (kGreenId << kFirstChannelShift))
+#define kBlue    (1 | (kBlueId << kFirstChannelShift))
+#define kMagenta (2 | (kRedId << kFirstChannelShift) | (kBlueId << kSecondChannelShift))
+#define kYellow  (2 | (kRedId << kFirstChannelShift) | (kGreenId << kSecondChannelShift))
+#define kCyan    (2 | (kGreenId << kFirstChannelShift) | (kBlueId << kSecondChannelShift))
+#define kBlack   0
+
+#define kRedChannel     vec3(1.0, 0.0, 0.0)
+#define kGreenChannel   vec3(0.0, 1.0, 0.0)
+#define kBlueChannel    vec3(0.0, 0.0, 1.0)
+
+const vec3 kColourMask[3] = { kRedChannel, kGreenChannel, kBlueChannel };
 
 #define kApertureGrille    0
 #define kShadowMask        1
@@ -237,7 +188,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 const uint kApertureGrilleMaskSize[kResolutionAxis][kTVLAxis] = { { 4, 3, 2 }, { 7, 5, 4 } }; //4K: 600 TVL, 800 TVL, 1000 TVL   8K: 600 TVL, 800 TVL, 1000 TVL
 
-const vec3 kApertureGrilleMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxApertureGrilleSize] = {
+const uint kApertureGrilleMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxApertureGrilleSize] = {
    { // 4K
       { kRGBX, kBGRX },            // 600 TVL
       { kBGR, kRGB },              // 800 TVL
@@ -296,7 +247,7 @@ const vec3 kApertureGrilleMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxApertur
 const uint kShadowMaskSizeX[kResolutionAxis][kTVLAxis] = { { 6, 2, 2 }, { 12, 6, 6 } }; 
 const uint kShadowMaskSizeY[kResolutionAxis][kTVLAxis] = { { 4, 2, 2 }, {  8, 4, 4 } }; 
 
-const vec3 kShadowMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxShadowMaskSizeY][kMaxShadowMaskSizeX]  = {
+const uint kShadowMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxShadowMaskSizeY][kMaxShadowMaskSizeX]  = {
    { // 4K
       { kGRRBBG_GRRBBG_BBGGRR_BBGGRR, kGBBRRG_GBBRRG_RRGGBB_RRGGBB },                                                      // 600 TVL
       { kMG_GM, kGM_MG },                                                                                                  // 800 TVL
@@ -362,7 +313,7 @@ const vec3 kShadowMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxShadowMaskSizeY
 
 const uint kSlotMaskSize[kResolutionAxis][kTVLAxis] = { { 4, 3, 2 }, { 7, 5, 4 } }; //4K: 600 TVL, 800 TVL, 1000 TVL   8K: 600 TVL, 800 TVL, 1000 TVL
 
-const vec3 kSlotMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxSlotSizeY][kMaxSlotSizeX][kMaxSlotMaskSize] = {
+const uint kSlotMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxSlotSizeY][kMaxSlotSizeX][kMaxSlotMaskSize] = {
    { // 4K
       { kRGBXRGBX_RGBXXXXX_RGBXRGBX_XXXXRGBX, kBGRXBGRX_BGRXXXXX_BGRXBGRX_XXXXBGRX },   // 600 TVL
       { kBGRBGR_BGRXXX_BGRBGR_XXXBGR, kRGBRGB_RGBXXX_RGBRGB_XXXRGB },                   // 800 TVL
@@ -393,16 +344,8 @@ float ModInteger(float a, float b)
     return floor(m + 0.5);
 }
 
-const mat4 kCubicBezier = mat4( 1.0f,  0.0f,  0.0f,  0.0f,
-                               -3.0f,  3.0f,  0.0f,  0.0f,
-                                3.0f, -6.0f,  3.0f,  0.0f,
-                               -1.0f,  3.0f, -3.0f,  1.0f );
-
-float Bezier(const float t0, const vec4 control_points)
-{
-   vec4 t = vec4(1.0, t0, t0*t0, t0*t0*t0);
-   return dot(t, control_points * kCubicBezier);
-}
+#include "include/scanline_generation.h"
+#include "include/hdr10.h"
 
 // SDR Colour output spaces
 float sRGBToLinear_1(const float channel)
@@ -430,11 +373,6 @@ vec3 LinearToDCIP3(const vec3 colour)
 	return pow(colour, vec3(1.0f / 2.6f));
 }
 
-#include "include\hdr10.h"
-#include "include\inverse_tonemap.h"
-#include "include\colour_grade.h"
-#include "include\scanline_generation.h"
-
 vec3 GammaCorrect(const vec3 scanline_colour)
 {
    if(HCRT_HDR > 0.0f)
@@ -446,12 +384,9 @@ vec3 GammaCorrect(const vec3 scanline_colour)
       return Hdr10(scanline_colour, HCRT_PAPER_WHITE_NITS, HCRT_EXPAND_GAMUT);
    }
 }
- 
+
 void main()
 {
-   const float scanline_size        = global.OutputSize.y / global.SourceSize.y;
-   vec3 scanline_colour             = GenerateScanline(global.SourceSize.xy, scanline_size);
-
    const uint screen_type           = uint(HCRT_CRT_SCREEN_TYPE);
    const uint crt_resolution        = uint(HCRT_CRT_RESOLUTION);
    const uint lcd_resolution        = uint(HCRT_LCD_RESOLUTION);
@@ -459,13 +394,15 @@ void main()
 
    const vec2 current_position      = vTexCoord * global.OutputSize.xy;
 
+   uint colour_mask;
+
    switch(screen_type)
    {
       case kApertureGrille:
       {
          uint mask = uint(ModInteger(floor(current_position.x), kApertureGrilleMaskSize[lcd_resolution][crt_resolution]));
 
-         scanline_colour *= kApertureGrilleMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][mask];      
+         colour_mask = kApertureGrilleMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][mask];      
 
          break;
       }
@@ -475,7 +412,7 @@ void main()
 
          uint mask = uint(ModInteger(floor(current_position.x), kShadowMaskSizeX[lcd_resolution][crt_resolution]));
 
-         scanline_colour *= kShadowMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][shadow_y][mask];    
+         colour_mask = kShadowMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][shadow_y][mask];    
 
          break;
       }
@@ -486,7 +423,7 @@ void main()
 
          uint mask = uint(ModInteger(floor(current_position.x), kSlotMaskSize[lcd_resolution][crt_resolution]));
 
-         scanline_colour *= kSlotMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][slot_x][slot_y][mask];
+         colour_mask = kSlotMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][slot_x][slot_y][mask];
 
          break;
       }
@@ -496,7 +433,57 @@ void main()
       }
    }
 
+   const float scanline_size           = global.OutputSize.y / global.SourceSize.y;
+
+   const vec3 horizontal_convergence   = vec3(HCRT_RED_HORIZONTAL_CONVERGENCE, HCRT_GREEN_HORIZONTAL_CONVERGENCE, HCRT_BLUE_HORIZONTAL_CONVERGENCE);
+   const vec3 vertical_convergence     = vec3(HCRT_RED_VERTICAL_CONVERGENCE, HCRT_GREEN_VERTICAL_CONVERGENCE, HCRT_BLUE_VERTICAL_CONVERGENCE);
+   const vec3 beam_sharpness           = vec3(HCRT_RED_BEAM_SHARPNESS, HCRT_GREEN_BEAM_SHARPNESS, HCRT_BLUE_BEAM_SHARPNESS);
+   const vec3 beam_attack              = vec3(HCRT_RED_BEAM_ATTACK, HCRT_GREEN_BEAM_ATTACK, HCRT_BLUE_BEAM_ATTACK);
+   const vec3 scanline_min             = vec3(HCRT_RED_SCANLINE_MIN, HCRT_GREEN_SCANLINE_MIN, HCRT_BLUE_SCANLINE_MIN);
+   const vec3 scanline_max             = vec3(HCRT_RED_SCANLINE_MAX, HCRT_GREEN_SCANLINE_MAX, HCRT_BLUE_SCANLINE_MAX);
+   const vec3 scanline_attack          = vec3(HCRT_RED_SCANLINE_ATTACK, HCRT_GREEN_SCANLINE_ATTACK, HCRT_BLUE_SCANLINE_ATTACK);
+
+   const uint channel_count            = colour_mask & 3;
+
+   vec3 scanline_colour = vec3(0.0f);
+
+   if(channel_count > 0)
+   {
+      const uint channel_0             = (colour_mask >> 2) & 3;
+
+      const float scanline_channel_0   = GenerateScanline(channel_0,
+                                                            global.SourceSize.xy, 
+                                                            scanline_size, 
+                                                            horizontal_convergence[channel_0], 
+                                                            vertical_convergence[channel_0], 
+                                                            beam_sharpness[channel_0], 
+                                                            beam_attack[channel_0], 
+                                                            scanline_min[channel_0], 
+                                                            scanline_max[channel_0], 
+                                                            scanline_attack[channel_0]);
+
+      scanline_colour =  scanline_channel_0 * kColourMask[channel_0];
+   }
+
+   if(channel_count > 1)
+   {
+      const uint channel_1       = (colour_mask >> 4) & 3;
+
+      const float scanline_channel_1   = GenerateScanline(channel_1,
+                                                          global.SourceSize.xy, 
+                                                          scanline_size, 
+                                                          horizontal_convergence[channel_1], 
+                                                          vertical_convergence[channel_1], 
+                                                          beam_sharpness[channel_1], 
+                                                          beam_attack[channel_1], 
+                                                          scanline_min[channel_1], 
+                                                          scanline_max[channel_1], 
+                                                          scanline_attack[channel_1]);
+
+      scanline_colour += scanline_channel_1 * kColourMask[channel_1];
+   }
+
    const vec3 hdr10 = GammaCorrect(scanline_colour);
 
-   FragColor = vec4(hdr10, 1.0);
+   FragColor = vec4(hdr10, 1.0f);
 }
