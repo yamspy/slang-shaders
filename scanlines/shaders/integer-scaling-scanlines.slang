@@ -66,17 +66,11 @@ layout(location = 1) in float Scale;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
 
-float ModInteger(float a, float b) 
-{
-    float m = a - floor((a + 0.5) / b) * b;
-    return floor(m + 0.5);
-}
-
 void main()
 {
    vec2 InPixels = (vTexCoord * params.SourceSize.xy) * vec2(Scale);
 
-   if(ModInteger(floor(InPixels.y), Scale) < params.ScanlineWidth)
+   if(floor(mod(InPixels.y, Scale)) < params.ScanlineWidth)
    {
       FragColor = vec4(texture(Source, vTexCoord).xyz, 1.0);
    }

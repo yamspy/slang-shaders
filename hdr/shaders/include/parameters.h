@@ -1,11 +1,8 @@
 
 
-#pragma parameter hcrt_title                         "SONY PVM/BVM HDR SHADER"                                   0.0      0.0   0.0001   0.0
+#pragma parameter hcrt_title                         "SONY MEGATRON COLOUR VIDEO MONITOR"                        0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_space0                        " "                                                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support0                      "SUPPORTED: RGB/BGR LCD, QD-OLED Displays"                  0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support1                      "NOT SUPPORTED: WRGB OLED Displays"                         0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support2                      "MIN SPEC: DisplayHDR 600, 4K, RetroArch v1.10"             0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_support3                      "REC SPEC: DisplayHDR 1000, 4K+, RetroArch v1.10"           0.0      0.0   0.0001   0.0
+#pragma parameter hcrt_support0                      "Use as bright a display as possible but SDR is supported"  0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_space1                        " "                                                         0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_user_settings                 "USER SETTINGS:"                                            0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_hdr                           "    HDR | SDR"                                             0.0      0.0   1.0      1.0
@@ -23,7 +20,7 @@
 
 #pragma parameter hcrt_space3                        " "                                                         0.0      0.0   0.0001   0.0
 #pragma parameter hcrt_developer_settings            "DEVELOPER SETTINGS:"                                       0.0      0.0   0.0001   0.0
-#pragma parameter hcrt_crt_screen_type               "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   2.0      1.0
+#pragma parameter hcrt_crt_screen_type               "    CRT Type: APERTURE GRILLE | SHADOW MASK | SLOT MASK"   0.0      0.0   3.0      1.0
 #pragma parameter hcrt_crt_resolution                "    CRT Resolution: 300TVL | 600TVL | 800TVL | 1000TVL"    1.0      0.0   3.0      1.0
 #pragma parameter hcrt_colour_system                 "    CRT Colour System: PAL | NTSC-U | NTSC-J"              1.0      0.0   2.0      1.0
 #pragma parameter hcrt_white_temperature             "    White Point: (PAL:D65, NTSC-U:D65, NTSC-J:D93)"        0.0      -5000.0  12000.0      100.0
