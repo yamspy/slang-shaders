@@ -140,6 +140,7 @@ layout(set = 0, binding = 3) uniform sampler2D SourceHDR;
 #define kChannelMask          3
 #define kFirstChannelShift    2
 #define kSecondChannelShift   4
+#define kThirdChannelShift    6
 
 #define kRedId   0
 #define kGreenId 1
@@ -151,6 +152,7 @@ layout(set = 0, binding = 3) uniform sampler2D SourceHDR;
 #define kMagenta (2 | (kRedId << kFirstChannelShift) | (kBlueId << kSecondChannelShift))
 #define kYellow  (2 | (kRedId << kFirstChannelShift) | (kGreenId << kSecondChannelShift))
 #define kCyan    (2 | (kGreenId << kFirstChannelShift) | (kBlueId << kSecondChannelShift))
+#define kWhite   (3 | (kRedId << kFirstChannelShift) | (kGreenId << kSecondChannelShift) | (kBlueId << kThirdChannelShift))
 #define kBlack   0
 
 #define kRedChannel     vec3(1.0, 0.0, 0.0)
@@ -162,6 +164,7 @@ const vec3 kColourMask[3] = { kRedChannel, kGreenChannel, kBlueChannel };
 #define kApertureGrille    0
 #define kShadowMask        1
 #define kSlotMask          2
+#define kBlackWhiteMask    3
 
 #define kBGRAxis           2
 #define kTVLAxis           4
@@ -186,7 +189,7 @@ const vec3 kColourMask[3] = { kRedChannel, kGreenChannel, kBlueChannel };
 #define kRRGGBBX        { kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack }
 #define kBBGGRRX        { kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack }
 
-const uint kApertureGrilleMaskSize[kResolutionAxis][kTVLAxis] = { { 7, 4, 3, 2 }, { 7, 7, 5, 4 } }; //4K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL   8K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL
+const float kApertureGrilleMaskSize[kResolutionAxis][kTVLAxis] = { { 7.0f, 4.0f, 3.0f, 2.0f }, { 7.0f, 7.0f, 5.0f, 4.0f } }; //4K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL   8K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL
 
 const uint kApertureGrilleMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxApertureGrilleSize] = {
    { // 4K
@@ -246,8 +249,8 @@ const uint kApertureGrilleMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxApertur
 #define kGGRRRRBBBBGG_GGRRRRBBBBGG_GGRRRRBBBBGG_GGRRRRBBBBGG_BBBBGGGGRRRR_BBBBGGGGRRRR_BBBBGGGGRRRR_BBBBGGGGRRRR  { kGGRRRRBBBBGG, kGGRRRRBBBBGG, kGGRRRRBBBBGG, kGGRRRRBBBBGG, kBBBBGGGGRRRR, kBBBBGGGGRRRR, kBBBBGGGGRRRR, kBBBBGGGGRRRR }
 #define kGGBBBBRRRRGG_GGBBBBRRRRGG_GGBBBBRRRRGG_GGBBBBRRRRGG_RRRRGGGGBBBB_RRRRGGGGBBBB_RRRRGGGGBBBB_RRRRGGGGBBBB  { kGGBBBBRRRRGG, kGGBBBBRRRRGG, kGGBBBBRRRRGG, kGGBBBBRRRRGG, kRRRRGGGGBBBB, kRRRRGGGGBBBB, kRRRRGGGGBBBB, kRRRRGGGGBBBB }
 
-const uint kShadowMaskSizeX[kResolutionAxis][kTVLAxis] = { { 12, 6, 2, 2 }, { 12, 12, 6, 6 } }; 
-const uint kShadowMaskSizeY[kResolutionAxis][kTVLAxis] = { {  8, 4, 2, 2 }, {  8,  8, 4, 4 } }; 
+const float kShadowMaskSizeX[kResolutionAxis][kTVLAxis] = { { 12.0f, 6.0f, 2.0f, 2.0f }, { 12.0f, 12.0f, 6.0f, 6.0f } }; 
+const float kShadowMaskSizeY[kResolutionAxis][kTVLAxis] = { {  8.0f, 4.0f, 2.0f, 2.0f }, {  8.0f,  8.0f, 4.0f, 4.0f } }; 
 
 const uint kShadowMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxShadowMaskSizeY][kMaxShadowMaskSizeX]  = {
    { // 4K
@@ -317,7 +320,7 @@ const uint kShadowMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxShadowMaskSizeY
 #define kRRGGBBXRRGGBBX_RRGGBBXXXXX_RRGGBBXRRGGBBX_XXXXRRGGBBX   { { kRRGGBBX, kRRGGBBX }, { kRRGGBBX, kXXXX }, { kRRGGBBX, kRRGGBBX }, { kXXXX, kRRGGBBX } }
 #define kBBGGRRXBBGGRRX_BBGGRRXXXXX_BBGGRRXBBGGRRX_XXXXBBGGRRX   { { kBBGGRRX, kBBGGRRX }, { kBBGGRRX, kXXXX }, { kBBGGRRX, kBBGGRRX }, { kXXXX, kBBGGRRX } }
 
-const uint kSlotMaskSize[kResolutionAxis][kTVLAxis] = { { 7, 4, 3, 2 }, { 7, 7, 5, 4 } }; //4K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL   8K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL
+const float kSlotMaskSize[kResolutionAxis][kTVLAxis] = { { 7.0f, 4.0f, 3.0f, 2.0f }, { 7.0f, 7.0f, 5.0f, 4.0f } }; //4K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL   8K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL
 
 const uint kSlotMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxSlotSizeY][kMaxSlotSizeX][kMaxSlotMaskSize] = {
    { // 4K
@@ -346,11 +349,46 @@ const uint kSlotMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxSlotSizeY][kMaxSl
 #undef kRRGGBBX
 #undef kBBGGRRX
 
-float ModInteger(float a, float b) 
-{
-    float m = a - floor((a + 0.5) / b) * b;
-    return floor(m + 0.5);
-}
+
+// BLACK WHITE MASKS
+
+#define kMaxBlackWhiteSize       14
+
+#define kWX                { kWhite, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+#define kWWX               { kWhite, kWhite, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+#define kWWXX              { kWhite, kWhite, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+#define kWWWWX             { kWhite, kWhite, kWhite, kWhite, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+#define kWWWWWXX           { kWhite, kWhite, kWhite, kWhite, kWhite, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack, kBlack }
+#define kWWWWWWWWWWWXXX    { kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite, kWhite /*kBlack, kBlack, kBlack*/ }
+
+const float kBlackWhiteMaskSize[kResolutionAxis][kTVLAxis] = { { 7.0f, 4.0f, 3.0f, 2.0f }, { 14.0f, 7.0f, 5.0f, 4.0f } }; //4K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL   8K: 300 TVL, 600 TVL, 800 TVL, 1000 TVL
+
+const uint kBlackWhiteMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxBlackWhiteSize] = {
+   { // 4K
+      { kWWWWWXX, kWWWWWXX },                   // 300 TVL
+      { kWWXX, kWWXX },                         // 600 TVL
+      { kWWX, kWWX },                           // 800 TVL
+      { kWX, kWX }                              // 1000 TVL
+   },
+   { // 8K
+      { kWWWWWWWWWWWXXX, kWWWWWWWWWWWXXX },     // 300 TVL
+      { kWWWWWXX, kWWWWWXX },                   // 600 TVL
+      { kWWWWX, kWWWWX },                       // 800 TVL
+      { kWWXX, kWWXX }                          // 1000 TVL
+   }
+};
+
+#undef kXXXX
+#undef kMG
+#undef kGM
+#undef kBGR
+#undef kRGB
+#undef kRGBX
+#undef kBGRX
+#undef kRYCBX
+#undef kBCYRX
+#undef kRRGGBBX
+#undef kBBGGRRX
 
 #include "include/scanline_generation.h"
 #include "include/hdr10.h"
@@ -408,7 +446,7 @@ void main()
    {
       case kApertureGrille:
       {
-         uint mask = uint(ModInteger(floor(current_position.x), kApertureGrilleMaskSize[lcd_resolution][crt_resolution]));
+         uint mask = uint(floor(mod(current_position.x, kApertureGrilleMaskSize[lcd_resolution][crt_resolution])));
 
          colour_mask = kApertureGrilleMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][mask];      
 
@@ -416,9 +454,9 @@ void main()
       }
       case kShadowMask:
       {
-         uint shadow_y = uint(ModInteger(floor(current_position.y), kShadowMaskSizeY[lcd_resolution][crt_resolution]));
+         uint shadow_y = uint(floor(mod(current_position.y, kShadowMaskSizeY[lcd_resolution][crt_resolution])));
 
-         uint mask = uint(ModInteger(floor(current_position.x), kShadowMaskSizeX[lcd_resolution][crt_resolution]));
+         uint mask = uint(floor(mod(current_position.x, kShadowMaskSizeX[lcd_resolution][crt_resolution])));
 
          colour_mask = kShadowMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][shadow_y][mask];    
 
@@ -426,12 +464,20 @@ void main()
       }
       case kSlotMask:
       {
-         uint slot_x = uint(ModInteger(floor(current_position.x / float(kSlotMaskSize[lcd_resolution][crt_resolution])), kMaxSlotSizeX));
-         uint slot_y = uint(ModInteger(floor(current_position.y), kMaxSlotSizeY));
+         uint slot_x = uint(floor(mod(current_position.x / kSlotMaskSize[lcd_resolution][crt_resolution], kMaxSlotSizeX)));
+         uint slot_y = uint(floor(mod(current_position.y, kMaxSlotSizeY)));
 
-         uint mask = uint(ModInteger(floor(current_position.x), kSlotMaskSize[lcd_resolution][crt_resolution]));
+         uint mask = uint(floor(mod(current_position.x, kSlotMaskSize[lcd_resolution][crt_resolution])));
 
          colour_mask = kSlotMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][slot_x][slot_y][mask];
+
+         break;
+      }
+      case kBlackWhiteMask:
+      {
+         uint mask = uint(floor(mod(current_position.x, kBlackWhiteMaskSize[lcd_resolution][crt_resolution])));
+
+         colour_mask = kBlackWhiteMasks[lcd_resolution][crt_resolution][lcd_subpixel_layout][mask];      
 
          break;
       }
@@ -457,7 +503,7 @@ void main()
 
    if(channel_count > 0)
    {
-      const uint channel_0             = (colour_mask >> 2) & 3;
+      const uint channel_0             = (colour_mask >> kFirstChannelShift) & 3;
 
       const float scanline_channel_0   = GenerateScanline(channel_0,
                                                             global.SourceSize.xy, 
@@ -475,7 +521,7 @@ void main()
 
    if(channel_count > 1)
    {
-      const uint channel_1       = (colour_mask >> 4) & 3;
+      const uint channel_1             = (colour_mask >> kSecondChannelShift) & 3;
 
       const float scanline_channel_1   = GenerateScanline(channel_1,
                                                           global.SourceSize.xy, 
@@ -489,6 +535,24 @@ void main()
                                                           scanline_attack[channel_1]);
 
       scanline_colour += scanline_channel_1 * kColourMask[channel_1];
+   }
+
+   if(channel_count > 2)
+   {
+      const uint channel_2             = (colour_mask >> kThirdChannelShift) & 3;
+
+      const float scanline_channel_2   = GenerateScanline(channel_2,
+                                                          global.SourceSize.xy, 
+                                                          scanline_size, 
+                                                          horizontal_convergence[channel_2], 
+                                                          vertical_convergence[channel_2], 
+                                                          beam_sharpness[channel_2], 
+                                                          beam_attack[channel_2], 
+                                                          scanline_min[channel_2], 
+                                                          scanline_max[channel_2], 
+                                                          scanline_attack[channel_2]);
+
+      scanline_colour += scanline_channel_2 * kColourMask[channel_2];
    }
 
    const vec3 hdr10 = GammaCorrect(scanline_colour);
