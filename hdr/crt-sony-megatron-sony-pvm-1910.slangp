@@ -1,4 +1,4 @@
-#reference "crt-sony-megatron-sony-pvm.slangp"
+#reference "crt-sony-megatron.slangp"
 
 hcrt_crt_resolution = "0.000000"
 hcrt_colour_system = "0.000000"
