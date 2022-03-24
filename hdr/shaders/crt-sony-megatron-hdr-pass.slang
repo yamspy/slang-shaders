@@ -70,7 +70,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 vec3 InverseTonemapConditional(const vec3 linear)
 {
-   if(HCRT_HDR > 0.0f)
+   if(HCRT_HDR < 1.0f)
    {
       return linear;
    }
