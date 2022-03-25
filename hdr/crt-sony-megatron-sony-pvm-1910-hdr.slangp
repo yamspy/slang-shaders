@@ -1,5 +1,6 @@
 #reference "crt-sony-megatron.slangp"
 
+hcrt_hdr = "1.000000"
 hcrt_crt_resolution = "0.000000"
 hcrt_colour_system = "0.000000"
 hcrt_white_temperature = "2800.000000"

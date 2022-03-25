@@ -421,7 +421,7 @@ vec3 LinearToDCIP3(const vec3 colour)
 
 vec3 GammaCorrect(const vec3 scanline_colour)
 {
-   if(HCRT_HDR > 0.0f)
+   if(HCRT_HDR < 1.0f)
    {
       return HCRT_OUTPUT_COLOUR_SPACE == 0.0f ? LinearTosRGB(scanline_colour) : LinearToDCIP3(scanline_colour);
    }
