@@ -217,7 +217,7 @@ vec3 ColourGrade(const vec3 colour)
 
    const vec3 graded          = BrightnessContrastSaturation(linear); 
 
-   const vec3 gamut           = kPhosphorGamut[colour_system] * graded;
+   const vec3 gamut           = (HCRT_HDR == 0.0f) && (HCRT_OUTPUT_COLOUR_SPACE == 0.0f) ? graded : kPhosphorGamut[colour_system] * graded;
 
    const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, gamut);
 
