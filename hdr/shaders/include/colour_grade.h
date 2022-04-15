@@ -93,28 +93,30 @@ float r601r709ToLinear_1(const float channel)
 
 vec3 r601r709ToLinear(const vec3 colour)
 {
-	return vec3(r601r709ToLinear_1(colour.r), r601r709ToLinear_1(colour.g), r601r709ToLinear_1(colour.b));
+	//return vec3(r601r709ToLinear_1(colour.r), r601r709ToLinear_1(colour.g), r601r709ToLinear_1(colour.b));
+   return pow(colour, vec3((1.0f / 0.45f) + HCRT_GAMMA));
 }
 
-float LinearTor601r709_1(const float channel)
-{
-	return (channel >= 0.018f) ? pow(channel * 1.099f, 0.45f) - 0.099f : channel * 4.5f;
-}
+//float LinearTor601r709_1(const float channel)
+//{
+//	return (channel >= 0.018f) ? pow(channel * 1.099f, 0.45f) - 0.099f : channel * 4.5f;
+//}
 
-vec3 LinearTor601r709(const vec3 colour)
-{
-	return vec3(LinearTor601r709_1(colour.r), LinearTor601r709_1(colour.g), LinearTor601r709_1(colour.b));
-}
+//vec3 LinearTor601r709(const vec3 colour)
+//{
+//	return vec3(LinearTor601r709_1(colour.r), LinearTor601r709_1(colour.g), LinearTor601r709_1(colour.b));
+//}
 
 // SDR Colour output spaces
 float sRGBToLinear_1(const float channel)
 {
-	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
+	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f) : channel * (1.0f / 12.92f);
 }
 
 vec3 sRGBToLinear(const vec3 colour)
 {
-	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
+	//return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
+   return pow(colour, vec3(2.4f));
 }
 
 float LinearTosRGB_1(const float channel)
@@ -124,7 +126,8 @@ float LinearTosRGB_1(const float channel)
 
 vec3 LinearTosRGB(const vec3 colour)
 {
-	return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
+	//return vec3(LinearTosRGB_1(colour.r), LinearTosRGB_1(colour.g), LinearTosRGB_1(colour.b));
+   return pow(colour, vec3(1.0f / 2.4f));
 }
 
 vec3 LinearToDCIP3(const vec3 colour)
@@ -215,11 +218,11 @@ vec3 ColourGrade(const vec3 colour)
 
    const vec3 linear          = r601r709ToLinear(colour);
 
-   const vec3 graded          = BrightnessContrastSaturation(linear); 
-
-   const vec3 gamut           = (HCRT_HDR == 0.0f) && (HCRT_OUTPUT_COLOUR_SPACE == 0.0f) ? graded : kPhosphorGamut[colour_system] * graded;
+   const vec3 gamut           = linear; // (HCRT_HDR == 0.0f) && (HCRT_OUTPUT_COLOUR_SPACE == 0.0f) ? linear : kPhosphorGamut[colour_system] * linear;
 
    const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, gamut);
 
-   return clamp(XYZ_to_sRGB * white_point, 0.0f, 1.0f);
+   const vec3 graded          = BrightnessContrastSaturation(white_point); 
+
+   return graded;
 }

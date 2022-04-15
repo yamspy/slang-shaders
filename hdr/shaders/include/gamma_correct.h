@@ -1,13 +1,4 @@
 // SDR Colour output spaces
-float sRGBToLinear_1(const float channel)
-{
-	return (channel > 0.04045f) ? pow((channel + 0.055f) * (1.0f / 1.055f), 2.4f + HCRT_GAMMA) : channel * (1.0f / 12.92f);
-}
-
-vec3 sRGBToLinear(const vec3 colour)
-{
-	return vec3(sRGBToLinear_1(colour.r), sRGBToLinear_1(colour.g), sRGBToLinear_1(colour.b));
-}
 
 float LinearTosRGB_1(const float channel)
 {
