@@ -33,7 +33,7 @@ layout(push_constant) uniform Push
    float hcrt_max_nits;
    float hcrt_paper_white_nits;
    float hcrt_expand_gamut;
-   float hcrt_gamma;
+   float hcrt_gamma_out;
 
    float hcrt_lcd_resolution;
    float hcrt_lcd_subpixel;
@@ -93,7 +93,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_MAX_NITS                        params.hcrt_max_nits
 #define HCRT_PAPER_WHITE_NITS                params.hcrt_paper_white_nits
 #define HCRT_EXPAND_GAMUT                    params.hcrt_expand_gamut
-#define HCRT_GAMMA                           params.hcrt_gamma
+#define HCRT_GAMMA_OUT                       params.hcrt_gamma_out
 
 #define HCRT_LCD_RESOLUTION                  params.hcrt_lcd_resolution 
 #define HCRT_LCD_SUBPIXEL                    params.hcrt_lcd_subpixel
