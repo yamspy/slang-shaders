@@ -35,11 +35,8 @@ filter_linear5 = true
 scale_type5 = source
 scale5 = 1.0
 
-parameters = "video_scale;SCALE;OUT_X;OUT_Y;adjacent_texel_alpha_blending;pixel_opacity;shadow_opacity"
-video_scale = "3.0"
-SCALE = "0.6667"
-OUT_X = "1600.0"
-OUT_Y = "800.0"
+parameters = "video_scale;adjacent_texel_alpha_blending;pixel_opacity;shadow_opacity"
+video_scale = "2.0"
 
 textures = COLOR_PALETTE;BACKGROUND;BORDER
 COLOR_PALETTE = resources/dmg-palette.png

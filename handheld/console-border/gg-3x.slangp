@@ -12,10 +12,8 @@ shader1 = "shader-files/gb-pass-5.slang"
 filter_linear1 = "true"
 wrap_mode1 = "clamp_to_border"
 
-parameters = "SCALE;OUT_X;OUT_Y"
-SCALE = "1.0"
-OUT_X = "2400.0"
-OUT_Y = "1200.0"
+parameters = "video_scale"
+video_scale = "3.0"
 
 textures = "BORDER"
 BORDER = "resources/gg-border-square-4x.png"

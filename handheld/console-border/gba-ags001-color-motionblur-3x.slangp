@@ -28,7 +28,5 @@ textures = BORDER
 BORDER = resources/gba-border-square-4x.png
 BORDER_linear = true
 
-parameters = "SCALE;OUT_X;OUT_Y"
-SCALE = "3.0"
-OUT_X = "9600.0"
-OUT_Y = "4800.0"
+parameters = "video_scale"
+video_scale = "3.0"

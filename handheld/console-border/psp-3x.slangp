@@ -12,11 +12,9 @@ shader1 = "shader-files/gb-pass-5.slang"
 filter_linear1 = "true"
 wrap_mode1 = "clamp_to_border"
 
-parameters = "SCALE;OUT_X;OUT_Y;GRID_STRENGTH"
+parameters = "video_scale;GRID_STRENGTH"
 GRID_STRENGTH = 0.10
-SCALE = "0.75"
-OUT_X = "4050.0"
-OUT_Y = "2025.0"
+video_scale = "3.0"
 
 textures = "BORDER"
 BORDER = "resources/psp border.png"

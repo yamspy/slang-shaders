@@ -23,10 +23,8 @@ textures = BORDER
 BORDER = resources/color-border-square-4x.png
 BORDER_linear = true
 
-parameters = "SCALE;OUT_X;OUT_Y;RSUBPIX_R;RSUBPIX_G;RSUBPIX_B;GSUBPIX_R;GSUBPIX_G;GSUBPIX_B;BSUBPIX_R;BSUBPIX_G;BSUBPIX_B;gain;gamma;blacklevel;ambient;BGR"
-SCALE = "1.0"
-OUT_X = "3200.0"
-OUT_Y = "1600.0"
+parameters = "video_scale;RSUBPIX_R;RSUBPIX_G;RSUBPIX_B;GSUBPIX_R;GSUBPIX_G;GSUBPIX_B;BSUBPIX_R;BSUBPIX_G;BSUBPIX_B;gain;gamma;blacklevel;ambient;BGR"
+video_scale = "4.0"
 RSUBPIX_R = "0.750000"
 RSUBPIX_G = "0.000000"
 RSUBPIX_B = "0.000000"

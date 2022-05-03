@@ -39,11 +39,8 @@ BACKGROUND_linear = true
 BORDER = resources/pocket-border-square-4x.png
 BORDER_linear = true
 
-parameters = "video_scale;SCALE;OUT_X;OUT_Y;screen_light;grey_balance;response_time;blending_mode"
+parameters = "video_scale;screen_light;grey_balance;response_time;blending_mode"
 video_scale = "4.0"
-SCALE = "1.0"
-OUT_X = "3200.0"
-OUT_Y = "1600.0"
 screen_light = "1.4"
 grey_balance = 3.0
 response_time = 0.444

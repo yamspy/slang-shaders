@@ -20,11 +20,9 @@ shader3 = "shader-files/gb-pass-5.slang"
 filter_linear3 = "true"
 wrap_mode3 = "clamp_to_border"
 
-parameters = "SCALE;OUT_X;OUT_Y;GRID_STRENGTH;mixfactor"
+parameters = "video_scale;GRID_STRENGTH;mixfactor"
 GRID_STRENGTH = "0.150000"
-SCALE = "1.0"
-OUT_X = "1600.0"
-OUT_Y = "800.0"
+video_scale = "2.0"
 mixfactor = "0.50"
 
 textures = "BORDER"
