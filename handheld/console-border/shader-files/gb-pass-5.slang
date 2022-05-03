@@ -4,14 +4,14 @@ layout(push_constant) uniform Push
 {
 	vec4 OutputSize;
 	vec4 SourceSize;
-	float SCALE;
-	float OUT_X;
-	float OUT_Y;
+	float video_scale;
 } params;
 
-#pragma parameter SCALE "Box Scale" 0.6667 0.6667 1.5 0.33333
-#pragma parameter OUT_X "Out X" 1600.0 1600.0 4800.0 8000.0
-#pragma parameter OUT_Y "Out Y" 800.0 800.0 2400.0 400.0
+#pragma parameter video_scale "Video Scale" 3.0 2.0 20.0 1.0
+
+vec2 middle	= vec2(0.5, 0.5);
+vec2 screen_scale = params.OutputSize.xy * params.SourceSize.zw;
+vec2 border_scale = vec2(800, 400) * params.video_scale;
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -27,14 +27,10 @@ layout(location = 1) out vec2 tex_border;
 void main()
 {
 	gl_Position	=	global.MVP * Position;
-	vec2 scale	=	(params.OutputSize.xy * params.SourceSize.zw) / params.SCALE;
-	vec2 middle	=	vec2(0.5, 0.5);
-	vec2 diff	=	TexCoord.xy - middle;
-	vTexCoord	=	middle + diff * scale;
 
-	middle		=	vec2(0.5, 0.5);
-	vec2 dist	=	TexCoord - middle;
-	tex_border	=	middle + dist * params.OutputSize.xy / vec2(params.OUT_X, params.OUT_Y);
+	vec2 diff	=	TexCoord.xy - middle;
+	vTexCoord	=	middle + diff * screen_scale;
+	tex_border	=	middle + diff * params.OutputSize.xy / border_scale;
 }
 
 #pragma stage fragment
