@@ -10,7 +10,8 @@ shader1 = "shader-files/border-auto-scale.slang"
 filter_linear1 = "true"
 wrap_mode1 = "clamp_to_border"
 
-parameters = "GRID_STRENGTH"
+parameters = "border_texture_scale;GRID_STRENGTH"
+border_texture_scale = 2.5
 GRID_STRENGTH = 0.15
 
 textures = "BORDER"
