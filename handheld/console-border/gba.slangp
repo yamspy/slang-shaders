@@ -11,18 +11,15 @@ filter_linear1 = false
 shader2 = "../shaders/lcd-cgwg/lcd-grid.slang"
 filter_linear2 = "false"
 wrap_mode2 = "clamp_to_border"
-scale_type_x2 = "source"
-scale_x2 = "5.000000"
-scale_type_y2 = "source"
-scale_y2 = "5.000000"
+scale_type2 = "source"
+scale2 = "4.0"
 
-shader3 = "shader-files/gb-pass-5.slang"
+shader3 = "shader-files/border-auto-scale.slang"
 filter_linear3 = "true"
 wrap_mode3 = "clamp_to_border"
 
-parameters = "video_scale;GRID_STRENGTH;mixfactor"
+parameters = "GRID_STRENGTH;mixfactor"
 GRID_STRENGTH = "0.150000"
-video_scale = "5.0"
 mixfactor = "0.50"
 
 textures = "BORDER"

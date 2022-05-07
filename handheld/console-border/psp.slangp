@@ -3,18 +3,15 @@ shaders = "2"
 shader0 = "../shaders/lcd-cgwg/lcd-grid.slang"
 filter_linear0 = "false"
 wrap_mode0 = "clamp_to_border"
-scale_type_x0 = "source"
-scale_x0 = "4.000000"
-scale_type_y0 = "source"
-scale_y0 = "4.000000"
+scale_type0 = "source"
+scale0 = "4.0"
 
-shader1 = "shader-files/gb-pass-5.slang"
+shader1 = "shader-files/border-auto-scale.slang"
 filter_linear1 = "true"
 wrap_mode1 = "clamp_to_border"
 
-parameters = "video_scale;GRID_STRENGTH"
-GRID_STRENGTH = 0.10
-video_scale = "3.0"
+parameters = "GRID_STRENGTH"
+GRID_STRENGTH = 0.15
 
 textures = "BORDER"
 BORDER = "resources/psp border.png"
