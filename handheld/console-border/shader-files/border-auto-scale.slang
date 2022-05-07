@@ -5,14 +5,11 @@ layout(push_constant) uniform Push
 	vec4 OutputSize;
 	vec4 SourceSize;
 	vec4 OriginalSize;
-	float video_scale;
 } params;
-
-#pragma parameter video_scale "Video Scale" 3.0 2.0 20.0 1.0
 
 vec2 middle	= vec2(0.5, 0.5);
 vec2 screen_scale = params.OutputSize.xy * params.SourceSize.zw;
-vec2 border_scale = vec2(800, 400) * params.video_scale;
+vec2 border_scale = vec2(800, 400) * (params.SourceSize.y / params.OriginalSize.y);
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
