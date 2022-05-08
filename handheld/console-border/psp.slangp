@@ -11,7 +11,7 @@ filter_linear1 = "true"
 wrap_mode1 = "clamp_to_border"
 
 parameters = "border_texture_scale;GRID_STRENGTH"
-border_texture_scale = 2.5
+border_texture_scale = 2.4
 GRID_STRENGTH = 0.15
 
 textures = "BORDER"
