@@ -322,6 +322,26 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       weights = slot[w][z];
       return weights;
    }
+	
+   else if(phosphor_layout == 22){
+      // black and white aperture; good for weird subpixel layouts and low brightness; good for 1080p and lower
+      vec3 bw3[3] = vec3[](black, white, white);
+      
+      z = int(floor(mod(coord.x, 3.0)));
+      
+      weights = bw3[z];
+      return weights;
+   }
+
+   else if(phosphor_layout == 23){
+      // black and white aperture; good for weird subpixel layouts and low brightness; good for 4k 
+      vec3 bw4[4] = vec3[](black, black, white, white);
+      
+      z = int(floor(mod(coord.x, 4.0)));
+      
+      weights = bw4[z];
+      return weights;
+   }
 
    else return weights;
 }
@@ -640,6 +660,28 @@ vec3 mask_weights_alpha(vec2 coord, float mask_intensity, int phosphor_layout, o
       
       weights = slot[w][z];
       alpha = 21./96.;
+      return weights;
+   }
+	
+   else if(phosphor_layout == 22){
+      // black and white aperture; good for weird subpixel layouts and low brightness; good for 1080p and lower
+      vec3 bw3[3] = vec3[](black, white, white);
+      
+      z = int(floor(mod(coord.x, 3.0)));
+      
+      weights = bw3[z];
+      alpha = 2./3.;
+      return weights;
+   }
+
+   else if(phosphor_layout == 23){
+      // black and white aperture; good for weird subpixel layouts and low brightness; good for 4k 
+      vec3 bw4[4] = vec3[](black, black, white, white);
+      
+      z = int(floor(mod(coord.x, 4.0)));
+      
+      weights = bw4[z];
+      alpha = 0.5;
       return weights;
    }
 
