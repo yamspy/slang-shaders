@@ -96,16 +96,16 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	mat4 MVP;
 } global;
 
-#pragma parameter ApplyBloom "          Apply Bloom" 1 0 1 1
+#pragma parameter ApplyBloom        "          Apply Bloom" 1 0 1 1
 #define ApplyBloom params.ApplyBloom
 
-#pragma parameter fExposure "          Exposure" 0.2 0 1 0.001
+#pragma parameter fExposure         "          Exposure" 0.2 0 1 0.01
 #define fExposure params.fExposure
 
-#pragma parameter fDirt_Intensity "          Dirt Intensity" 0 0 1 0.001
+#pragma parameter fDirt_Intensity   "          Dirt Intensity" 0 0 1 0.01
 #define fDirt_Intensity params.fDirt_Intensity
 
-#pragma parameter iDebug    "          Debug: Show Blur Pass" 0 0 1 1
+#pragma parameter iDebug            "          Debug: Show Bloom Contribution" 0 0 1 1
 #define iDebug params.iDebug
 
 #pragma stage vertex
@@ -178,26 +178,26 @@ vec4 PS_Blend(vec2 uv){
     bloom /= 8;
 
     // TODO need to use the feedback, also the blend is possibly the last pass
-// #if !MAGICBLOOM_NOADAPT
+#if !MAGICBLOOM_NOADAPT
     float exposure = fExposure / max(texture(tMagicBloom_Adapt, vec2(0.0)).x, 0.00001);
     bloom = tonemap(bloom, exposure);
-// #else
+#else
     // Without adaptation it seems 100.0 exposure is needed for bloom to look bright enough.
-    // bloom = tonemap(bloom, 100.0);
-// #endif
+    bloom = tonemap(bloom, 100.0);
+#endif
 
-    // // #if !MAGICBLOOM_NODIRT
+    #if !MAGICBLOOM_NODIRT
     vec3 dirt = texture(tMagicBloom_Dirt, uv).rgb;
     dirt *= fDirt_Intensity;
     bloom = blend_screen(bloom, dirt * bloom);
-    // // #endif
+    #endif
+
+    vec3 col_max = max(col, bloom);
 
     col = blend_screen(col, bloom);
 
     // If we're to display the bloom texture, we replace col with it.
     col = iDebug == 1 ? bloom : col;
-
-    // col = pow(abs(col), vec3(1/2.2));
 
     return vec4(col, 1.0);
 }
@@ -206,10 +206,8 @@ void main()
 {
     if (ApplyBloom < 1){
         FragColor = texture(PreBloomPass, vTexCoord);
-        // FragColor = pow(abs(FragColor), vec4(1/2.2));
         return;
     }
 
     FragColor = PS_Blend(vTexCoord);
-    // FragColor = pow(abs(FragColor), vec4(1/2.2));
 }

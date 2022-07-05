@@ -99,20 +99,23 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	mat4 MVP;
 } global;
 
-#pragma parameter ApplyBloom "          Apply Bloom" 1 0 1 1
+#pragma parameter ApplyBloom            "          Apply Bloom" 1 0 1 1
 #define ApplyBloom params.ApplyBloom
 
-#pragma parameter fAdapt_Speed "          Adaptation Speed" 1 0.001 1 0.001
-#define fAdapt_Speed params.fAdapt_Speed
+#pragma parameter fExposure             "          Exposure" 0.2 0 1 0.01
+#define fExposure params.fExposure
 
-#pragma parameter fAdapt_Sensitivity "          Adaptation Sensitivity" 1 0 3 0.001
+#pragma parameter fAdapt_Sensitivity    "          Adaptation Sensitivity" 1 0 3 0.01
 float fAdapt_Sensitivity = params.fAdapt_Sensitivity;
 
-#pragma parameter f2Adapt_Clip_Min "          Adaptation Min" 0 0 3 0.001
+#pragma parameter f2Adapt_Clip_Min      "          Adaptation Min" 0 0 3 0.01
 #define f2Adapt_Clip_Min params.f2Adapt_Clip_Min
 
-#pragma parameter f2Adapt_Clip_Max "          Adaptation Max" 1 0 3 0.001
+#pragma parameter f2Adapt_Clip_Max      "          Adaptation Max" 1 0 3 0.01
 #define f2Adapt_Clip_Max params.f2Adapt_Clip_Max
+
+#pragma parameter fAdapt_Speed          "          Adaptation Speed" 1 0.001 1 0.01
+#define fAdapt_Speed params.fAdapt_Speed
 
 
 #pragma stage vertex
