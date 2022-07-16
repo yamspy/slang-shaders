@@ -10,7 +10,7 @@ How to use it:
 Multiply your image by the vec3 output:
 FragColor.rgb *= mask_weights(gl_FragCoord.xy, 1.0, 1);
 
-In the vec3 version, the alpha channel stores the number of lit subpixels per pixel for use in brightness-loss compensation efforts.
+In the "alpha" version, the alpha channel stores the number of lit subpixels per pixel for use in brightness-loss compensation efforts.
 
 The function needs to be tiled across the screen using the physical pixels, e.g.
 gl_FragCoord (the "vec2 coord" input). In the case of slang shaders, we use
@@ -21,7 +21,7 @@ effect should be. Full-strength red, green and blue subpixels on a white pixel
 are the ideal, and are achieved with an intensity of 1.0, though this darkens
 the image significantly and may not always be desirable.
 
-The "phosphor_layout" (int value between 0 and 19) determines which phophor
+The "phosphor_layout" (int value between 0 and 24) determines which phophor
 layout to apply. 0 is no mask/passthru.
 
 Many of these mask arrays are adapted from cgwg's crt-geom-deluxe LUTs, and
@@ -340,6 +340,24 @@ vec3 mask_weights(vec2 coord, float mask_intensity, int phosphor_layout){
       z = int(floor(mod(coord.x, 4.0)));
       
       weights = bw4[z];
+      return weights;
+   }
+   
+   else if(phosphor_layout == 24){
+      // shadowmask courtesy of Louis. Suitable for lower TVL on high-res 4K+ screens
+      vec3 shadow[6][10] = {
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+      };
+      
+      w = int(floor(mod(coord.y, 6.0)));
+      z = int(floor(mod(coord.x, 10.0)));
+      
+      weights = shadow[w][z];
       return weights;
    }
 
@@ -682,6 +700,25 @@ vec3 mask_weights_alpha(vec2 coord, float mask_intensity, int phosphor_layout, o
       
       weights = bw4[z];
       alpha = 0.5;
+      return weights;
+   }
+   
+   else if(phosphor_layout == 24){
+      // shadowmask courtesy of Louis. Suitable for lower TVL on high-res 4K+ screens
+      vec3 shadow[6][10] = {
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {green, cyan, blue, blue, blue, red, red, red, yellow, green},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+         {red, red, red, yellow, green, green, cyan, blue, blue, blue},
+      };
+      
+      w = int(floor(mod(coord.y, 6.0)));
+      z = int(floor(mod(coord.x, 10.0)));
+      
+      weights = shadow[w][z];
+      alpha = 72./180.;
       return weights;
    }
 
