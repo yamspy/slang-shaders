@@ -1,7 +1,7 @@
 #version 450
 
 /*
-   Hyllian's xBR-lv2 Shader
+   Hyllian's xBR-lv1 Shader
 
    Copyright (C) 2011-2022 Hyllian - sergiogdb@gmail.com
 
@@ -34,16 +34,13 @@ layout(push_constant) uniform Push
 	vec4 OutputSize;
 	uint FrameCount;
 	float XBR_EQ_THRESHOLD;
-	float XBR_LV2_COEFFICIENT;
 	float XBR_BLENDING;
 } params;
 
 #pragma parameter XBR_EQ_THRESHOLD "COLOR DISTINCTION THRESHOLD" 0.32 0.0 1.0 0.01
-#pragma parameter XBR_LV2_COEFFICIENT "SMOOTHNESS THRESHOLD" 0.30 0.0 1.0 0.1
 #pragma parameter XBR_BLENDING "BLENDING [ NOBLEND | AA ]" 1.0 0.0 1.0 1.0
 
 #define XBR_EQ_THRESHOLD params.XBR_EQ_THRESHOLD
-#define XBR_LV2_COEFFICIENT params.XBR_LV2_COEFFICIENT
 #define XBR_BLENDING params.XBR_BLENDING
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -56,18 +53,11 @@ layout(std140, set = 0, binding = 0) uniform UBO
 //#define CORNER_B
 #define CORNER_C
 
-#define lv2_cf (XBR_LV2_COEFFICIENT + 2.0)
 #define saturate(c) clamp(c, 0.0, 1.0)
 
 const  vec4 Ao = vec4( 1.0, -1.0, -1.0, 1.0 );
 const  vec4 Bo = vec4( 1.0,  1.0, -1.0,-1.0 );
 const  vec4 Co = vec4( 1.5,  0.5, -0.5, 0.5 );
-const  vec4 Ax = vec4( 1.0, -1.0, -1.0, 1.0 );
-const  vec4 Bx = vec4( 0.5,  2.0, -0.5,-2.0 );
-const  vec4 Cx = vec4( 1.0,  1.0, -0.5, 0.0 );
-const  vec4 Ay = vec4( 1.0, -1.0, -1.0, 1.0 );
-const  vec4 By = vec4( 2.0,  0.5, -2.0,-0.5 );
-const  vec4 Cy = vec4( 2.0,  0.0, -1.0, 0.5 );
 const  vec4 Ci = vec4(0.25, 0.25, 0.25, 0.25);
 
 const vec3 v2f = vec3( 65536, 256, 1); // vec to float encode
@@ -180,11 +170,11 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 void main()
 {
-    vec4 edri, edr, edr_l, edr_u, px; // px = pixel, edr = edge detection rule
-    vec4 irlv0, irlv1, irlv2l, irlv2u;
-    vec4 fx, fx_l, fx_u; // inequations of straight lines.
+    vec4 edri, edr, px; // px = pixel, edr = edge detection rule
+    vec4 irlv0, irlv1;
+    vec4 fx; // inequations of straight lines.
     vec3 res1, res2;
-    vec4 fx45i, fx45, fx30, fx60;
+    vec4 fx45i, fx45;
 
     vec2 fp  = fract(texCoord*params.SourceSize.xy);
 
@@ -240,8 +230,6 @@ void main()
 
     // These inequations define the line below which interpolation occurs.
     fx    = ( Ao*fp.y + Bo*fp.x );
-    fx_l  = ( Ax*fp.y + Bx*fp.x );
-    fx_u  = ( Ay*fp.y + By*fp.x );
 
     irlv0 = diff(e_,f_) * diff(e_,h_);
     irlv1 = irlv0;
@@ -253,45 +241,29 @@ void main()
     irlv1     = saturate(irlv0  * ( neq(f,b) * neq(f,c) + neq(h,d) * neq(h,g) + eq(e,i) * (neq(f,f4) * neq(f,i4) + neq(h,h5) * neq(h,i5)) + eq(e,g) + eq(e,c)) );
 #endif
 
-    irlv2l = diff(e_,g_) * diff( d_, g_);
-    irlv2u = diff(e_,c_) * diff( b_, c_);
-
     if (XBR_BLENDING == 1.0) {
         vec4 delta  = vec4(aa_factor);
-        vec4 deltaL = vec4(0.5, 1.0, 0.5, 1.0) * aa_factor;
-        vec4 deltaU = deltaL.yxwz;
 
         fx45i = saturate( 0.5 + (fx   - Co - Ci) / delta  );
         fx45  = saturate( 0.5 + (fx   - Co     ) / delta  );
-        fx30  = saturate( 0.5 + (fx_l - Cx     ) / deltaL );
-        fx60  = saturate( 0.5 + (fx_u - Cy     ) / deltaU );
     }
     else {
         fx45i = LT( Co + Ci, fx   );
         fx45  = LT(      Co, fx   );
-        fx30  = LT(      Cx, fx_l );
-        fx60  = LT(      Cy, fx_u );
     }
        
     vec4 wd1 = weighted_distance( e, c,  g, i, h5, f4, h, f);
     vec4 wd2 = weighted_distance( h, d, i5, f, i4,  b, e, i);
 
-    vec4 d_fg = dist4(f, g);
-    vec4 d_hc = dist4(h, c);
-
     edri      = LTE(wd1, wd2) * irlv0;
     edr       = LT( wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
-    edr_l     = LTE( lv2_cf * d_fg, d_hc ) * irlv2l * edr * (NOT(edri.yzwx) * eq(e, c));
-    edr_u     = LTE( lv2_cf * d_hc, d_fg ) * irlv2u * edr * (NOT(edri.wxyz) * eq(e, g));
 
     fx45i = edri   * fx45i;
     fx45  = edr    * fx45;
-    fx30  = edr_l  * fx30;
-    fx60  = edr_u  * fx60;
 
     px = LTE(dist4(e,f), dist4(e,h));
 
-    vec4 maximos = max(max(fx30, fx60), max(fx45, fx45i));
+    vec4 maximos = max(fx45, fx45i);
 
     res1 = mix(E, mix(H, F, px.x), maximos.x);
     res2 = mix(E, mix(B, D, px.z), maximos.z);

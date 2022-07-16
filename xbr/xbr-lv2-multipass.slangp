@@ -1,0 +1,10 @@
+shaders = "2"
+shader0 = shaders/xbr-lv2-multipass/xbr-lv2-pass0.slang
+scale_type0 = "source"
+scale0 = "1.000000"
+
+shader1 = shaders/xbr-lv2-multipass/xbr-lv2-pass1.slang
+
+filter_linear0 = "false"
+filter_linear1 = "false"
+

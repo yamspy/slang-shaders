@@ -1,4 +1,10 @@
-shaders = 1
+shaders = 2
 
-shader0 = "shaders/xbr-lv3.slang"
+shader0 = shaders/xbr-lv3.slang
 filter_linear0 = false
+scale_type0 = "source"
+scale0 = "3.000000"
+
+shader1 = "shaders/support/b-spline.slang"
+filter_linear1 = false
+
