@@ -1,7 +1,7 @@
 #version 450
 
 /*
-   Hyllian's xBR-lv2 - pass1 Shader
+   Hyllian's xBR-lv3 - pass1b Shader
    
    Copyright (C) 2011-2022 Hyllian - sergiogdb@gmail.com
 
@@ -59,6 +59,13 @@ const  vec4 By = vec4( 2.0,  0.5, -2.0,-0.5 );
 const  vec4 Cy = vec4( 2.0,  0.0, -1.0, 0.5 );
 const  vec4 Ci = vec4(0.25, 0.25, 0.25, 0.25);
 
+const  vec4 Az = vec4( 6.0, -2.0, -6.0, 2.0 );
+const  vec4 Bz = vec4( 2.0, 6.0, -2.0, -6.0 );
+const  vec4 Cz = vec4( 5.0, 3.0, -3.0, -1.0 );
+const  vec4 Aw = vec4( 2.0, -6.0, -2.0, 6.0 );
+const  vec4 Bw = vec4( 6.0, 2.0, -6.0,-2.0 );
+const  vec4 Cw = vec4( 5.0, -1.0, -3.0, 3.0 );
+
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec2 TexCoord;
@@ -96,7 +103,7 @@ layout(location = 2) in vec4 t2;
 layout(location = 3) in float aa_factor;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D Original;
+layout(set = 0, binding = 3) uniform sampler2D xbr3x;
 
 // Return if A components are less than or equal B ones.
 vec4 LTE(vec4 A, vec4 B)
@@ -126,6 +133,18 @@ vec4 remapFrom01(vec4 v, vec4 low, vec4 high)
     return round(mix(low, high, v));
 }
 
+vec4 unpack_info(float i)
+{
+    vec4 info;
+    info.x = round(modf(i/2.0, i));
+    info.y = round(modf(i/2.0, i));
+    info.z = round(modf(i/2.0, i));
+    info.w = i;
+
+    return info;
+}
+
+/*
 mat4 unpack_info(vec4 i)
 {
     mat4 info;
@@ -135,22 +154,37 @@ mat4 unpack_info(vec4 i)
     info[3] = i;
 
     return transpose(info);
+}*/
+
+mat2x4 unpack_info2(float i)
+{
+    mat2x4 info;
+    info[0].x = round(modf(i/2.0, i));
+    info[0].y = round(modf(i/2.0, i));
+    info[0].z = round(modf(i/2.0, i));
+    info[0].w = round(modf(i/2.0, i));
+    info[1].x = round(modf(i/2.0, i));
+    info[1].y = round(modf(i/2.0, i));
+    info[1].z = round(modf(i/2.0, i));
+    info[1].w = i;
+
+    return info;
 }
 
 void main()
 {
-    vec4 px; // px = pixel, edr = edge detection rule
-    vec4 fx, fx_l, fx_u; // inequations of straight lines.
+    vec4 edri, edr, edr_l, edr_u, edr3_l, edr3_u, px; // px = pixel, edr = edge detection rule
+    vec4 fx, fx_l, fx_u, fx3_l, fx3_u; // inequations of straight lines.
     vec3 res1, res2;
-    vec4 fx45i, fx45, fx30, fx60;
+    vec4 fx45i, fx45, fx30, fx60, fx15, fx75;
 
     vec2 fp = fract(vTexCoord*global.SourceSize.xy);
 
-    vec3 B  = texture(Original, t1.xy).rgb;
-    vec3 D  = texture(Original, t2.xw).rgb;
-    vec3 E  = texture(Original, t2.yw).rgb;
-    vec3 F  = texture(Original, t2.zw).rgb;
-    vec3 H  = texture(Original, t1.xw).rgb;
+    vec3 B  = texture(xbr3x, t1.xy).rgb;
+    vec3 D  = texture(xbr3x, t2.xw).rgb;
+    vec3 E  = texture(xbr3x, t2.yw).rgb;
+    vec3 F  = texture(xbr3x, t2.zw).rgb;
+    vec3 H  = texture(xbr3x, t1.xw).rgb;
 
     mat4x3 e  = mat4x3(E, E, E, E);
     mat4x3 f  = mat4x3(F, B, D, H);
@@ -160,34 +194,54 @@ void main()
     fx   = (Ao*fp.y+Bo*fp.x); 
     fx_l = (Ax*fp.y+Bx*fp.x);
     fx_u = (Ay*fp.y+By*fp.x);
+    fx3_l = ( Az*fp.y + Bz*fp.x );
+    fx3_u = ( Aw*fp.y + Bw*fp.x );
 
     if (XBR_BLENDING == 1.0) {
         vec4 delta  = vec4(aa_factor);
         vec4 deltaL = vec4(0.5, 1.0, 0.5, 1.0) * aa_factor;
         vec4 deltaU = deltaL.yxwz;
 
-        fx45  = saturate( 0.5 + (fx   - Co     ) / delta  );
-        fx30  = saturate( 0.5 + (fx_l - Cx     ) / deltaL );
-        fx60  = saturate( 0.5 + (fx_u - Cy     ) / deltaU );
-        fx45i = saturate( 0.5 + (fx   - Co - Ci) / delta  );
+        fx45  = saturate( 0.5 + (fx    - Co     ) / delta  );
+        fx30  = saturate( 0.5 + (fx_l  - Cx     ) / deltaL );
+        fx60  = saturate( 0.5 + (fx_u  - Cy     ) / deltaU );
+        fx45i = saturate( 0.5 + (fx    - Co - Ci) / delta  );
+        fx15  = saturate( 0.5 + (fx3_l - Cz     ) / deltaL );
+        fx75  = saturate( 0.5 + (fx3_u - Cw     ) / deltaU );
     }
     else {
         fx45  = LT(      Co, fx   );
         fx30  = LT(      Cx, fx_l );
         fx60  = LT(      Cy, fx_u );
         fx45i = LT( Co + Ci, fx   );
+        fx15  = LT(      Cz, fx3_l );
+        fx75  = LT(      Cw, fx3_u );
     }
 
-    mat4 edr = unpack_info(remapFrom01(texture(Source, vTexCoord), low, high));
+    vec4 info  = texture(Source, vTexCoord);
 
-    fx45  = edr[0] * fx45;
-    fx30  = edr[1] * fx30;
-    fx60  = edr[2] * fx60;
-    fx45i = edr[3] * fx45i;
+    vec4 i = remapFrom01(info, low, high);
 
-    px = LTE(dist4(e,f), dist4(e,h));
+    mat2x4 edx = unpack_info2(i.x);
+    mat2x4 edy = unpack_info2(i.y);
+    mat2x4 edz = unpack_info2(i.z);
 
-    vec4 maximos = max(max(fx30, fx60), max(fx45, fx45i));
+    edr    = edx[0];
+    edr_l  = edy[0];
+    edr_u  = edz[0];
+    edri   = unpack_info(i.w);
+    edr3_l = edx[1];
+    edr3_u = edy[1];
+    px     = edz[1];
+
+    fx45i = edri   * fx45i;
+    fx45  = edr    * fx45;
+    fx30  = edr_l  * fx30;
+    fx60  = edr_u  * fx60;
+    fx15  = edr3_l * fx15;
+    fx75  = edr3_u * fx75;
+
+    vec4 maximos = max(max(max(fx15, fx30), max(fx60, fx75)), max(fx45, fx45i));
 
     res1 = mix(E, mix(H, F, px.x), maximos.x);
     res2 = mix(E, mix(B, D, px.z), maximos.z);
