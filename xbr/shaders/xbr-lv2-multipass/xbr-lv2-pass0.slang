@@ -232,7 +232,7 @@ void main()
     vec4 f4_  = h5_.yzwx;
 
     irlv0     = diff(e_, f_) * diff(e_, h_);
-    irlv1     = saturate( irlv0  * ( neq(f,b) * neq(f,c) + neq(h,d) * neq(h,g) + eq(e,i) * (neq(f,f4) * neq(f,i4) + neq(h,h5) * neq(h,i5)) + eq(e,g) + eq(e,c)) );
+    irlv1     = irlv0;
 
 #ifdef CORNER_B
     irlv1      = saturate(irlv0 * ( neq(f,b) * neq(h,d) + eq(e,i) * neq(f,i4) * neq(h,i5) + eq(e,g) + eq(e,c) ) );
