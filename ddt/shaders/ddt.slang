@@ -100,7 +100,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 void main()
 {
-float2 pos = frac(loc * 1.00001)-float2(0.4999, 0.4999); // pos = pixel position
+float2 pos = frac(loc)-float2(0.5, 0.5); // pos = pixel position
 	float2 dir = sign(pos); // dir = pixel direction
 
 	float2 g1 = dir*t1.xy;
@@ -119,8 +119,8 @@ float2 pos = frac(loc * 1.00001)-float2(0.4999, 0.4999); // pos = pixel position
 	float p = abs(pos.x);
 	float q = abs(pos.y);
 
-	float k = distance(pos,g1);
-	float l = distance(pos,g2);
+	float k = distance(pos,g1 * params.SourceSize.xy);
+	float l = distance(pos,g2 * params.SourceSize.xy);
 
 	float wd1 = abs(a-d);
 	float wd2 = abs(b-c);
