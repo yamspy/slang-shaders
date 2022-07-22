@@ -126,6 +126,18 @@ vec4 remapFrom01(vec4 v, vec4 low, vec4 high)
     return round(mix(low, high, v));
 }
 
+vec4 unpack_info(float i)
+{
+    vec4 info;
+    info.x = round(modf(i/2.0, i));
+    info.y = round(modf(i/2.0, i));
+    info.z = round(modf(i/2.0, i));
+    info.w = i;
+
+    return info;
+}
+
+/*
 mat4 unpack_info(vec4 i)
 {
     mat4 info;
@@ -135,11 +147,26 @@ mat4 unpack_info(vec4 i)
     info[3] = i;
 
     return transpose(info);
+}*/
+
+mat2x4 unpack_info2(float i)
+{
+    mat2x4 info;
+    info[0].x = round(modf(i/2.0, i));
+    info[0].y = round(modf(i/2.0, i));
+    info[0].z = round(modf(i/2.0, i));
+    info[0].w = round(modf(i/2.0, i));
+    info[1].x = round(modf(i/2.0, i));
+    info[1].y = round(modf(i/2.0, i));
+    info[1].z = round(modf(i/2.0, i));
+    info[1].w = i;
+
+    return info;
 }
 
 void main()
 {
-    vec4 px; // px = pixel, edr = edge detection rule
+    vec4 edri, edr, edr_l, edr_u, px; // px = pixel, edr = edge detection rule
     vec4 fx, fx_l, fx_u; // inequations of straight lines.
     vec3 res1, res2;
     vec4 fx45i, fx45, fx30, fx60;
@@ -178,14 +205,24 @@ void main()
         fx45i = LT( Co + Ci, fx   );
     }
 
-    mat4 edr = unpack_info(remapFrom01(texture(Source, vTexCoord), low, high));
+    vec4 info  = texture(Source, vTexCoord);
 
-    fx45  = edr[0] * fx45;
-    fx30  = edr[1] * fx30;
-    fx60  = edr[2] * fx60;
-    fx45i = edr[3] * fx45i;
+    vec4 i = remapFrom01(info, low, high);
 
-    px = LTE(dist4(e,f), dist4(e,h));
+    mat2x4 edx = unpack_info2(i.x);
+    mat2x4 edy = unpack_info2(i.y);
+    mat2x4 edz = unpack_info2(i.z);
+
+    edr    = edx[0];
+    edr_l  = edy[0];
+    edr_u  = edz[0];
+    edri   = unpack_info(i.w);
+    px     = edz[1];
+
+    fx45i = edri   * fx45i;
+    fx45  = edr    * fx45;
+    fx30  = edr_l  * fx30;
+    fx60  = edr_u  * fx60;
 
     vec4 maximos = max(max(fx30, fx60), max(fx45, fx45i));
 
