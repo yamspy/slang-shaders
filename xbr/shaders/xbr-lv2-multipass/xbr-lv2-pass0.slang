@@ -31,13 +31,16 @@ layout(push_constant) uniform Push
 {
     float XBR_EQ_THRESHOLD;
     float XBR_LV2_COEFFICIENT;
+    float SMALL_DETAILS;
 } params;
 
 #pragma parameter XBR_EQ_THRESHOLD "COLOR DISTINCTION THRESHOLD" 0.32 0.0 1.0 0.01
 #pragma parameter XBR_LV2_COEFFICIENT "SMOOTHNESS THRESHOLD" 0.3 0.0 1.0 0.1
+#pragma parameter SMALL_DETAILS "SMALL DETAILS" 0.0 0.0 1.0 1.0
 
 #define XBR_EQ_THRESHOLD params.XBR_EQ_THRESHOLD
 #define XBR_LV2_COEFFICIENT params.XBR_LV2_COEFFICIENT
+#define SMALL_DETAILS params.SMALL_DETAILS
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -58,9 +61,11 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 const vec3 v2f       = vec3( 65536, 256, 1); // vec to float encode
 const vec4 zip       = vec4(  1.0,   2.0,   4.0,   8.0);
+const vec4 zip2      = vec4( 16.0,  32.0,  64.0, 128.0);
 const vec4 low       = vec4(  0.0,   0.0,   0.0,   0.0);
 const vec4 high      = vec4(255.0, 255.0, 255.0, 255.0);
 const vec3 Y         = vec3(0.2627, 0.6780, 0.0593);
+const vec3 Ysd       = vec3( 0.299,  0.587,  0.114);
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -141,7 +146,14 @@ vec4 diff(vec4 A, vec4 B)
 
 float dist(vec3 A, vec3 B)
 {
-    return dot(abs(A-B), Y);
+    if (SMALL_DETAILS < 0.5)
+    {
+        return dot(abs(A-B), Y);
+    }
+    else
+    {
+        return dot(abs(A-B), Ysd);
+    }
 }
 
 
@@ -166,7 +178,14 @@ vec4 neq(mat4x3 A, mat4x3 B)
 // Calculate weighted distance among pixels in some directions.
 vec4 weighted_distance(mat4x3 a, mat4x3 b, mat4x3 c, mat4x3 d, mat4x3 e, mat4x3 f, mat4x3 g, mat4x3 h)
 {
-    return (dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) + 4.0*dist4(g,h));
+    if (SMALL_DETAILS < 0.5)
+    {
+        return (dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) + 4.0*dist4(g,h));
+    }
+    else
+    {
+        return (dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) + 4.0*dist4(g,h) - dist4(b,c) - dist4(e,f));
+    }
 }
 
 
@@ -250,12 +269,17 @@ void main()
     vec4 d_fg = dist4(f, g);
     vec4 d_hc = dist4(h, c);
 
+    float K = (SMALL_DETAILS < 0.5  ? 1.0 : 3.0);
+
     edri      = LTE(wd1, wd2) * irlv0;
-    edr       = LT( wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
+    edr       = LT( K*wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
     edr_l     = LTE( lv2_cf * d_fg, d_hc ) * irlv2l * edr * (NOT(edri.yzwx) * eq(e, c));
     edr_u     = LTE( lv2_cf * d_hc, d_fg ) * irlv2u * edr * (NOT(edri.wxyz) * eq(e, g));
 
-    vec4 info = zip * mat4(edr, edr_l, edr_u, edri);
+    vec4 px = LTE(dist4(e,f), dist4(e,h));
+
+    vec4 info  = zip  * mat4(      edr,     edr_l, edr_u,      edri);
+         info += zip2 * mat4(vec4(0.0), vec4(0.0),    px, vec4(0.0));
 
     FragColor = remapTo01(info, low, high);
 }

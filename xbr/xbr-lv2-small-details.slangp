@@ -1,0 +1,19 @@
+shaders = "3"
+shader0 = shaders/xbr-lv2-multipass/xbr-lv2-pass0.slang
+scale_type0 = "source"
+scale0 = "1.000000"
+
+shader1 = shaders/xbr-lv2-multipass/xbr-lv2-pass1.slang
+scale_type1 = "source"
+scale1 = "3.000000"
+
+shader2 = "shaders/support/b-spline.slang"
+filter_linear2 = false
+
+filter_linear0 = "false"
+filter_linear1 = "false"
+
+parameters = "SMALL_DETAILS"
+
+SMALL_DETAILS = "1.0"
+
