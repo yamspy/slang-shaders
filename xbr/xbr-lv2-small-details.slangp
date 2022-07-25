@@ -13,7 +13,9 @@ filter_linear2 = false
 filter_linear0 = "false"
 filter_linear1 = "false"
 
-parameters = "SMALL_DETAILS"
+parameters = "XBR_LV2_COEFFICIENT;XBR_EQ_THRESHOLD;SMALL_DETAILS"
 
+XBR_LV2_COEFFICIENT = "0.0
+XBR_EQ_THRESHOLD = "0.22"
 SMALL_DETAILS = "1.0"
 
