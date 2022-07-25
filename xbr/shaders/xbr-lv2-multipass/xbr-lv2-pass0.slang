@@ -184,7 +184,7 @@ vec4 weighted_distance(mat4x3 a, mat4x3 b, mat4x3 c, mat4x3 d, mat4x3 e, mat4x3 
     }
     else
     {
-        return (dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) + 4.0*dist4(g,h) - dist4(b,c) - dist4(e,f));
+        return ( (dist4(a,b) + dist4(a,c)) * (dist4(d,e) + dist4(d,f)) + 2.0 * dist4(g,h) * (dist4(c,e)+dist4(b,f)) * (dist4(c,b)+dist4(e,f)) );
     }
 }
 
@@ -269,7 +269,7 @@ void main()
     vec4 d_fg = dist4(f, g);
     vec4 d_hc = dist4(h, c);
 
-    float K = (SMALL_DETAILS < 0.5  ? 1.0 : 3.0);
+    float K = (SMALL_DETAILS < 0.5  ? 1.0 : 1.9);
 
     edri      = LTE(wd1, wd2) * irlv0;
     edr       = LT( K*wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
