@@ -203,13 +203,13 @@ vec2 HSM_GetScaledCoord(vec2 in_viewport_coord,
 		out_placement_scale.x *= inherited_aspect_difference;
 	out_placement_scale = out_placement_scale * offset_scale;
 
-	out_placement_coord = HSM_AddPosScaleToCoord(inherited_placement_coord, inherited_scale, offset_pos, out_placement_scale / inherited_scale);
+	out_placement_coord = HSM_AddPosScaleToCoord(inherited_placement_coord, offset_pos, out_placement_scale / inherited_scale);
 
 	vec2 out_coord = vec2(0.5);
 
 	if (use_inherited_curved_coord == 1)
 	{
-		out_coord = HSM_AddPosScaleToCoord(inherited_coord, inherited_scale, offset_pos, offset_scale);
+		out_coord = HSM_AddPosScaleToCoord(inherited_coord, offset_pos, offset_scale);
 	}
 	else
 	{
@@ -233,7 +233,7 @@ vec2 HSM_GetScaledCoord(vec2 in_viewport_coord,
 
 		// The inherited_coord is already the coord from the inherited space
 		// We only need to apply an offset from this
-		out_coord = HSM_AddPosScaleToCoord(inherited_coord, inherited_scale, offset_pos, drawing_scale / inherited_scale);
+		out_coord = HSM_AddPosScaleToCoord(inherited_coord, offset_pos, drawing_scale / inherited_scale);
 		// out_coord.x -= slide_x;
 	}
 
@@ -244,20 +244,6 @@ vec2 HSM_GetScaledCoord(vec2 in_viewport_coord,
 float GetFade(float current_position, float corner_position, float fade_distance)
 {
 	return smoothstep(corner_position + fade_distance / 2, corner_position - fade_distance / 2, current_position);
-}
-
-vec3 ApplyAmbientImage(vec3 base_image, vec3 ambient_image, float layer_blend_amount, float applyInAddMode, float layerBlendMode) 
-{
-	vec3 outImage = base_image;
-
-	if (HSM_AMBIENT_LIGHTING_OPACITY > 0 && 
-		(applyInAddMode == 1 || layerBlendMode != BLEND_MODE_ADD) && 
-		layer_blend_amount > 0)
-		{
-			outImage = (1 - layer_blend_amount) * base_image.rgb + layer_blend_amount * base_image.rgb * ambient_image.rgb;
-		}
-
-	return outImage;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,20 +283,21 @@ layout(set = 0, binding = 3) uniform sampler2D TubeDiffuseImage;
 layout(set = 0, binding = 4) uniform sampler2D BackgroundImage;
 layout(set = 0, binding = 5) uniform sampler2D BackgroundVertImage;
 layout(set = 0, binding = 6) uniform sampler2D NightLightingImage;
+layout(set = 0, binding = 7) uniform sampler2D NightLighting2Image;
 
-layout(set = 0, binding = 7) uniform sampler2D LEDImage;
-layout(set = 0, binding = 8) uniform sampler2D FrameTextureImage;
-layout(set = 0, binding = 9) uniform sampler2D DeviceImage;
-layout(set = 0, binding = 10) uniform sampler2D DeviceVertImage;
-layout(set = 0, binding = 11) uniform sampler2D DecalImage;
-layout(set = 0, binding = 12) uniform sampler2D CabinetGlassImage;
-layout(set = 0, binding = 13) uniform sampler2D TopLayerImage;
+layout(set = 0, binding = 8) uniform sampler2D LEDImage;
+layout(set = 0, binding = 9) uniform sampler2D FrameTextureImage;
+layout(set = 0, binding = 10) uniform sampler2D DeviceImage;
+layout(set = 0, binding = 11) uniform sampler2D DeviceVertImage;
+layout(set = 0, binding = 12) uniform sampler2D DecalImage;
+layout(set = 0, binding = 13) uniform sampler2D CabinetGlassImage;
+layout(set = 0, binding = 14) uniform sampler2D TopLayerImage;
 
 #ifdef LAYERS_OVER_CRT
-layout(set = 0, binding = 14) uniform sampler2D BR_LayersOverCRTPassFeedback;
+layout(set = 0, binding = 15) uniform sampler2D BR_LayersOverCRTPassFeedback;
 #define PassFeedback BR_LayersOverCRTPassFeedback
 #else
-layout(set = 0, binding = 14) uniform sampler2D BR_LayersUnderCRTPassFeedback;
+layout(set = 0, binding = 15) uniform sampler2D BR_LayersUnderCRTPassFeedback;
 #define PassFeedback BR_LayersUnderCRTPassFeedback
 #endif
 
@@ -335,14 +322,10 @@ void main()
 		return;
 	}
 
-	//-----------------------------------------------------------------------------------------
-	// Night Lighting Image
-	//-----------------------------------------------------------------------------------------
-	// Add Multiplied Image for Darkening
-	// Sample the image and do some color correction
-	vec4 ambient_lighting_image = vec4(1);
-	if (HSM_AMBIENT_LIGHTING_OPACITY > 0)
-		ambient_lighting_image = HSM_GetNightLightingMultiplyColor( HSM_AMBIENT_LIGHTING_SCALE_MODE > 0.5 ? VIEWPORT_UNSCALED_COORD : VIEWPORT_COORD, NightLightingImage );
+	// AMBIENT LIGHTING IMAGES
+	vec4 ambient_image = vec4(1);
+	vec4 ambient2_image = vec4(1);
+	HSM_Fill_Ambient_Images(VIEWPORT_COORD, VIEWPORT_UNSCALED_COORD, HSM_AMBIENT_LIGHTING_SWAP_IMAGES, NightLightingImage, NightLighting2Image, ambient_image, ambient2_image);
 
 	SCREEN_BLACK_EDGE_CURVED_COORD = HSM_GetCurvedCoord(SCREEN_COORD, HSM_TUBE_BLACK_EDGE_CURVATURE_SCALE, SCREEN_ASPECT);
 
@@ -386,8 +369,6 @@ void main()
 
 	// Get a coordinate offset so it is centered around the corner
 	vec2 outermap_coord_warped_ctr_at_screen_corner = abs(tube_curved_coord_ctr) - vec2(0.5);
-
-
 
 	// Have to get the scale of the coordinates so we can figure out the size of the onscreen rectangle of the area 
 	HSM_GetBezelCoords(SCREEN_COORD, 
@@ -531,7 +512,7 @@ void main()
 		frame_base_color_with_noise = mix(frame_base_color, 1.5 * frame_base_color * noise_mask, HSM_FRM_NOISE);
 	}
 
-	vec3 frame_color = hmbz_frame_brightness / 100 * mix(frame_base_color, 1.5 * frame_base_color * noise_mask, 0.6 * HSM_BZL_NOISE);;
+	vec3 frame_color = hmbz_frame_brightness / 100 * mix(frame_base_color, 1.5 * frame_base_color * noise_mask, 0.6 * HSM_FRM_NOISE);
 	vec3 outside_frame_color = hmbz_brightness_shadow * base_color_with_noise;
 
 	vec3 bezel_diffuse_color = mix(sides_color, top_color, top_mask);
@@ -597,11 +578,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			bezel_and_frame_rgba = HSM_ApplyGamma(bezel_and_frame_rgba, HSM_STATIC_LAYERS_GAMMA);
 
-		bezel_and_frame_rgba.rgb = ApplyAmbientImage(bezel_and_frame_rgba.rgb, 
-													 ambient_lighting_image.rgb,
-													 HSM_BZL_AMBIENT_LIGHTING_MULTIPLIER,
-													 1,
-													 HSM_BZL_BLEND_MODE);
+		bezel_and_frame_rgba.rgb = ApplyAmbientImages(bezel_and_frame_rgba.rgb,
+															ambient_image.rgb,
+															ambient2_image.rgb,
+															HSM_BZL_AMBIENT_LIGHTING_MULTIPLIER,
+															HSM_BZL_AMBIENT2_LIGHTING_MULTIPLIER,
+															1,
+															HSM_BZL_BLEND_MODE,
+															HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 
 		float FRAME_AND_BEZEL_MASK = outside_tube_mask * (1 - OUTSIDE_FRAME_MASK);
 
@@ -672,11 +656,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			bg_image = HSM_ApplyGamma(bg_image, HSM_STATIC_LAYERS_GAMMA);
 
-		bg_image.rgb = ApplyAmbientImage(bg_image.rgb, 
-										ambient_lighting_image.rgb,
-										HSM_BG_AMBIENT_LIGHTING_MULTIPLIER,
-										HSM_BG_APPLY_AMBIENT_IN_ADD_MODE,
-										HSM_BG_BLEND_MODE);
+		bg_image.rgb = ApplyAmbientImages(bg_image.rgb, 
+												ambient_image.rgb,
+												ambient2_image.rgb,
+												HSM_BG_AMBIENT_LIGHTING_MULTIPLIER,
+												HSM_BG_AMBIENT2_LIGHTING_MULTIPLIER,
+												HSM_BG_APPLY_AMBIENT_IN_ADD_MODE,
+												HSM_BG_BLEND_MODE,
+												HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 	//----------------------------------------------------
@@ -713,11 +700,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			device_image = HSM_ApplyGamma(device_image, HSM_STATIC_LAYERS_GAMMA);
 
-		device_image.rgb = ApplyAmbientImage(device_image.rgb, 
-											ambient_lighting_image.rgb,
-											HSM_DEVICE_AMBIENT_LIGHTING_MULTIPLIER,
-											HSM_DEVICE_APPLY_AMBIENT_IN_ADD_MODE,
-											HSM_DEVICE_BLEND_MODE);
+		device_image.rgb = ApplyAmbientImages(device_image.rgb, 
+													ambient_image.rgb,
+													ambient2_image.rgb,
+													HSM_DEVICE_AMBIENT_LIGHTING_MULTIPLIER,
+													HSM_DEVICE_AMBIENT2_LIGHTING_MULTIPLIER,
+													HSM_DEVICE_APPLY_AMBIENT_IN_ADD_MODE,
+													HSM_DEVICE_BLEND_MODE,
+													HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 	//----------------------------------------------------
@@ -754,11 +744,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			led_image = HSM_ApplyGamma(led_image, HSM_STATIC_LAYERS_GAMMA);
 
-		led_image.rgb = ApplyAmbientImage(led_image.rgb, 
-											ambient_lighting_image.rgb,
-											HSM_LED_AMBIENT_LIGHTING_MULTIPLIER,
-											HSM_LED_APPLY_AMBIENT_IN_ADD_MODE,
-											HSM_LED_BLEND_MODE);
+		led_image.rgb = ApplyAmbientImages(led_image.rgb, 
+												ambient_image.rgb,
+												ambient2_image.rgb,
+												HSM_LED_AMBIENT_LIGHTING_MULTIPLIER,
+												HSM_LED_AMBIENT2_LIGHTING_MULTIPLIER,
+												HSM_LED_APPLY_AMBIENT_IN_ADD_MODE,
+												HSM_LED_BLEND_MODE,
+												HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 	//----------------------------------------------------
@@ -794,11 +787,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			decal_image = HSM_ApplyGamma(decal_image, HSM_STATIC_LAYERS_GAMMA);
 
-		decal_image.rgb = ApplyAmbientImage(decal_image.rgb, 
-											ambient_lighting_image.rgb,
-											HSM_DECAL_AMBIENT_LIGHTING_MULTIPLIER,
-											HSM_DECAL_APPLY_AMBIENT_IN_ADD_MODE,
-											HSM_DECAL_BLEND_MODE);
+		decal_image.rgb = ApplyAmbientImages(decal_image.rgb, 
+												ambient_image.rgb,
+												ambient2_image.rgb,
+												HSM_DECAL_AMBIENT_LIGHTING_MULTIPLIER,
+												HSM_DECAL_AMBIENT2_LIGHTING_MULTIPLIER,
+												HSM_DECAL_APPLY_AMBIENT_IN_ADD_MODE,
+												HSM_DECAL_BLEND_MODE,
+												HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 //----------------------------------------------------
@@ -839,11 +835,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			top_image = HSM_ApplyGamma(top_image, HSM_STATIC_LAYERS_GAMMA);
 
-		top_image.rgb = ApplyAmbientImage(top_image.rgb, 
-											ambient_lighting_image.rgb,
-											HSM_TOP_AMBIENT_LIGHTING_MULTIPLIER,
-											HSM_TOP_APPLY_AMBIENT_IN_ADD_MODE,
-											HSM_TOP_BLEND_MODE);
+		top_image.rgb = ApplyAmbientImages(top_image.rgb, 
+												ambient_image.rgb,
+												ambient2_image.rgb,
+												HSM_TOP_AMBIENT_LIGHTING_MULTIPLIER,
+												HSM_TOP_AMBIENT2_LIGHTING_MULTIPLIER,
+												HSM_TOP_APPLY_AMBIENT_IN_ADD_MODE,
+												HSM_TOP_BLEND_MODE,
+												HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 	//----------------------------------------------------
@@ -869,9 +868,6 @@ void main()
 											CAB_GLASS_COORD,
 											CAB_GLASS_SCALE);
 
-		// Add Scaling
-		CAB_GLASS_CURVED_COORD = (CAB_GLASS_CURVED_COORD - 0.5) * 1 / HSM_CAB_GLASS_SCALE + 0.5;
-
 		// Sample Texture
 		cab_glass_image = HSM_GetMipmappedTexSample(CabinetGlassImage, CAB_GLASS_CURVED_COORD, CAB_GLASS_SCALE, HSM_CAB_GLASS_MIPMAPPING_BLEND_BIAS);
 
@@ -885,11 +881,14 @@ void main()
 		if (HSM_STATIC_LAYERS_GAMMA != 1)
 			cab_glass_image = HSM_ApplyGamma(cab_glass_image, HSM_STATIC_LAYERS_GAMMA);
 
-		cab_glass_image.rgb = ApplyAmbientImage(cab_glass_image.rgb, 
-												ambient_lighting_image.rgb,
-												HSM_CAB_GLASS_AMBIENT_LIGHTING_MULTIPLIER,
-												HSM_CAB_GLASS_APPLY_AMBIENT_IN_ADD_MODE,
-												HSM_CAB_GLASS_BLEND_MODE);
+		cab_glass_image.rgb = ApplyAmbientImages(cab_glass_image.rgb, 
+													ambient_image.rgb,
+													ambient2_image.rgb,
+													HSM_CAB_GLASS_AMBIENT_LIGHTING_MULTIPLIER,
+													HSM_CAB_GLASS_AMBIENT2_LIGHTING_MULTIPLIER,
+													HSM_CAB_GLASS_APPLY_AMBIENT_IN_ADD_MODE,
+													HSM_CAB_GLASS_BLEND_MODE,
+													HSM_AMBIENT_LIGHTING_SWAP_IMAGES);
 	}
 
 
@@ -989,8 +988,7 @@ void main()
 													SHOW_ON_DUALSCREEN_MODE_BOTH,
 													HSM_VIEWPORT_VIGNETTE_OPACITY);
 		// LED IMAGE
-		if (HSM_LED_LAYER_ORDER == i)
-			if (HSM_LED_OPACITY > 0)
+		if (HSM_LED_LAYER_ORDER == i && HSM_LED_OPACITY > 0)
 				frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
 														led_image, 
 														HSM_LED_BLEND_MODE, 
@@ -1000,8 +998,7 @@ void main()
 														HSM_LED_OPACITY);
 
 		// DEVICE IMAGE
-		if (HSM_DEVICE_LAYER_ORDER == i)
-			if (HSM_DEVICE_OPACITY > 0)
+		if (HSM_DEVICE_LAYER_ORDER == i && HSM_DEVICE_OPACITY > 0)
 				frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
 														device_image, 
 														HSM_DEVICE_BLEND_MODE, 
@@ -1011,8 +1008,7 @@ void main()
 														HSM_DEVICE_OPACITY);
 
 		// DECAL IMAGE
-		if (HSM_DECAL_LAYER_ORDER == i)
-			if (HSM_DECAL_OPACITY > 0)
+		if (HSM_DECAL_LAYER_ORDER == i && HSM_DECAL_OPACITY > 0)
 				frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
 														decal_image, 
 														HSM_DECAL_BLEND_MODE, 
@@ -1022,8 +1018,7 @@ void main()
 														HSM_DECAL_OPACITY);
 
 		// CABINET GLASS
-		if (HSM_CAB_GLASS_LAYER_ORDER == i)
-			if (HSM_CAB_GLASS_OPACITY > 0)
+		if (HSM_CAB_GLASS_LAYER_ORDER == i && HSM_CAB_GLASS_OPACITY > 0)
 				frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
 														cab_glass_image, 
 														HSM_CAB_GLASS_BLEND_MODE, 
@@ -1034,8 +1029,7 @@ void main()
 
 
 		// Top Layer
-		if (HSM_TOP_LAYER_ORDER == i)
-			if (HSM_TOP_OPACITY > 0)
+		if (HSM_TOP_LAYER_ORDER == i && HSM_TOP_OPACITY > 0)
 				frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
 														top_image, 
 														HSM_TOP_BLEND_MODE, 

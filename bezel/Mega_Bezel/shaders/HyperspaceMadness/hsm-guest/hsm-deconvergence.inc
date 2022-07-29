@@ -30,6 +30,9 @@
 #pragma parameter bloom "          Bloom Strength -- bloom" 0.0 -2.0 2.0 0.05
 #define bloom         global.bloom     // bloom effect
 
+#pragma parameter mask_bloom "          Mask Bloom -- mask_bloom" 0.0 0.0 2.0 0.05
+#define mask_bloom         global.mask_bloom     // bloom effect
+
 #pragma parameter bloom_dist "          Bloom Distribution -- bloom_dist" 0.0 0.0 3.0 0.05
 #define bloom_dist         global.bloom_dist     // bloom effect distribution
 
@@ -102,7 +105,7 @@
 #pragma parameter shadowMask "CRT Mask: -1:None|0:CGWG|1-4:Lottes|5-12:Trinitrn -- shadowMask" 0.0 -1.0 12.0 1.0
 #define shadowMask   global.shadowMask     // Mask Style
 
-#pragma parameter masksize "          Mask Size - 0:Auto | 2K | 4k -- masksize" 0.0 0.0 4 1.0
+#pragma parameter masksize "          Mask Size - 0:Auto | 2K | 4k -- masksize" 1.0 0.0 4 1.0
 #define masksize     global.masksize     // Mask Size
 
 #pragma parameter maskstr "          Mask Strength (0, 5-12) -- maskstr" 0.3 -0.5 1.0 0.025
@@ -138,7 +141,7 @@
 #pragma parameter double_slot "          Slot Mask Height: 2x1 or 4x1... -- double_slot" 1.0 1.0 4.0 1.0
 #define double_slot  global.double_slot     // Slot Mask Height
 
-#pragma parameter slotms "          Slot Mask Size - Auto | 2K | 4k -- slotms" 0.0 0.0 4.0 1.0
+#pragma parameter slotms "          Slot Mask Size - Auto | 2K | 4k -- slotms" 1.0 0.0 4.0 1.0
 #define slotms  global.slotms       // Slot Mask Size
 
 #pragma parameter mclip "          Keep Mask effect with clipping -- mclip" 0.50 0.0 1.0 0.05
@@ -231,7 +234,7 @@ vec3 Mask(vec2 pos, float mx)
 
 	// If using automatic Mask Size
 	if (masksize < 0.5)
-		final_mask_size = (global.FinalViewportSize.x + global.FinalViewportSize.y) / 3 > 1900 ? 2 : 1;
+		final_mask_size = global.FinalViewportSize.y > 2000 ? 2 : 1;
 	
 	final_mask_size = max(1, floor(((1 - HSM_VIEWPORT_ZOOM_MASK) + HSM_VIEWPORT_ZOOM_MASK * VIEWPORT_SCALE.y) * final_mask_size + 0.2));
 
@@ -670,7 +673,7 @@ void main()
 
 	// HSM Added
 	if (GDV_DECONVERGENCE_ON > 0.5)
-		fetch_pixel(color, Bloom, pos1, pos);
+		fetch_pixel(color, Bloom, pos1, pos); // deconvergence
 
 	float cm = max(max(color.r,color.g),color.b);
 	float mx1 = COMPAT_TEXTURE(Source, pos1     ).a;
@@ -696,6 +699,19 @@ void main()
 	cmask*= Mask(maskcoord, mx);
 	
 	if (mask_layout > 0.5) cmask = cmask.rbg;
+
+	vec3 cmask1 = cmask;
+	float smask1 = smask;
+
+	if (mask_bloom > 0.025)
+	{
+		float maxb = max(max(Bloom.r,Bloom.g),Bloom.b);
+		maxb = pow(sqrt(maxb*mix(maxb, colmx, 0.75)),0.275);
+		vec3 mBloom = 0.5*(1.5*Bloom+0.5*maxb) * mix(1.0, 2.0-colmx, (bloom_dist + 0.5));
+		float maskmx = 1.0; if (shadowMask > 0.5 || shadowMask < 4.5) maskmx = maskLight; else if (shadowMask > 6.5 && shadowMask < 10.5) maskmx = 1.0; else maskmx = max(max(cmask.r,cmask.g),cmask.b);
+		cmask = min(cmask + maxb*mBloom*mask_bloom, maskmx);
+		smask = min(smask + 0.9*maxb*max(max(mBloom.r,mBloom.g),mBloom.b)*mask_bloom, 1.0);
+	}
 	
 	color = pow(color, vec3(mask_gamma/gamma_in));
 	color = color*cmask;
@@ -704,6 +720,7 @@ void main()
 	color = pow(color, vec3(gamma_in/mask_gamma));
 
 	cmask = min(cmask*smask, 1.0);
+	cmask1 = min(cmask1*smask1, 1.0);
 
 	float bb = mix(brightboost, brightboost1, colmx);
 	if (interb) bb = (abs(intera-0.5)<0.1) ? pow(0.80*bb, 0.65) : pow(bb, 0.70);
@@ -718,7 +735,7 @@ void main()
 
 	vec3  Glow = HSM_GetCroppedTexSample(GlowPass, pos).rgb;
 	vec3  Ref = HSM_GetCroppedTexSample(LinearizePass, pos).rgb;
-	float maxb = COMPAT_TEXTURE(BloomPass, pos).a;
+	float maxb = HSM_GetCroppedTexSample(BloomPass, pos).a;
 
 	vec3 Bloom1 = Bloom;
 
@@ -731,13 +748,13 @@ void main()
 
 	color = color + abs(bloom) * Bloom1;
 
-	color = min(color, mix(one, cmask, mclip));
+	color = min(color, mix(one, cmask1, mclip));
 
 	if (!interb) color = declip(color, mix(1.0, w3, 0.6)); else w3 = 1.0;
 
 	if (halation > 0.01) {
 		Bloom = mix(0.5*(Bloom + Bloom*Bloom), 0.75*Bloom*Bloom, colmx);	
-		color = color + 2.0*max((maxb+maxb*maxb-0.5*max(max(Ref.r,Ref.g),Ref.b)),0.25)*mix(1.0,w3,0.5*colmx)*mix(one,cmask,0.6)*Bloom*halation; }
+		color = color + 2.0*max((2.0*mix(maxb*maxb, maxb, colmx)-0.5*max(max(Ref.r,Ref.g),Ref.b)),0.25)*mix(1.0,w3,0.5*colmx)*mix(one,cmask,0.6)*Bloom*halation; }
  
 
 	Glow = mix(Glow, 0.25*color, 0.7*colmx);

@@ -185,7 +185,6 @@ bool HSM_ResolutionIsEqual(vec2 in_res, vec2 match_res)
 
 float HSM_GetScreenAspect(float screen_index, vec2 cropped_size)
 {
-	float epsilon = 0.002;
 	vec2 original_size = HSM_GetRotatedCoreOriginalSize();
 	vec2 rotated_original_size = HSM_GetRotatedCoreOriginalSize();
 	float core_aspect_ratio = rotated_original_size.x / rotated_original_size.y;
@@ -363,7 +362,6 @@ void HSM_GetCroppedRotatedSizeAndPixelSampleAreaStart(float screen_index, sample
 {
 	screen_index = HSM_GetSwappedScreenIndex(screen_index);
 	vec2 rotated_negative_crop_added_size = HSM_GetRotatedNegativeCropAddedSize();
-	float prepped_size_aspect = rotated_negative_crop_added_size.y / rotated_negative_crop_added_size.x;
 
 	float default_crop_left_px = floor(MAX_NEGATIVE_CROP * rotated_negative_crop_added_size.x);
 	float default_crop_top_px = floor(MAX_NEGATIVE_CROP * rotated_negative_crop_added_size.y);
@@ -430,7 +428,6 @@ void HSM_GetCroppedRotatedSizeAndPixelSampleAreaStart(float screen_index, sample
 		}
 
 		vec2 base_cropped_size = rotated_negative_crop_added_size - vec2(final_crop_left_px + final_crop_right_px, final_crop_top_px + final_crop_bottom_px);
-		float crop_percent_zoom = 0;
 
 		if (HSM_GetCoreImageSplitDirection() == 1)
 		{
@@ -513,51 +510,89 @@ float HSM_GetParameterSum()
 					
 					// Night Lighting
 					+ HSM_AMBIENT_LIGHTING_OPACITY * 100
-					+ abs(HSM_AMBIENT_LIGHTING_HUE) * 360
+					+ HSM_AMBIENT2_LIGHTING_OPACITY * 100
+					+ HSM_AMBIENT_LIGHTING_SWAP_IMAGES
+
+					// AMBIENT LIGHTING 1
+					+ HSM_AMBIENT_LIGHTING_HUE * 360
 					+ HSM_AMBIENT_LIGHTING_SATURATION * 100
 					+ HSM_AMBIENT_LIGHTING_VALUE * 100
+					+ HSM_AMBIENT_LIGHTING_CONTRAST
+					+ HSM_AMBIENT_LIGHTING_SCALE_KEEP_ASPECT
+					+ HSM_AMBIENT_LIGHTING_SCALE_WITH_ZOOM
 					+ HSM_AMBIENT_LIGHTING_SCALE * 100
+					+ HSM_AMBIENT_LIGHTING_SCALE_X * 100
 					+ HSM_AMBIENT_LIGHTING_ROTATE
+					+ HSM_AMBIENT_LIGHTING_POSITION_X * 1000
+					+ HSM_AMBIENT_LIGHTING_POSITION_Y * 1000
 					+ HSM_AMBIENT_LIGHTING_MIRROR_HORZ
-					+ HSM_AMBIENT_LIGHTING_SCALE_MODE
 					+ HSM_AMBIENT_LIGHTING_DITHERING_SAMPLES
 
+					// AMBIENT LIGHTING 2
+					+ HSM_AMBIENT2_LIGHTING_HUE * 360
+					+ HSM_AMBIENT2_LIGHTING_SATURATION * 100
+					+ HSM_AMBIENT2_LIGHTING_VALUE * 100
+					+ HSM_AMBIENT2_LIGHTING_CONTRAST
+					+ HSM_AMBIENT2_LIGHTING_SCALE_KEEP_ASPECT
+					+ HSM_AMBIENT2_LIGHTING_SCALE_WITH_ZOOM
+					+ HSM_AMBIENT2_LIGHTING_SCALE * 100
+					+ HSM_AMBIENT2_LIGHTING_SCALE_X * 100
+					+ HSM_AMBIENT2_LIGHTING_ROTATE
+					+ HSM_AMBIENT2_LIGHTING_POSITION_X * 1000
+					+ HSM_AMBIENT2_LIGHTING_POSITION_Y * 1000
+					+ HSM_AMBIENT2_LIGHTING_MIRROR_HORZ
+
 					//    Zoom & Pan
-					+ HSM_VIEWPORT_ZOOM * 1000
+					+ HSM_VIEWPORT_ZOOM * 100
 					+ HSM_VIEWPORT_POSITION_X * 1000
 					+ HSM_VIEWPORT_POSITION_Y * 1000
 
-					// //    FLIP & ROTATE
+					//    FLIP & ROTATE
 					+ HSM_FLIP_VIEWPORT_VERTICAL
 					+ HSM_FLIP_VIEWPORT_HORIZONTAL
 					// + HSM_FLIP_CORE_VERTICAL
 					// + HSM_FLIP_CORE_HORIZONTAL
 					// + HSM_ROTATE_CORE_IMAGE
 
-					// //    ASPECT RATIO
+					//    ASPECT RATIO
 					+ HSM_ASPECT_RATIO_ORIENTATION
 					+ HSM_ASPECT_RATIO_MODE
 					+ HSM_ASPECT_RATIO_EXPLICIT
 
-					// //    SCALING
+					//    SCALING
 					+ HSM_INT_SCALE_MODE
+					+ HSM_VERTICAL_PRESET
+
+					// Integer Scale
+					+ HSM_INT_SCALE_MAX_HEIGHT
 					+ HSM_INT_SCALE_MULTIPLE_OFFSET
 					+ HSM_INT_SCALE_MULTIPLE_OFFSET_LONG
-					+ HSM_INT_SCALE_MAX_HEIGHT
-					+ HSM_VERTICAL_PRESET
+
+					// Non Integer Scale
 					+ HSM_NON_INTEGER_SCALE
 
-					// //    Extended Scale
-					// + HSM_USE_IMAGE_FOR_PLACEMENT
-					// + HSM_PLACEMENT_IMAGE_MODE
-					// + HSM_NON_INTEGER_SCALE_OFFSET * 100
-					// + HSM_SNAP_TO_CLOSEST_INT_SCALE_TOLERANCE
+					+ HSM_USE_PHYSICAL_SIZE_FOR_NON_INTEGER
+					+ HSM_PHYSICAL_MONITOR_ASPECT_RATIO
+					+ HSM_PHYSICAL_MONITOR_DIAGONAL_SIZE
+					+ HSM_PHYSICAL_SIM_TUBE_DIAGONAL_SIZE
 
-					// //    Position
-					// + HSM_SCREEN_POSITION_X * 1000
-					// + HSM_SCREEN_POSITION_Y * 1000
+					//    Extended Scale
+					+ HSM_USE_IMAGE_FOR_PLACEMENT
+					+ HSM_PLACEMENT_IMAGE_USE_HORIZONTAL
+					+ HSM_PLACEMENT_IMAGE_MODE
 
-					// //    CROPPING
+					// Non Integer Scale Offset
+					+ HSM_NON_INTEGER_SCALE_OFFSET * 100
+
+					// Snap to Integer Scale
+					+ HSM_USE_SNAP_TO_CLOSEST_INT_SCALE
+					+ HSM_SNAP_TO_CLOSEST_INT_SCALE_TOLERANCE
+
+					//    Position
+					+ HSM_SCREEN_POSITION_X * 1000
+					+ HSM_SCREEN_POSITION_Y * 1000
+
+					//    CROPPING
 					+ HSM_CROP_MODE
 					+ HSM_CROP_PERCENT_ZOOM * 100
 					+ HSM_CROP_PERCENT_TOP * 100
@@ -588,8 +623,8 @@ float HSM_GetParameterSum()
 					+ HSM_2ND_SCREEN_CROP_PERCENT_LEFT * 100
 					+ HSM_2ND_SCREEN_CROP_PERCENT_RIGHT * 100
 
-					// //    CURVATURE
-					+ HSM_CURVATURE_MODE * 2
+					//    CURVATURE
+					+ HSM_CURVATURE_MODE
 					+ HSM_CURVATURE_2D_SCALE_LONG_AXIS * 100
 					+ HSM_CURVATURE_2D_SCALE_SHORT_AXIS * 100
 					+ HSM_CURVATURE_3D_RADIUS * 100
@@ -602,23 +637,24 @@ float HSM_GetParameterSum()
 					+ HSM_AB_COMPARE_FREEZE_GRAPHICS
 
 					// //    TUBE DIFFUSE
-					+ HSM_TUBE_DIFFUSE_OPACITY
-					+ HSM_TUBE_DIFFUSE_MODE
+					// + HSM_TUBE_DIFFUSE_OPACITY
+					// + HSM_TUBE_DIFFUSE_MODE
 					// + HSM_TUBE_DIFFUSE_IMAGE_DUALSCREEN_VIS_MODE
 					// + HSM_TUBE_DIFFUSE_IMAGE_COLORIZE_ON
 					// + HSM_TUBE_DIFFUSE_IMAGE_HUE
 					// + HSM_TUBE_DIFFUSE_IMAGE_SATURATION
 					// + HSM_TUBE_DIFFUSE_IMAGE_BRIGHTNESS
 					// + HSM_TUBE_DIFFUSE_IMAGE_GAMMA
+					+ HSM_TUBE_EMPTY_THICKNESS
+					+ HSM_TUBE_EMPTY_THICKNESS_X_SCALE
 
-					// //    SCREEN BLACK EDGE
+					// SCREEN BLACK EDGE
 					+ HSM_GLOBAL_CORNER_RADIUS
 					+ HSM_TUBE_BLACK_EDGE_CORNER_RADIUS_SCALE * 100
 					+ HSM_TUBE_BLACK_EDGE_SHARPNESS * 100
 					+ HSM_TUBE_BLACK_EDGE_CURVATURE_SCALE * 100
 					+ HSM_TUBE_BLACK_EDGE_THICKNESS * 100
 					+ HSM_TUBE_BLACK_EDGE_THICKNESS_X_SCALE * 100
-					+ HSM_TUBE_BLACK_EDGE_LAYERING_MODE
 
 					// //    BEZEL INDEPENDENT SCALE
 					+ HSM_BZL_USE_INDEPENDENT_SCALE
@@ -627,7 +663,7 @@ float HSM_GetParameterSum()
 					+ HSM_BZL_INDEPENDENT_CURVATURE_SCALE_LONG_AXIS * 100
 					+ HSM_BZL_INDEPENDENT_CURVATURE_SCALE_SHORT_AXIS * 100
 
-					// //    BEZEL GENERAL
+					//    BEZEL GENERAL
 					+ HSM_BZL_OPACITY * 100
 					+ HSM_BZL_BLEND_MODE
 					+ HSM_BZL_WIDTH /  0.0008624
@@ -653,6 +689,7 @@ float HSM_GetParameterSum()
 					+ HSM_BZL_COLOR_VALUE * 100
 					+ HSM_BZL_NOISE * 100
 					+ HSM_BZL_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_BZL_AMBIENT2_LIGHTING_MULTIPLIER * 100
 
 					// Frame Color
 					+ HSM_FRM_USE_INDEPENDENT_COLOR
@@ -707,6 +744,7 @@ float HSM_GetParameterSum()
 					+ HSM_BG_BRIGHTNESS * 100
 					+ HSM_BG_GAMMA
 					+ HSM_BG_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_BG_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_BG_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_BG_BLEND_MODE
 					+ HSM_BG_SOURCE_MATTE_TYPE
@@ -754,6 +792,7 @@ float HSM_GetParameterSum()
 					+ HSM_LED_BRIGHTNESS * 100
 					+ HSM_LED_GAMMA
 					+ HSM_LED_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_LED_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_LED_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_LED_BLEND_MODE
 					+ HSM_LED_SOURCE_MATTE_TYPE
@@ -778,6 +817,7 @@ float HSM_GetParameterSum()
 					+ HSM_DEVICE_BRIGHTNESS * 100
 					+ HSM_DEVICE_GAMMA
 					+ HSM_DEVICE_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_DEVICE_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_DEVICE_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_DEVICE_BLEND_MODE
 					+ HSM_DEVICE_SOURCE_MATTE_TYPE
@@ -803,6 +843,7 @@ float HSM_GetParameterSum()
 					+ HSM_DECAL_BRIGHTNESS * 100
 					+ HSM_DECAL_GAMMA
 					+ HSM_DECAL_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_DECAL_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_DECAL_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_DECAL_BLEND_MODE
 					+ HSM_DECAL_SOURCE_MATTE_TYPE
@@ -827,6 +868,7 @@ float HSM_GetParameterSum()
 					+ HSM_CAB_GLASS_BRIGHTNESS * 100
 					+ HSM_CAB_GLASS_GAMMA
 					+ HSM_CAB_GLASS_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_CAB_GLASS_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_CAB_GLASS_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_CAB_GLASS_BLEND_MODE
 					+ HSM_CAB_GLASS_SOURCE_MATTE_TYPE
@@ -851,6 +893,7 @@ float HSM_GetParameterSum()
 					+ HSM_TOP_BRIGHTNESS * 100
 					+ HSM_TOP_GAMMA
 					+ HSM_TOP_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_TOP_AMBIENT2_LIGHTING_MULTIPLIER * 100
 					+ HSM_TOP_APPLY_AMBIENT_IN_ADD_MODE
 					+ HSM_TOP_BLEND_MODE
 					+ HSM_TOP_SOURCE_MATTE_TYPE
@@ -892,7 +935,7 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	vec3 screen_pos_and_height = HSM_GetScreenPlacementAndHeight(screen_placement_image, 60);
 	float screen_aspect = HSM_GetScreenAspect(1, cropped_rotated_size);
 	vec2 screen_scale = HSM_GetScreenScale(screen_aspect, screen_pos_and_height.z, cropped_rotated_size);
-	vec2 tube_scale = HSM_GetTubeScale(screen_scale, screen_pos_and_height.z, vec2(HSM_TUBE_EMPTY_THICKNESS + HSM_TUBE_BLACK_EDGE_THICKNESS) * vec2(HSM_TUBE_EMPTY_THICKNESS_X_SCALE * HSM_TUBE_BLACK_EDGE_THICKNESS_X_SCALE, 1));	
+	vec2 tube_scale = HSM_GetTubeScale(screen_scale, screen_pos_and_height.z, vec2(HSM_TUBE_EMPTY_THICKNESS * HSM_TUBE_EMPTY_THICKNESS_X_SCALE + HSM_TUBE_BLACK_EDGE_THICKNESS * HSM_TUBE_BLACK_EDGE_THICKNESS_X_SCALE, HSM_TUBE_EMPTY_THICKNESS + HSM_TUBE_BLACK_EDGE_THICKNESS));	
 	vec2 black_edge_scale = HSM_GetTubeScale(screen_scale, screen_pos_and_height.z, vec2(HSM_TUBE_EMPTY_THICKNESS) * vec2(HSM_TUBE_EMPTY_THICKNESS_X_SCALE, 1));
 	
 	vec2 pos_offset = HSM_GetScreenPositionOffset(screen_pos_and_height.xy, screen_scale, 1);
