@@ -37,7 +37,6 @@ layout(push_constant) uniform Push
 	
 } params;
 
-
 //TODO remove this and replace with simpler calls
 float GetFade(float current_position, float corner_position, float fade_distance)
 {
@@ -81,23 +80,25 @@ layout(set = 0, binding = 1) uniform sampler2D InfoCachePass;
 layout(set = 0, binding = 2) uniform sampler2D InfoCachePassFeedback;
 
 layout(set = 0, binding = 3) uniform sampler2D NightLightingImage;
-layout(set = 0, binding = 4) uniform sampler2D BackgroundImage;
-layout(set = 0, binding = 5) uniform sampler2D ReflectionMaskImage;
+layout(set = 0, binding = 4) uniform sampler2D NightLighting2Image;
+layout(set = 0, binding = 5) uniform sampler2D BackgroundImage;
+layout(set = 0, binding = 6) uniform sampler2D ReflectionMaskImage;
 
-layout(set = 0, binding = 6) uniform sampler2D TubeStaticReflectionImage;
-layout(set = 0, binding = 7) uniform sampler2D TubeColoredGelImage;
+layout(set = 0, binding = 7) uniform sampler2D TubeStaticReflectionImage;
+layout(set = 0, binding = 8) uniform sampler2D TubeColoredGelImage;
 
-layout(set = 0, binding = 8) uniform sampler2D MBZ_PostCRTPass;
-layout(set = 0, binding = 9) uniform sampler2D BR_MirrorBlurredPass;
-layout(set = 0, binding = 10) uniform sampler2D BR_MirrorReflectionDiffusedPass;
-layout(set = 0, binding = 11) uniform sampler2D BR_MirrorFullscreenGlowPass;
+layout(set = 0, binding = 9) uniform sampler2D MBZ_PostCRTPass;
+layout(set = 0, binding = 10) uniform sampler2D BR_MirrorBlurredPass;
+layout(set = 0, binding = 11) uniform sampler2D BR_MirrorReflectionDiffusedPass;
+layout(set = 0, binding = 12) uniform sampler2D BR_MirrorFullscreenGlowPass;
 
-layout(set = 0, binding = 12) uniform sampler2D BR_CRTAndReflectionPassFeedback;
+layout(set = 0, binding = 13) uniform sampler2D BR_CRTAndReflectionPassFeedback;
 #define PassFeedback BR_CRTAndReflectionPassFeedback
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 void main()
 {
+	
 	if (HSM_AB_COMPARE_FREEZE_CRT_TUBE == 1 && HSM_GetIsInABCompareArea(vTexCoord))
 	{
 		FragColor = texture(PassFeedback, vTexCoord);
@@ -281,7 +282,6 @@ void main()
 
 	edge_highlight_mask = hmbz_bezel_highlight_edge * edge_mask * (edge_top_center_highlight_mask + edge_bottom_center_highlight_mask + edge_sides_highlight_mask);
 
-
 	//----------------------------------------------------
 	// Reflection
 	//----------------------------------------------------
@@ -418,25 +418,12 @@ void main()
 		// }
 	}
 
-	if (HSM_TUBE_BLACK_EDGE_LAYERING_MODE > 0.5)
-		crt_linear.rgb *= (1 - HSM_TUBE_BLACK_EDGE_LAYERING_MODE) + HSM_TUBE_BLACK_EDGE_LAYERING_MODE * HSM_Get_Screen_Black_Edge_Mask(BLACK_EDGE_COORD, false);
-
 	crt_linear.rgb *= TUBE_MASK;
 
 	// Put the frame and bezel over top a black tube
 	// It must be a little wider than the inside of the bezel so we don't see a gap
 	crt_linear = HSM_PreMultAlphaBlend(vec4(0, 0, 0, 1 - outside_tube_mask_wider), crt_linear);
 
-	// TUBE HIGHLIGHT
-	if (HSM_GetUseTubeStaticReflection())
-	{
-		vec4 night_lighting_image = vec4(1);
-		if (HSM_AMBIENT_LIGHTING_OPACITY > 0)
-			night_lighting_image = HSM_GetNightLightingMultiplyColor( HSM_AMBIENT_LIGHTING_SCALE_MODE > 0.5 ? VIEWPORT_UNSCALED_COORD : VIEWPORT_COORD, NightLightingImage );
-		crt_linear += HSM_GetTubeHighlight(tube_curved_coord, false, TubeStaticReflectionImage, night_lighting_image);
-	}
-
-	// Clamp otherwise we get artifacts (blue overlays of brighter parts of image)
 	crt_linear = clamp(crt_linear, 0, 1);
 
 	FragColor = vec4(0);

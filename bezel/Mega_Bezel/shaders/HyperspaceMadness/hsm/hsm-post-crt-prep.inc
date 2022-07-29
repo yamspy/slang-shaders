@@ -61,20 +61,18 @@ layout(set = 0, binding = 8) uniform sampler2D BackgroundImage;
 layout(set = 0, binding = 9) uniform sampler2D BackgroundVertImage;
 
 layout(set = 0, binding = 10) uniform sampler2D NightLightingImage;
-layout(set = 0, binding = 11) uniform sampler2D IntroPass;
+layout(set = 0, binding = 11) uniform sampler2D NightLighting2Image;
+layout(set = 0, binding = 12) uniform sampler2D IntroPass;
 
-layout(set = 0, binding = 12) uniform sampler2D MBZ_PostCRTPassFeedback;
+layout(set = 0, binding = 13) uniform sampler2D MBZ_PostCRTPassFeedback;
 #define PassFeedback MBZ_PostCRTPassFeedback
 
 // Torridgristle - ScanlineSimple pass - Public domain
 vec4 HSM_ApplyScanlineMask(vec4 in_color, vec2 screen_scale, vec2 in_coord, vec2 in_curved_coord)
 {
 	//   Stuff to try implementing
-    //   Option to try to match a integer division of the core resolution
-    //   Curvature Multiplier
     //   Try mame hlsl darkening
     //   Check Lottes tone mapping
-    //   Crawl
 
 	in_coord = mix(in_coord, in_curved_coord, HSM_FAKE_SCANLINE_CURVATURE);
 
@@ -128,13 +126,10 @@ vec4 HSM_ApplyScanlineMask(vec4 in_color, vec2 screen_scale, vec2 in_coord, vec2
 	masked_color = clamp(final_scanline_mask * masked_color, 0, 1);
 	masked_color.w = in_color.w;
 
-	// Split Screen for debugging
-	// masked_color = scan_opposite_axis_pos > 0.7 ? in_color : masked_color;
-
 	return clamp(masked_color, 0, 1);
 }
 
-vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, vec2 screen_curved_coord, in sampler2D source_pass, bool source_is_linear, in sampler2D TubeDiffuseImage, in sampler2D TubeColoredGelImage, in sampler2D TubeStaticReflectionImage, in sampler2D BackgroundImage, in sampler2D BackgroundVertImage, in sampler2D NightLightingImage)
+vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, vec2 screen_curved_coord, in sampler2D source_pass, bool source_is_linear, in sampler2D TubeDiffuseImage, in sampler2D TubeColoredGelImage, in sampler2D TubeStaticReflectionImage, in sampler2D BackgroundImage, in sampler2D BackgroundVertImage, in sampler2D NightLightingImage, in sampler2D NightLighting2Image)
 {
 	if (HSM_MONOCHROME_MODE > 0.5 && HSM_GetUseOnCurrentScreenIndex(HSM_MONOCHROME_DUALSCREEN_VIS_MODE))
 		in_color_with_gamma = HSM_ApplyMonochrome(in_color_with_gamma);
@@ -143,12 +138,10 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 	out_color *= HSM_POST_CRT_BRIGHTNESS;
 
 	vec2 mirrored_screen_coord = HSM_GetMirrorWrappedCoord(screen_curved_coord);
-	float screen_mask = HSM_GetCornerMask((screen_curved_coord - 0.5) * 0.999 + 0.5, SCREEN_ASPECT, HSM_GLOBAL_CORNER_RADIUS, 0.9);
+	float screen_mask = HSM_GetCornerMask((screen_curved_coord - 0.5) * 0.999 + 0.5, SCREEN_ASPECT, HSM_GLOBAL_CORNER_RADIUS * HSM_SCREEN_CORNER_RADIUS_SCALE, 0.9);
 						
 	if (HSM_GetUseScreenVignette())
 	{
-		// out_color *= HSM_GetScreenVignetteFactor(screen_curved_coord);
-
 		float vignette_factor = HSM_GetScreenVignetteFactor(mirrored_screen_coord);
 
 		float vignette_factor_outside_screen = HSM_SCREEN_VIGNETTE_IN_REFLECTION * vignette_factor + (1 - HSM_SCREEN_VIGNETTE_IN_REFLECTION) * 1;
@@ -156,13 +149,6 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 
 		out_color *= vignette_factor;
 	}
-
-	vec4 ambient_lighting_image = HSM_GetNightLightingMultiplyColor( HSM_AMBIENT_LIGHTING_SCALE_MODE > 0.5 ? VIEWPORT_UNSCALED_COORD : VIEWPORT_COORD, NightLightingImage );
-
-	// float screen_edge_mask = HSM_GetCornerMask(screen_curved_coord, SCREEN_ASPECT, HSM_GLOBAL_CORNER_RADIUS, HSM_TUBE_BLACK_EDGE_SHARPNESS);
-	// screen_edge_mask = 1 - ((1 - screen_edge_mask) * screen_mask);
-
-	// out_color *= screen_edge_mask;
 
 	if (HSM_AB_COMPARE_SHOW_MODE == 1 && HSM_GetIsInABCompareArea(VIEWPORT_COORD))
 	{
@@ -193,21 +179,44 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 		out_color = mix(out_color, scanline_masked_color, tube_highlight_mask);
 	}
 	
+	float bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * HSM_GLOBAL_CORNER_RADIUS;
+	if(HSM_BZL_USE_INDEPENDENT_CURVATURE > 0)
+		bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * DEFAULT_SCREEN_CORNER_RADIUS;
+
+	float tube_mask =  HSM_GetCornerMask(tube_curved_coord, SCREEN_ASPECT, bezel_corner_radius, 0.99);
+	float screen_to_tube_mask_invert = 1 - (tube_mask - screen_mask);
+
+	float black_edge_corner_radius = HSM_TUBE_BLACK_EDGE_CORNER_RADIUS_SCALE * HSM_GLOBAL_CORNER_RADIUS;
+	vec2 tube_diffuse_curved_coord = HSM_GetTubeCurvedCoord(SCREEN_COORD, HSM_TUBE_BLACK_EDGE_CURVATURE_SCALE, SCREEN_SCALE, BLACK_EDGE_SCALE, SCREEN_ASPECT, 1);
+	float tube_diffuse_mask =  HSM_GetCornerMask(tube_diffuse_curved_coord, SCREEN_ASPECT, black_edge_corner_radius, 0.99);
+
+	float black_edge_mask_invert = 1 - (tube_mask - tube_diffuse_mask);
+
+	out_color *= screen_to_tube_mask_invert;
+
+	// AMBIENT LIGHTING IMAGES
+	vec4 ambient_lighting_image = vec4(1);
+	vec4 ambient2_lighting_image = vec4(1);
+	HSM_Fill_Ambient_Images(VIEWPORT_COORD, VIEWPORT_UNSCALED_COORD, HSM_AMBIENT_LIGHTING_SWAP_IMAGES, NightLightingImage, NightLighting2Image, ambient_lighting_image, ambient2_lighting_image);
+
 	vec3 tube_shadow = vec3(1);
-	if (HSM_TUBE_SHADOW_IMAGE_ON > 0.5)
+	if (HSM_TUBE_SHADOW_IMAGE_ON > 0.5 && (HSM_GetUseTubeDiffuseImage() || HSM_GetUseTubeColoredGelImage() || HSM_GetUseTubeStaticReflection()))
 	{
-		vec2 shadow_coord = SCREEN_COORD;
+		vec2 shadow_coord = tube_diffuse_curved_coord;
+		shadow_coord = HSM_GetMirrorWrappedCoord(shadow_coord);
 
 		// TODO Shadow Coordinate isn't right with 3D Curvature
 
 		shadow_coord.x = (shadow_coord.x - HSM_TUBE_SHADOW_IMAGE_POS_X - 0.5) / HSM_TUBE_SHADOW_IMAGE_SCALE_X + 0.5;
 		shadow_coord.y = (shadow_coord.y + HSM_TUBE_SHADOW_IMAGE_POS_Y) / HSM_TUBE_SHADOW_IMAGE_SCALE_Y;
-		shadow_coord = HSM_GetTubeCurvedCoord(shadow_coord, HSM_TUBE_SHADOW_CURVATURE_SCALE, SCREEN_SCALE, TUBE_SCALE, SCREEN_ASPECT, 1);
-		shadow_coord = HSM_GetMirrorWrappedCoord(shadow_coord);
+
+		vec2 curvature_values = HSM_TUBE_SHADOW_CURVATURE_SCALE * HSM_GetCurvatureValues(SCREEN_ASPECT);
+		shadow_coord = HSM_Get2DCurvedCoord(shadow_coord, curvature_values);
 
 		shadow_coord.x = HSM_FLIP_VIEWPORT_HORIZONTAL * (shadow_coord.x - 0.5) + 0.5;
 		shadow_coord.y = HSM_FLIP_VIEWPORT_VERTICAL * (shadow_coord.y - 0.5) + 0.5;
 		
+
 		vec4 tube_shadow_sample = HSM_GetMipmappedTexSample(TubeShadowImage, shadow_coord, TUBE_SCALE * vec2(HSM_TUBE_SHADOW_IMAGE_SCALE_X, HSM_TUBE_SHADOW_IMAGE_SCALE_Y), 0);
 		tube_shadow_sample = HSM_GLOBAL_GRAPHICS_BRIGHTNESS * HSM_GetPreMultipliedColorLinear(tube_shadow_sample, SOURCE_MATTE_PREMULTIPLIED, DEFAULT_SRGB_GAMMA);
 
@@ -217,19 +226,23 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 	// If the crt blend mode is multiply then use the diffuse image
 	float tube_diffuse_mode = HSM_CRT_BLEND_MODE == 2 ? 1 : HSM_TUBE_DIFFUSE_MODE;
 	vec4 tube_diffuse = vec4(0, 0, 0, 1);
+	vec4 diffuse_unshaded = vec4(0, 0, 0, 1);
 	if (tube_diffuse_mode == 1)
 	{
 		// TubeDiffuseImage
 		if (HSM_TUBE_DIFFUSE_MODE == 1 || HSM_CRT_BLEND_MODE == 2)
 		{
-			vec2 diffuse_coord = mirrored_tube_coord; 
+			vec2 diffuse_coord = tube_diffuse_curved_coord;
+
+			diffuse_coord = HSM_GetMirrorWrappedCoord(diffuse_coord);
 			diffuse_coord.x = HSM_FLIP_VIEWPORT_HORIZONTAL * (diffuse_coord.x - 0.5) + 0.5;
 			diffuse_coord.y = HSM_FLIP_VIEWPORT_VERTICAL * (diffuse_coord.y - 0.5) + 0.5;
 
 			diffuse_coord = (diffuse_coord - 0.5) / (HSM_TUBE_DIFFUSE_IMAGE_SCALE * vec2(HSM_TUBE_DIFFUSE_IMAGE_SCALE_X, 1)) + 0.5;
 
-			tube_diffuse = HSM_GetMipmappedTexSample(TubeDiffuseImage, diffuse_coord, TUBE_SCALE * HSM_TUBE_DIFFUSE_IMAGE_SCALE, 0);
-			tube_diffuse = HSM_GLOBAL_GRAPHICS_BRIGHTNESS * HSM_GetPreMultipliedColorLinear(tube_diffuse, SOURCE_MATTE_PREMULTIPLIED, DEFAULT_SRGB_GAMMA);
+			diffuse_unshaded = HSM_GetMipmappedTexSample(TubeDiffuseImage, diffuse_coord, TUBE_SCALE * HSM_TUBE_DIFFUSE_IMAGE_SCALE, 0);
+			tube_diffuse = diffuse_unshaded;
+			tube_diffuse *= HSM_GLOBAL_GRAPHICS_BRIGHTNESS * HSM_GetPreMultipliedColorLinear(tube_diffuse, SOURCE_MATTE_PREMULTIPLIED, DEFAULT_SRGB_GAMMA);
 			tube_diffuse.rgb = HSM_ApplyHSVAdjustment(tube_diffuse.rgb, HSM_TUBE_DIFFUSE_IMAGE_HUE, HSM_TUBE_DIFFUSE_IMAGE_SATURATION, HSM_TUBE_DIFFUSE_IMAGE_BRIGHTNESS, HSM_TUBE_DIFFUSE_IMAGE_COLORIZE_ON, HSM_TUBE_DIFFUSE_IMAGE_GAMMA);
 
 			tube_diffuse.rgb *= tube_shadow;
@@ -237,22 +250,14 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 
 		// If CRT Blend Mode is Multiply (2) then the tube must be fully opaque
 		tube_diffuse *= HSM_GetTubeDiffuseOpacity();
-		tube_diffuse.rgb *=  (1 - HSM_TUBE_DIFFUSE_IMAGE_AMBIENT_LIGHTING) * vec3(1) + HSM_TUBE_DIFFUSE_IMAGE_AMBIENT_LIGHTING * ambient_lighting_image.rgb;
+		tube_diffuse.rgb = HSM_ApplyAmbientImage(tube_diffuse.rgb, ambient_lighting_image.rgb, HSM_TUBE_DIFFUSE_IMAGE_AMBIENT_LIGHTING);
+		tube_diffuse.rgb = HSM_ApplyAmbientImage(tube_diffuse.rgb, ambient2_lighting_image.rgb, HSM_TUBE_DIFFUSE_IMAGE_AMBIENT2_LIGHTING);
 	}
 	out_color.a = in_color_with_gamma.a;
 
-	float bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * HSM_GLOBAL_CORNER_RADIUS;
-	if(HSM_BZL_USE_INDEPENDENT_CURVATURE > 0)
-		bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * DEFAULT_SCREEN_CORNER_RADIUS;
-
-	float tube_mask =  HSM_GetCornerMask(tube_curved_coord, SCREEN_ASPECT, bezel_corner_radius, 0.99);
-	float black_edge_mask_invert = 1 - (tube_mask - screen_mask);
-
-	out_color *= black_edge_mask_invert;
-
 	// Don't apply the CRT images
 	if (HSM_CRT_BLEND_MODE == 0)
-		out_color = vec4(0);
+		out_color = tube_diffuse;
 
 	// Apply the CRT image additively to the tube diffuse color
 	if (HSM_CRT_BLEND_MODE == 1)
@@ -260,12 +265,16 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 
 	// Apply the CRT image with multiply blending
 	if (HSM_CRT_BLEND_MODE == 2)
+	{	
+		out_color = clamp(out_color, 0, 1);
+		out_color *= screen_mask; 
 		out_color = HSM_BlendModeLayerMix(tube_diffuse, out_color, BLEND_MODE_MULTIPLY, HSM_CRT_BLEND_AMOUNT);
+	}
 
 	// Add a Colored Gel image on top of the screen, this is what colors games like space invaders or battlezone
 	if (HSM_GetUseTubeColoredGelImage())
 	{
-		vec2 gel_coord = mirrored_tube_coord;
+		vec2 gel_coord = HSM_GetMirrorWrappedCoord(tube_diffuse_curved_coord);
 		gel_coord.x = HSM_TUBE_COLORED_GEL_IMAGE_FLIP_HORIZONTAL * (gel_coord.x - 0.5) + 0.5;
 		gel_coord.y = HSM_TUBE_COLORED_GEL_IMAGE_FLIP_VERTICAL * (gel_coord.y - 0.5) + 0.5;
 		gel_coord = (gel_coord - 0.5) / HSM_TUBE_COLORED_GEL_IMAGE_SCALE + 0.5;
@@ -285,26 +294,43 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 			gel_image.rgb *= HSM_TUBE_COLORED_GEL_IMAGE_NORMAL_BRIGHTNESS;
 			gel_image.rgb *= tube_shadow;
 
-			if (HSM_TUBE_COLORED_GEL_IMAGE_AMBIENT_LIGHTING > 0)
-				gel_image.rgb *= (1 - HSM_TUBE_COLORED_GEL_IMAGE_AMBIENT_LIGHTING) * vec3(1) + HSM_TUBE_COLORED_GEL_IMAGE_AMBIENT_LIGHTING * ambient_lighting_image.rgb;
+			gel_image.rgb = HSM_ApplyAmbientImage(gel_image.rgb, ambient_lighting_image.rgb, HSM_TUBE_COLORED_GEL_IMAGE_AMBIENT_LIGHTING);
+			gel_image.rgb = HSM_ApplyAmbientImage(gel_image.rgb, ambient2_lighting_image.rgb, HSM_TUBE_COLORED_GEL_IMAGE_AMBIENT2_LIGHTING);
+
+			gel_image = HSM_BlendModeLayerMix(gel_image, vec4(vec3(diffuse_unshaded.r) * 3, 1), BLEND_MODE_MULTIPLY, HSM_TUBE_COLORED_GEL_IMAGE_NORMAL_MULTIPLY_BY_DIFFUSE);
 
 			if ( HSM_SHOW_CRT_ON_TOP_OF_COLORED_GEL == 0 )
 				out_color = HSM_BlendModeLayerMix(out_color, gel_image, BLEND_MODE_NORMAL, HSM_TUBE_COLORED_GEL_IMAGE_NORMAL_AMOUNT);
+			
 			if ( HSM_SHOW_CRT_ON_TOP_OF_COLORED_GEL == 1 )
 			{
+				gel_image.rgb *= tube_shadow;
 				vec4 normal_blended = HSM_BlendModeLayerMix(vec4(0, 0, 0, 1), gel_image, BLEND_MODE_NORMAL, HSM_TUBE_COLORED_GEL_IMAGE_NORMAL_AMOUNT);
 				out_color = normal_blended + out_color;
 			}
 		}
 	} 
 
-	#ifdef IS_NO_REFLECT_PRESET
-	out_color.rgb *= HSM_Get_Screen_Black_Edge_Mask(BLACK_EDGE_COORD, false);
+	#ifndef IS_NO_REFLECT_PRESET
 
-	// TUBE HIGHLIGHT
-	if (HSM_GetUseTubeStaticReflection())
-		out_color += HSM_GetTubeHighlight(tube_curved_coord, false, TubeStaticReflectionImage, ambient_lighting_image);
+	out_color *= black_edge_mask_invert;
+
+	#else
+
+	out_color *= tube_diffuse_mask;
+
 	#endif
+
+	if (HSM_GetUseTubeStaticReflection())
+	{
+		vec3 tube_highlight_image = HSM_GetTubeHighlight(tube_curved_coord, false, TubeStaticReflectionImage).rgb;
+		tube_highlight_image = HSM_ApplyAmbientImage(tube_highlight_image.rgb, ambient_lighting_image.rgb, HSM_TUBE_STATIC_REFLECTION_IMAGE_AMBIENT_LIGHTING);
+		tube_highlight_image = HSM_ApplyAmbientImage(tube_highlight_image.rgb, ambient2_lighting_image.rgb, HSM_TUBE_STATIC_REFLECTION_IMAGE_AMBIENT2_LIGHTING);
+
+		tube_highlight_image.rgb *= HSM_TUBE_STATIC_REFLECTION_IMAGE_SHADOW_OPACITY * tube_shadow + (1 - HSM_TUBE_STATIC_REFLECTION_IMAGE_SHADOW_OPACITY);
+
+		out_color.rgb += tube_highlight_image * HSM_TUBE_STATIC_REFLECTION_IMAGE_OPACITY;
+	}
 
 	// #ifndef IS_NO_REFLECT_PRESET
 	// Apply the final Gamma
@@ -324,7 +350,6 @@ void main()
 	}
 
 	VIEWPORT_UNSCALED_COORD = HSM_GetViewportCoordWithFlip(vTexCoord);
-	// VIEWPORT_COORD = HSM_GetViewportCoordWithZoomAndPan(vTexCoord);
 
 	vec2 viewportCoordTransformed = HSM_GetViewportCoordWithZoomAndPan(vTexCoord);
 	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, InfoCachePassFeedback, vTexCoord);
@@ -351,5 +376,5 @@ void main()
 
 	FragColor = texture(Source, UNFLIPPED_VIEWPORT_COORD);
 
-	FragColor = HSM_GetPostCrtPreppedColor(FragColor, vTexCoord, screen_curved_coord, IntroPass, false, TubeDiffuseImage, TubeColoredGelImage, TubeStaticReflectionImage, BackgroundImage, BackgroundVertImage, NightLightingImage);
+	FragColor = HSM_GetPostCrtPreppedColor(FragColor, vTexCoord, screen_curved_coord, IntroPass, false, TubeDiffuseImage, TubeColoredGelImage, TubeStaticReflectionImage, BackgroundImage, BackgroundVertImage, NightLightingImage, NightLighting2Image);
 }

@@ -62,6 +62,9 @@ layout(push_constant) uniform Push
 #pragma parameter bloom "          Bloom Strength -- bloom" 0.0 -2.0 2.0 0.05
 #define bloom         global.bloom     // bloom effect
 
+#pragma parameter mask_bloom "          Mask Bloom -- mask_bloom" 0.0 0.0 2.0 0.05
+#define mask_bloom         global.mask_bloom     // bloom effect
+
 #pragma parameter bloom_dist "          Bloom Distribution -- bloom_dist" 0.0 0.0 3.0 0.05
 #define bloom_dist         global.bloom_dist     // bloom effect distribution
 
@@ -106,7 +109,7 @@ layout(push_constant) uniform Push
 #pragma parameter scan_falloff "          Scanline Falloff -- scan_falloff" 1.0 0.25 2.0 0.05
 #define scan_falloff        global.scan_falloff     // scanline falloff
 
-#pragma parameter scangamma "          Scanline Gamma -- scangamma" 2.40 0.5 5.0 0.05
+#pragma parameter scangamma "          Scanline Gamma -- scangamma" 2.40 0.5 10.0 0.05
 #define scangamma global.scangamma
 
 #pragma parameter rolling_scan "          Rolling Scanlines -- rolling_scan" 0.0 -1.0 1.0 0.01
