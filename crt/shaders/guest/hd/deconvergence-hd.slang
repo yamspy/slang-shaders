@@ -26,7 +26,7 @@
 
 layout(push_constant) uniform Push
 {
-	float TATE, IOS, OS, BLOOM, brightboost, brightboost1, csize, bsize1, warpX, warpY, glow, shadowMask, masksize,
+	float IOS, brightboost, brightboost1, csize, bsize1, warpX, warpY, glow, shadowMask, masksize,
 	slotmask, slotmask1, slotwidth, double_slot, mcut, maskDark, maskLight, maskstr, mshift, mask_layout, mask_bloom;
 } params;
 
@@ -56,8 +56,8 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	float deconr;
 	float decons;
 	float addnoised;
-	float noisetype;
 	float noiseresd;
+	float noisetype;
 	float deconrr;
 	float deconrg;
 	float deconrb;
@@ -98,17 +98,8 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter bogus_screen "[ SCREEN OPTIONS ]: " 0.0 0.0 1.0 1.0
 
-#pragma parameter TATE "          TATE Mode" 0.0 0.0 1.0 1.0
-#define TATE         params.TATE     // Screen orientation
-
 #pragma parameter IOS "          Integer Scaling: Odd:Y, Even:'X'+Y" 0.0 0.0 4.0 1.0
 #define IOS          params.IOS     // Smart Integer Scaling
-
-#pragma parameter OS "          R. Bloom Overscan Mode" 1.0 0.0 2.0 1.0
-#define OS           params.OS     // Do overscan
-
-#pragma parameter BLOOM "          Raster bloom %" 0.0 0.0 20.0 1.0
-#define BLOOM        params.BLOOM     // Bloom overscan percentage
 
 #pragma parameter csize "          Corner Size" 0.0 0.0 0.25 0.005
 #define csize        params.csize     // corner size
@@ -139,9 +130,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter overscanY "          Overscan Y original pixels" 0.0 -200.0 200.0 1.0
 #define overscanY        global.overscanY     // OverscanY pixels
-
-#pragma parameter prescalex "          Prescale-X Factor (for xBR...pre-shader)" 1.0 1.0 4.0 1.0
-#define prescalex        global.prescalex     // prescale-x factor
 
 #pragma parameter bogus_masks "[ CRT MASK OPTIONS ]: " 0.0 0.0 1.0 1.0
 
@@ -190,7 +178,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter mclip "          Keep Mask effect with clipping" 0.50 0.0 1.0 0.05
 #define mclip  global.mclip     //
 
-#pragma parameter gamma_out "Gamma out" 2.4 1.0 5.0 0.05
+#pragma parameter gamma_out "Gamma out" 1.75 1.0 5.0 0.05
 #define gamma_out    global.gamma_out     // output gamma
 
 
@@ -244,11 +232,9 @@ void main()
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D LinearizePass;
-layout(set = 0, binding = 3) uniform sampler2D AvgLumPass;
-layout(set = 0, binding = 4) uniform sampler2D GlowPass;
-layout(set = 0, binding = 5) uniform sampler2D BloomPass;
-layout(set = 0, binding = 6) uniform sampler2D PrePass;
-layout(set = 0, binding = 7) uniform sampler2D Source;
+layout(set = 0, binding = 3) uniform sampler2D BloomPass;
+layout(set = 0, binding = 4) uniform sampler2D PrePass;
+layout(set = 0, binding = 5) uniform sampler2D Source;
 
 #define eps 1e-10 
 
@@ -570,29 +556,24 @@ void fetch_pixel (inout vec3 c, inout vec3 b, vec2 coord, vec2 bcoord)
 
 void main()
 {
-	vec4 SourceSize = global.OriginalSize * vec4(prescalex, 1.0, 1.0/prescalex, 1.0);
-	
-	float lum = COMPAT_TEXTURE(AvgLumPass, vec2(0.5,0.5)).a;
+	vec4 SourceSize = global.OriginalSize;
 	
 	float gamma_in = 1.0/COMPAT_TEXTURE(LinearizePass, vec2(0.25,0.25)).a;
 	float intera = COMPAT_TEXTURE(LinearizePass, vec2(0.75,0.25)).a;
 	bool interb  = (intera < 0.5);
-	bool notate  = (TATE < 0.5);
 	
 	// Calculating texel coordinates
    
 	vec2 texcoord = TEX0.xy;
+
 	if (IOS > 0.0 && !interb){
 		vec2 ofactor = OutputSize.xy/SourceSize.xy;
 		vec2 intfactor = (IOS < 2.5) ? floor(ofactor) : ceil(ofactor);
 		vec2 diff = ofactor/intfactor;
-		float scan = mix(diff.y, diff.x, TATE);
+		float scan = diff.y;
 		texcoord = Overscan(texcoord, scan, scan);
-		if (IOS == 1.0 || IOS == 3.0) texcoord = mix(vec2(TEX0.x, texcoord.y), vec2(texcoord.x, TEX0.y), TATE);
-	}
-   
-	float factor  = 1.00 + (1.0-0.5*OS)*BLOOM/100.0 - lum*BLOOM/100.0;
-	texcoord  = Overscan(texcoord, factor, factor);
+		if (IOS == 1.0 || IOS == 3.0) texcoord = vec2(TEX0.x, texcoord.y);
+	} 
 
 	texcoord = Overscan(texcoord, (global.OriginalSize.x - overscanX)/global.OriginalSize.x, (global.OriginalSize.y - overscanY)/global.OriginalSize.y);
 
@@ -605,15 +586,14 @@ void main()
 	// color and bloom fetching
 	vec3 color = COMPAT_TEXTURE(Source,pos1).rgb;
 	vec3  Bloom = COMPAT_TEXTURE(BloomPass, pos).rgb;
+	fetch_pixel(color, Bloom, pos1, pos); 
 	
-	fetch_pixel(color, Bloom, pos1, pos); // deconvergence
-
 	float cm = max(max(color.r,color.g),color.b);
 	float mx1 = COMPAT_TEXTURE(Source, pos1     ).a;
 	float colmx = max(mx1, cm);
 	float w3 = min((c0 + 0.0005) / (pow(colmx, gamma_in/1.4) + 0.0005), 1.0);
 	
-	vec2 dx = mix(vec2(0.001, 0.0), vec2(0.0, 0.001), TATE);
+	vec2 dx = vec2(0.001, 0.0);
 	float mx0 = COMPAT_TEXTURE(Source, pos1 - dx).a;
 	float mx2 = COMPAT_TEXTURE(Source, pos1 + dx).a;
 	float mx = max(max(mx0,mx1),max(mx2,cm));
@@ -625,8 +605,7 @@ void main()
 	vec3 orig1 = color;
 	vec3 cmask = one;
 	
-	vec2 maskcoord = gl_FragCoord.yx * 1.000001;
-	if (notate) maskcoord = maskcoord.yx;
+	vec2 maskcoord = gl_FragCoord.xy * 1.000001;
 	
 	float smask = SlotMask(maskcoord, mx);	
 	cmask*= Mask(maskcoord, mx);
@@ -654,13 +633,13 @@ void main()
 
 	cmask = min(cmask*smask, 1.0);
 	cmask1 = min(cmask1*smask1, 1.0);
-
+	
 	float bb = mix(brightboost, brightboost1, colmx);
 	if (interb) bb = (abs(intera-0.5)<0.1) ? pow(0.80*bb, 0.65) : pow(bb, 0.70);
 	color*=bb;
 
-	vec3  Glow = COMPAT_TEXTURE(GlowPass, pos).rgb;
-	vec3  Ref = COMPAT_TEXTURE(LinearizePass, pos).rgb;
+	vec3  Glow = COMPAT_TEXTURE(BloomPass, pos).rgb;
+	vec3  Ref = COMPAT_TEXTURE(LinearizePass, pos).rgb;	
 	float maxb = COMPAT_TEXTURE(BloomPass, pos).a;
 	float vig  = COMPAT_TEXTURE(PrePass, clamp(pos, 0.0+0.5*global.OriginalSize.zw, 1.0-0.5*global.OriginalSize.zw)).a;
 
@@ -682,7 +661,6 @@ void main()
 	if (halation > 0.01) {
 		Bloom = mix(0.5*(Bloom + Bloom*Bloom), 0.75*Bloom*Bloom, colmx);	
 		color = color + 2.0*max((2.0*mix(maxb*maxb, maxb, colmx)-0.5*max(max(Ref.r,Ref.g),Ref.b)),0.25)*mix(1.0,w3,0.5*colmx)*mix(one,cmask,0.6)*Bloom*halation; }
- 
 
 	Glow = mix(Glow, 0.25*color, 0.7*colmx);
 	if (glow >= 0.0) color = color + 0.5*Glow*glow; else { cmask*=cmask; cmask*=cmask; color = color + (-glow)*cmask*Glow; }
