@@ -1,9 +1,9 @@
 #version 450
 
 /*
-   CRT - Guest - Advanced - Fast - Pass2
+   CRT - Guest - Advanced - HD - Pass2
    
-   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2021 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -26,8 +26,8 @@
 
 layout(push_constant) uniform Push
 {
-	float brightboost, brightboost1, gsl, scanline1, scanline2, beam_min, beam_max, beam_size,
-    glow, vertmask, maskstr, inters, bloom, halation, scans, gamma_c, gamma_out, IOS;
+	float IOS, brightboost, brightboost1, gsl, scanline1, scanline2, beam_min, beam_max, beam_size,
+    glow, vertmask, inters, bloom, halation, scans, gamma_c;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -37,7 +37,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-	float addnoise;
 	float warpX;
 	float warpY;
 	float csize;
@@ -47,12 +46,37 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	float barspeed;
 	float barintensity;
 	float bardir;
+	float SIGMA_VER;
+	float VSHARPNESS;
+	float S_SHARPV;
+	float VARNG;
+	float VSHARP;
+	float prescaley;
+	float internal_res;
+	float scangamma;
 	float sborder;
 	float scan_falloff;
 	float overscanX;
 	float overscanY;
 	float bloom_dist;	
 } global;
+
+#pragma parameter bogus_vfiltering "[ VERTICAL/INTERLACING FILTERING OPTIONS ]: " 0.0 0.0 1.0 1.0
+
+#pragma parameter VSHARPNESS "          Vertical Filter Range" 1.0 1.0 8.0 0.25
+#define VSHARPNESS global.VSHARPNESS
+
+#pragma parameter SIGMA_VER "          Vertical Blur Sigma" 0.50 0.1 7.0 0.025
+#define SIGMA_VER global.SIGMA_VER
+
+#pragma parameter S_SHARPV "          Vert. Substractive Sharpness" 1.0 0.0 2.0 0.10
+#define S_SHARPV global.S_SHARPV
+
+#pragma parameter VSHARP "          Vert. Sharpness Definition" 1.25 0.0 2.0 0.10
+#define VSHARP global.VSHARP
+
+#pragma parameter VARNG "          Substractive Sharpness Ringing" 0.2 0.0 4.0 0.10
+#define VARNG global.VARNG 
 
 #pragma parameter bogus_screen "[ SCREEN OPTIONS ]: " 0.0 0.0 1.0 1.0
 
@@ -128,7 +152,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scanline2 "          Scanline Beam Shape Edges" 8.0 3.0 70.0 1.0 
 #define scanline2    params.scanline2      // scanline param, vertical sharpness
 
-#pragma parameter beam_min "          Scanline Shape Dark Pixels" 1.30 0.25 5.0 0.05
+#pragma parameter beam_min "          Scanline Shape Dark Pixels" 1.20 0.25 5.0 0.05
 #define beam_min     params.beam_min     // dark area beam min - narrow
 
 #pragma parameter beam_max "          Scanline Shape Bright Pixels" 1.00 0.4 3.5 0.025
@@ -146,7 +170,14 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scan_falloff "          Scanline Falloff" 1.0 0.25 2.0 0.05
 #define scan_falloff        global.scan_falloff     // scanline falloff
 
+#pragma parameter scangamma "          Scanline Gamma" 2.40 0.5 5.0 0.05
+#define scangamma global.scangamma
 
+#pragma parameter prescaley "          Prescale-Y Factor (for xBR...pre-shader...)" 1.0 1.0 5.0 0.25  // Joint parameter with Linearize Pass pass, values must match
+#define prescaley        global.prescaley     // prescale-y factor
+
+#pragma parameter internal_res "          Internal Resolution" 1.0 1.0 8.0 0.10
+#define internal_res global.internal_res
 
 #define COMPAT_TEXTURE(c,d) texture(c,d)
 #define TEX0 vTexCoord
@@ -203,7 +234,7 @@ float sw2(float x, float color, float scanline)
 	float ex = x*tmp;
 	return exp2(-scanline*ex*ex);
 }  
-
+ 
 
 vec3 gc(vec3 c)
 {
@@ -223,6 +254,63 @@ vec2 Warp(vec2 pos)
 	pos  = pos*2.0-1.0;    
 	pos  = mix(pos, vec2(pos.x*inversesqrt(1.0-c_shape*pos.y*pos.y), pos.y*inversesqrt(1.0-c_shape*pos.x*pos.x)), vec2(warpX, warpY)/c_shape);
 	return pos*0.5 + 0.5;
+}
+
+
+float invsqrsigma = 1.0/(2.0*SIGMA_VER*SIGMA_VER*internal_res*internal_res);
+
+float gaussian(float x)
+{
+	return exp(-x*x*invsqrsigma);
+} 
+
+vec3 v_resample (vec2 tex0, vec4 Size) {
+
+	float f = fract(Size.y * tex0.y);
+	f = 0.5 - f;
+	vec2 tex = tex0;
+	tex.y = floor(Size.y *tex.y)*Size.w + 0.5*Size.w;
+	vec3 color = 0.0.xxx;
+	vec2 dy  = vec2(0.0, Size.w);
+
+	float w = 0.0;
+	float wsum = 0.0;
+	vec3 pixel;
+
+	vec3 cmax = 0.0.xxx;
+	vec3 cmin = 1.0.xxx;
+	float vsharpness = VSHARPNESS*internal_res;
+	float sharp = gaussian(vsharpness) * S_SHARPV;
+	float maxsharp = 0.20;
+	float FPR = vsharpness;
+	float fpx = 0.0;
+
+	float LOOPSIZE = ceil(2.0*FPR);
+	float CLAMPSIZE = round(2.0*LOOPSIZE/3.0);
+	
+	float n = -LOOPSIZE;
+	
+	do
+	{
+		pixel  = COMPAT_TEXTURE(Pass1, tex + n*dy).rgb;
+
+		w = gaussian(n+f) - sharp;
+		fpx = abs(n+f-sign(n)*FPR)/FPR;
+		if (abs(n) <= CLAMPSIZE) { cmax = max(cmax, pixel); cmin = min(cmin, pixel); }
+		if (w < 0.0) w = clamp(w, mix(-maxsharp, 0.0, pow(fpx, VSHARP)), 0.0);
+	
+		color = color + w * pixel;
+		wsum  = wsum + w;
+
+		n = n + 1.0;
+			
+	} while (n <= LOOPSIZE);
+
+	color = color / wsum;
+
+	color = clamp(mix(clamp(color, cmin, cmax), color, VARNG), 0.0, 1.0);
+
+	return color; 
 }
 
 
@@ -252,9 +340,9 @@ void main()
 		texcoord = Overscan(texcoord, scan, scan);
 		if (IOS == 1.0 || IOS == 3.0) texcoord = vec2(TEX0.x, texcoord.y);
 	}
-	
-	texcoord = Overscan(texcoord, (global.OriginalSize.x - overscanX)/global.OriginalSize.x, (global.OriginalSize.y - overscanY)/global.OriginalSize.y);
 
+	texcoord = Overscan(texcoord, (global.OriginalSize.x - overscanX)/global.OriginalSize.x, (global.OriginalSize.y - overscanY)/global.OriginalSize.y);
+	
 	vec2 pos  = Warp(texcoord);
 
 	float coffset = 0.5;
@@ -273,19 +361,23 @@ void main()
 	pC4.y = floor(OGL2Pos) * ps.y + 0.5*ps.y; 
 	pC4.x = pos.x;
 	
-	if (interb)  pC4.y = pos.y;
-	
 	vec3 color1 = COMPAT_TEXTURE(Pass1, pC4      ).rgb;
 	vec3 scolor1 = 	COMPAT_TEXTURE(Pass1, pC4      ).aaa;
+
+	color1 = pow(color1, vec3(scangamma/gamma_in));
+
+	if (interb) color1 = v_resample(pos, SourceSize * vec4(1.0, prescaley, 1.0, 1.0/prescaley));
 	
 	pC4+=dy;
 	
 	vec3 color2 = COMPAT_TEXTURE(Pass1, pC4      ).rgb;
 	vec3 scolor2 = 	COMPAT_TEXTURE(Pass1, pC4      ).aaa;
 	
+	color2 = pow(color2, vec3(scangamma/gamma_in));
+	
 	// calculating scanlines
 
-	vec3 ctmp = color1; float w3 = 1.0; vec3 color = color1;
+	vec3 ctmp = color1; vec3 mcolor = scolor1; float w3 = 1.0; vec3 color = color1;
 	vec3 one = vec3(1.0);
 
 if (!interb)
@@ -362,6 +454,8 @@ if (!interb)
 	}
 
 	float colmx = pow(max(max(ctmp.r,ctmp.g),ctmp.b), 1.40/gamma_in);
-   
+
+	if (!interb) color = pow( color, vec3(gamma_in/scangamma) );
+  
 	FragColor = vec4(color, colmx);
 }
