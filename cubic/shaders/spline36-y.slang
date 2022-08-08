@@ -39,7 +39,14 @@ layout(push_constant) uniform Push
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
+	float S36_ANTI_RINGING;
 } params;
+
+#pragma parameter S36_ANTI_RINGING "Spline36 Anti-Ringing [ OFF | ON ]" 1.0 0.0 1.0 1.0
+
+#define S36_ANTI_RINGING params.S36_ANTI_RINGING
+
+#define AR_STRENGTH 0.8
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -130,6 +137,17 @@ void main()
     w2   /= sum;
 
     vec3 color = mat3( C0, C1, C2 ) * w1 +  mat3( C3, C4, C5) * w2;
+
+    // Anti-ringing
+    if (S36_ANTI_RINGING == 1.0)
+    {
+        vec3 aux = color;
+        vec3 min_sample = min(min(C1, C2), min(C3, C4));
+        vec3 max_sample = max(max(C1, C2), max(C3, C4));
+        color = clamp(color, min_sample, max_sample);
+        color = mix(aux, color, AR_STRENGTH*step(0.0, (C1-C2)*(C3-C4)));
+
+    }
 
     FragColor = vec4(color, 1.0);
 }
