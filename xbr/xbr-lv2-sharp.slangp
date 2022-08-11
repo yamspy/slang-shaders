@@ -6,14 +6,14 @@ scale0 = "1.000000"
 filter_linear0 = "false"
 alias0 = XbrSource
 
-shader1 = shaders/xbr-lv3-multipass/xbr-lv3-pass0.slang
+shader1 = shaders/xbr-lv2-multipass/xbr-lv2-pass0.slang
 scale_type1 = "source"
 scale1 = "1.000000"
 filter_linear1 = "false"
 
-shader2 = shaders/xbr-lv3-multipass/xbr-lv3-pass1.slang
+shader2 = shaders/xbr-lv2-multipass/xbr-lv2-pass1.slang
 scale_type2 = "source"
-scale2 = "3.000000"
+scale2 = "4.000000"
 filter_linear2 = "false"
 
 
@@ -39,5 +39,5 @@ parameters = "SMALL_DETAILS;WP4;KA"
 
 SMALL_DETAILS = "1.0"
 WP4 = "0.8"
-KA = "0.22"
+KA = "0.35"
 

@@ -26,7 +26,6 @@
 
 */
 
-#define XBR_EDGE_STR 0.6
 #define XBR_WEIGHT 1.0
 #define XBR_ANTI_RINGING 1.0
 
@@ -42,8 +41,8 @@ layout(push_constant) uniform Push
    float XBR_EDGE_STR_P1;
 } params;
 
-#pragma parameter XBR_EDGE_STR_P1 "Xbr - Edge Strength p1" 0.0 0.0 5.0 0.5
-#pragma parameter MODE "Mode - Normal, Details, Adaptive" 0.0 0.0 2.0 1.0
+#pragma parameter XBR_EDGE_STR_P1 "Xbr - Edge Strength p1" 5.0 0.0 5.0 0.5
+#pragma parameter MODE "Mode - Normal, Details, Adaptive" 1.0 0.0 2.0 1.0
 #pragma parameter XBR_EDGE_SHP "Adaptive Dynamic Edge Sharp" 0.4 0.0 3.0 0.1
 #pragma parameter XBR_TEXTURE_SHP "Adaptive Static Edge Sharp" 1.0 0.0 2.0 0.1
 
@@ -120,7 +119,7 @@ void main()
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D Original;
+layout(set = 0, binding = 3) uniform sampler2D XbrSource;
 
 void main()
 {
@@ -135,8 +134,8 @@ void main()
 		wp5	=	0.0;
 		wp6	=	0.0;
 
-		weight1	=	(XBR_WEIGHT*1.75068/10.0);
-		weight2	=	(XBR_WEIGHT*1.29633/10.0/2.0);
+		weight1	=	(XBR_WEIGHT*1.29633/10.0);
+		weight2	=	(XBR_WEIGHT*1.75068/10.0/2.0);
 	}
 	else if (MODE == 2.0)
 	{
@@ -147,8 +146,8 @@ void main()
 		wp5	=	0.0;
 		wp6	=	0.0;
 
-		weight1	=	(1.75068/10.0);
-		weight2	=	(1.29633/10.0/2.0);
+		weight1	=	(1.29633/10.0);
+		weight2	=	(1.75068/10.0/2.0);
 	}
 	else
 	{
@@ -159,8 +158,8 @@ void main()
 		wp5	=	0.0;
 		wp6	=	0.0;
 
-		weight1	=	(XBR_WEIGHT*1.75068/10.0);
-		weight2	=	(XBR_WEIGHT*1.29633/10.0/2.0);
+		weight1	=	(XBR_WEIGHT*1.29633/10.0);
+		weight2	=	(XBR_WEIGHT*1.75068/10.0/2.0);
 	}
 // end settings //
 
@@ -169,30 +168,30 @@ void main()
 	vec2 dir = fp - vec2(0.5,0.5);
  	if ((dir.x*dir.y)>0.0)
 	{
-		FragColor = mix( texture(Original, vTexCoord), texture(Source, vTexCoord), step(0.0, dir.x));
+		FragColor = mix( texture(XbrSource, vTexCoord), texture(Source, vTexCoord), step(0.0, dir.x));
 	}
 	else
 	{
 	vec2 g1 = (fp.x>0.5) ? vec2(0.5/params.SourceSize.x, 0.0) : vec2(0.0, 0.5/params.SourceSize.y);
 	vec2 g2 = (fp.x>0.5) ? vec2(0.0, 0.5/params.SourceSize.y) : vec2(0.5/params.SourceSize.x, 0.0);
 
-	vec3 P0 = texture(Original,	vTexCoord -3.0*g1        ).xyz;
+	vec3 P0 = texture(XbrSource,	vTexCoord -3.0*g1        ).xyz;
 	vec3 P1 = texture(Source,	vTexCoord         -3.0*g2).xyz;
 	vec3 P2 = texture(Source,	vTexCoord         +3.0*g2).xyz;
-	vec3 P3 = texture(Original,	vTexCoord +3.0*g1        ).xyz;
+	vec3 P3 = texture(XbrSource,	vTexCoord +3.0*g1        ).xyz;
 
 	vec3  B = texture(Source,	vTexCoord -2.0*g1     -g2).xyz;
-	vec3  C = texture(Original,	vTexCoord     -g1 -2.0*g2).xyz;
+	vec3  C = texture(XbrSource,	vTexCoord     -g1 -2.0*g2).xyz;
 	vec3  D = texture(Source,	vTexCoord -2.0*g1     +g2).xyz;
-	vec3  E = texture(Original,	vTexCoord     -g1        ).xyz;
+	vec3  E = texture(XbrSource,	vTexCoord     -g1        ).xyz;
 	vec3  F = texture(Source,	vTexCoord             -g2).xyz;
-	vec3  G = texture(Original,	vTexCoord     -g1 +2.0*g2).xyz;
+	vec3  G = texture(XbrSource,	vTexCoord     -g1 +2.0*g2).xyz;
 	vec3  H = texture(Source,	vTexCoord             +g2).xyz;
-	vec3  I = texture(Original,	vTexCoord     +g1        ).xyz;
+	vec3  I = texture(XbrSource,	vTexCoord     +g1        ).xyz;
 
-	vec3 F4 = texture(Original,	vTexCoord     +g1 -2.0*g2).xyz;
+	vec3 F4 = texture(XbrSource,	vTexCoord     +g1 -2.0*g2).xyz;
 	vec3 I4 = texture(Source,	vTexCoord +2.0*g1     -g2).xyz;
-	vec3 H5 = texture(Original,	vTexCoord     +g1 +2.0*g2).xyz;
+	vec3 H5 = texture(XbrSource,	vTexCoord     +g1 +2.0*g2).xyz;
 	vec3 I5 = texture(Source,	vTexCoord +2.0*g1     +g2).xyz;
 
 	float b = RGBtoYUV( B );

@@ -103,7 +103,7 @@ layout(location = 2) in vec4 t2;
 layout(location = 3) in float aa_factor;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D Original;
+layout(set = 0, binding = 3) uniform sampler2D XbrSource;
 
 // Return if A components are less than or equal B ones.
 vec4 LTE(vec4 A, vec4 B)
@@ -180,11 +180,11 @@ void main()
 
     vec2 fp = fract(vTexCoord*global.SourceSize.xy);
 
-    vec3 B  = texture(Original, t1.xy).rgb;
-    vec3 D  = texture(Original, t2.xw).rgb;
-    vec3 E  = texture(Original, t2.yw).rgb;
-    vec3 F  = texture(Original, t2.zw).rgb;
-    vec3 H  = texture(Original, t1.xw).rgb;
+    vec3 B  = texture(XbrSource, t1.xy).rgb;
+    vec3 D  = texture(XbrSource, t2.xw).rgb;
+    vec3 E  = texture(XbrSource, t2.yw).rgb;
+    vec3 F  = texture(XbrSource, t2.zw).rgb;
+    vec3 H  = texture(XbrSource, t1.xw).rgb;
 
     mat4x3 e  = mat4x3(E, E, E, E);
     mat4x3 f  = mat4x3(F, B, D, H);

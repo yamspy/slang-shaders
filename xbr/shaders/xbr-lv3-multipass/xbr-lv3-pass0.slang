@@ -29,15 +29,24 @@
 
 layout(push_constant) uniform Push
 {
+    float SMALL_DETAILS;
+    float WP4;
+    float KA;
     float XBR_EQ_THRESHOLD;
-    float XBR_LV2_COEFFICIENT;
+    float FD;
 } params;
 
-#pragma parameter XBR_EQ_THRESHOLD "COLOR DISTINCTION THRESHOLD" 0.32 0.0 1.0 0.01
-#pragma parameter XBR_LV2_COEFFICIENT "SMOOTHNESS THRESHOLD" 0.3 0.0 1.0 0.1
+#pragma parameter SMALL_DETAILS       "XBR - MODE (VANILLA | SMALL DETAILS)" 0.0 0.0 1.0 1.0
+#pragma parameter WP4                        "XBR - SMOOTHNESS LOCAL WEIGHT" 1.0 0.0 1.0 0.2
+#pragma parameter KA                            "XBR - SMOOTHNESS THRESHOLD" 1.0 0.0 1.0 0.05
+#pragma parameter XBR_EQ_THRESHOLD       "XBR - COLOR DISTINCTION THRESHOLD" 0.26 0.0 1.0 0.01
+#pragma parameter FD "XBR - DITHERING/SMOOTHNESS COMPROMISE (MEDIUM | HIGH)" 0.0 0.0 1.0 1.0
 
-#define XBR_EQ_THRESHOLD params.XBR_EQ_THRESHOLD
-#define XBR_LV2_COEFFICIENT params.XBR_LV2_COEFFICIENT
+#define SMALL_DETAILS         params.SMALL_DETAILS
+#define WP4                   (5.0*params.WP4)
+#define KA                    (6.0-5.0*params.KA)
+#define XBR_EQ_THRESHOLD      params.XBR_EQ_THRESHOLD
+#define FD                    (1.0-params.FD)
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -53,7 +62,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define CORNER_C
 
 #define XBR_EQ_THRESHOLD2 0.02
-#define lv2_cf       (XBR_LV2_COEFFICIENT + 2.0)
+#define lv2_cf       2.4
 #define saturate(c)  clamp(c, 0.0, 1.0)
 #define round(X)     floor((X)+0.5)
 
@@ -63,6 +72,7 @@ const vec4 zip2      = vec4( 16.0,  32.0,  64.0, 128.0);
 const vec4 low       = vec4(  0.0,   0.0,   0.0,   0.0);
 const vec4 high      = vec4(255.0, 255.0, 255.0, 255.0);
 const vec3 Y         = vec3(0.2627, 0.6780, 0.0593);
+const vec3 Ysd       = vec3( 0.299,  0.587,  0.114);
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -173,8 +183,16 @@ vec4 neq(mat4x3 A, mat4x3 B)
 // Calculate weighted distance among pixels in some directions.
 vec4 weighted_distance(mat4x3 a, mat4x3 b, mat4x3 c, mat4x3 d, mat4x3 e, mat4x3 f, mat4x3 g, mat4x3 h)
 {
-    return (dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) + 4.0*dist4(g,h));
+    if (SMALL_DETAILS < 0.5)
+    {
+        return ( FD * ( dist4(a,b) + dist4(a,c)) * (dist4(d,e) + dist4(d,f) ) + WP4 * dist4(g,h) );
+    }
+    else
+    {
+        return ( FD * ( dist4(a,b) + dist4(a,c) + dist4(d,e) + dist4(d,f) - dist4(c,e) - dist4(b,f) ) + WP4 * dist4(g,h) );
+    }
 }
+
 
 
 void main()
@@ -276,7 +294,7 @@ void main()
     vec4 d_hc = dist4(h, c);
 
     edri      = LTE(wd1, wd2) * irlv0;
-    edr       = LT( wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
+    edr       = LT( KA*wd1, wd2) * irlv1 * NOT(edri.yzwx * edri.wxyz);
     edr_l     = LTE( lv2_cf * d_fg, d_hc ) * irlv2l * edr * (NOT(edri.yzwx) * eq(e, c));
     edr_u     = LTE( lv2_cf * d_hc, d_fg ) * irlv2u * edr * (NOT(edri.wxyz) * eq(e, g));
     edr3_l    = irlv3l * edr_l;
