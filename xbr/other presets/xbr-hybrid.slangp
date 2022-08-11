@@ -1,7 +1,7 @@
 shaders = 3
 shader0 = shaders/xbr-hybrid/2xbr-hybrid-v5-gamma.slang
 shader1 = shaders/xbr-hybrid/2xbr-hybrid-v5-gamma.slang
-shader2 = ../stock.slang
+shader2 = ../shaders/support/stock.slang
 
 filter_linear0 = false
 filter_linear1 = false

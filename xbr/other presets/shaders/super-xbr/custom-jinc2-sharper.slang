@@ -163,13 +163,23 @@ void main()
 
       // Anti-ringing
       //  Get min/max samples
+      pc = vTexCoord;
+      c00 = texture(Source, pc              ).xyz;
+      c11 = texture(Source, pc    +dx       ).xyz;
+      c21 = texture(Source, pc    -dx       ).xyz;
+      c12 = texture(Source, pc           +dy).xyz;
+      c22 = texture(Source, pc           -dy).xyz;
+
+
       vec3 min_sample = min4(c11, c21, c12, c22);
       vec3 max_sample = max4(c11, c21, c12, c22);
+	min_sample = min(min_sample, c00);
+	max_sample = max(max_sample, c00);
 
       vec3 aux = color;
 
-      color = clamp(color, min_sample, max_sample);
-      color = mix(aux, color, params.JINC2_AR_STRENGTH);
+        color = clamp(color, min_sample, max_sample);
+        color = mix(aux, color, params.JINC2_AR_STRENGTH);
 
    FragColor = vec4(color, 1.);
 }

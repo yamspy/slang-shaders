@@ -40,9 +40,9 @@ layout(push_constant) uniform Push
 	float XBR_TEXTURE_SHP;
 } params;
 
-#pragma parameter MODE "Mode - Normal, Details, Adaptive" 0.0 0.0 2.0 1.0
+#pragma parameter MODE "Mode - Normal, Details, Adaptive" 1.0 0.0 2.0 1.0
 #pragma parameter XBR_EDGE_STR_P0 "Xbr - Edge Strength p0" 5.0 0.0 5.0 0.5
-#pragma parameter XBR_WEIGHT "Xbr - Filter Weight" 1.0 0.00 1.50 0.01
+#pragma parameter XBR_WEIGHT "Xbr - Filter Weight" 0.0 0.0 1.0 0.1
 #pragma parameter XBR_EDGE_SHP "Adaptive Dynamic Edge Sharp" 0.4 0.0 3.0 0.1
 #pragma parameter XBR_TEXTURE_SHP "Adaptive Static Edge Sharp" 1.0 0.0 2.0 0.1
 
