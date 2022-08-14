@@ -1,0 +1,4 @@
+shaders = 1
+
+shader0 = shaders/ddt-jinc.slang
+filter_linear0 = false
