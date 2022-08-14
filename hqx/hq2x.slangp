@@ -1,4 +1,4 @@
-shaders = 2
+shaders = 4
 shader0 = shader-files/pass1.slang
 shader1 = shader-files/hq2x.slang
 
@@ -9,6 +9,15 @@ scale0 = 1.0
 filter_linear1 = false
 scale_type1 = source
 scale1 = 2.0
+
+shader2 = ../cubic/shaders/bicubic-x.slang
+filter_linear2 = false
+scale_type_x2 = viewport
+scale_type_y2 = source
+scale2 = 1.0
+
+shader3 = ../cubic/shaders/bicubic-y.slang
+filter_linear3 = false
 
 textures = LUT
 LUT = resources/hq2x.png

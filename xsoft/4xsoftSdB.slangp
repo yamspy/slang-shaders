@@ -1,4 +1,4 @@
-shaders = 3
+shaders = 4
 
 shader0 = ../stock.slang
 filter_linear0 = false
@@ -12,5 +12,11 @@ scale_type1 = source
 scale_x1 = 2.0
 scale_y1 = 2.0
 
-shader2 = ../stock.slang
-filter_linear2 = true
+shader2 = ../cubic/shaders/b-spline-x.slang
+filter_linear2 = false
+scale_type_x2 = viewport
+scale_type_y2 = source
+scale2 = 1.0
+
+shader3 = ../cubic/shaders/b-spline-y.slang
+filter_linear3 = false
