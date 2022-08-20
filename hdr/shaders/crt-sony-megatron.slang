@@ -256,11 +256,11 @@ const uint kApertureGrilleMasks1080p1000TVL[kBGRAxis][kMaxApertureGrilleSize] =
 // 4K 
 
 // 300TVL
-#define kMaxApertureGrilleSize       6
+#define kMaxApertureGrilleSize       7
 
-#define kRRGGBBX        { kRed, kRed, kGreen, kGreen, kBlue, kBlue }
-#define kRRBBGGX        { kRed, kRed, kBlue, kBlue, kGreen, kGreen }
-#define kBBGGRRX        { kBlue, kBlue, kGreen, kGreen, kRed, kRed }
+#define kRRGGBBX        { kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack }
+#define kRRBBGGX        { kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack }
+#define kBBGGRRX        { kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack }
 
 const uint kApertureGrilleMasks4K300TVL[kBGRAxis][kMaxApertureGrilleSize] = 
 { 
