@@ -8,7 +8,7 @@ layout(push_constant) uniform Push
     float BEAM_MAX_WIDTH;
     float SCANLINES_STRENGTH;
     float COLOR_BOOST;
-    float HFILTER_SHARPNESS;
+    float SHARPNESS_HACK;
     float PHOSPHOR_LAYOUT;
     float MASK_INTENSITY;
     float CRT_ANTI_RINGING;
@@ -17,19 +17,20 @@ layout(push_constant) uniform Push
     float VSCANLINES;
 } param;
 
-#pragma parameter BEAM_PROFILE "BEAM PROFILE (BP)" 0.0 0.0 6.0 1.0
-#pragma parameter HFILTER_PROFILE "HORIZONTAL FILTER PROFILE (HFP)" 0.0 0.0 6.0 1.0
-#pragma parameter BEAM_MIN_WIDTH "  Custom [If   BP=0.00] MIN BEAM WIDTH" 0.86 0.0 1.0 0.02
-#pragma parameter BEAM_MAX_WIDTH "  Custom [If   BP=0.00] MAX BEAM WIDTH" 1.0 0.0 1.0 0.02
-#pragma parameter SCANLINES_STRENGTH "  Custom [If   BP=0.00] SCANLINES STRENGTH" 0.58 0.0 1.0 0.02
-#pragma parameter COLOR_BOOST "  Custom [If   BP=0.00] COLOR BOOST" 1.25 1.0 2.0 0.05
-#pragma parameter HFILTER_SHARPNESS "  Custom [If HFP=0.00] SHARPNESS" 1.0 0.0 1.0 0.02
-#pragma parameter PHOSPHOR_LAYOUT "PHOSPHOR LAYOUT" 4.0 0.0 21.0 1.0
-#pragma parameter MASK_INTENSITY "MASK INTENSITY" 0.5 0.0 1.0 0.1
-#pragma parameter CRT_ANTI_RINGING "ANTI RINGING" 1.0 0.0 1.0 0.1
-#pragma parameter InputGamma "INPUT GAMMA" 2.4 0.0 5.0 0.1
-#pragma parameter OutputGamma "OUTPUT GAMMA" 2.2 0.0 5.0 0.1
-#pragma parameter VSCANLINES "SCANLINES DIRECTION" 0.0 0.0 1.0 1.0
+#pragma parameter CRT_HYLLIAN "[CRT-HYLLIAN PARAMS]" 0.0 0.0 0.0 0.0
+#pragma parameter BEAM_PROFILE "  BEAM PROFILE (BP)" 0.0 0.0 2.0 1.0
+#pragma parameter HFILTER_PROFILE "  HORIZONTAL FILTER PROFILE [ HERMITE | CATMULL-ROM ]" 0.0 0.0 1.0 1.0
+#pragma parameter BEAM_MIN_WIDTH "    Custom [If   BP=0.00] MIN BEAM WIDTH" 1.0 0.0 1.0 0.01
+#pragma parameter BEAM_MAX_WIDTH "    Custom [If   BP=0.00] MAX BEAM WIDTH" 1.0 0.0 1.0 0.01
+#pragma parameter SCANLINES_STRENGTH "    Custom [If   BP=0.00] SCANLINES STRENGTH" 0.72 0.0 1.0 0.01
+#pragma parameter COLOR_BOOST "    Custom [If   BP=0.00] COLOR BOOST" 1.70 1.0 2.0 0.05
+#pragma parameter SHARPNESS_HACK "  SHARPNESS_HACK" 1.0 1.0 4.0 1.0
+#pragma parameter PHOSPHOR_LAYOUT "  PHOSPHOR LAYOUT" 4.0 0.0 24.0 1.0
+#pragma parameter MASK_INTENSITY "  MASK INTENSITY" 0.5 0.0 1.0 0.1
+#pragma parameter CRT_ANTI_RINGING "  ANTI RINGING" 1.0 0.0 1.0 0.2
+#pragma parameter InputGamma "  INPUT GAMMA" 2.4 0.0 5.0 0.1
+#pragma parameter OutputGamma "  OUTPUT GAMMA" 2.2 0.0 5.0 0.1
+#pragma parameter VSCANLINES "  VERTICAL SCANLINES [ OFF | ON ]" 0.0 0.0 1.0 1.0
 
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -48,7 +49,7 @@ layout(location = 0) out vec2 vTexCoord;
 void main()
 {
     gl_Position = global.MVP * Position;
-    vTexCoord   = TexCoord;
+    vTexCoord   = TexCoord * 1.0001;
 }
 
 #pragma stage fragment
@@ -60,7 +61,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 /*
     Hyllian's CRT Shader
 
-    Copyright (C) 2011-2020 Hyllian - sergiogdb@gmail.com
+    Copyright (C) 2011-2022 Hyllian - sergiogdb@gmail.com
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -99,18 +100,14 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 //    B = 0.3782, C = 0.3109  =>  Robidoux filter.
 //    B = 0.2620, C = 0.3690  =>  Robidoux Sharp filter.
 
+// Using only Hermite and Catmull-Rom, as the others aren't useful for crt shader.
 // For more info, see: http://www.imagemagick.org/Usage/img_diagrams/cubic_survey.gif
 mat4x4 get_hfilter_profile()
 {
-	float bf = 1.0 - param.HFILTER_SHARPNESS;
-	float cf = param.HFILTER_SHARPNESS*0.5; // B+2C=1  Mitchel-Netravali recommendation line.
+	float bf = 0.0;
+	float cf = 0.0;
 
-	if (param.HFILTER_PROFILE == 1) {bf = 0.0;     cf = 0.0;}
-	if (param.HFILTER_PROFILE == 2) {bf = 0.0;     cf = 0.5;}
-	if (param.HFILTER_PROFILE == 3) {bf = 0.2620;  cf = 0.3690;}
-	if (param.HFILTER_PROFILE == 4) {bf = 1.0/3.0; cf = 1.0/3.0;}
-	if (param.HFILTER_PROFILE == 5) {bf = 0.3782;  cf = 0.3109;}
-	if (param.HFILTER_PROFILE == 6) {bf = 1.0;     cf = 0.0;}
+	if (param.HFILTER_PROFILE == 1) {bf = 0.0;     cf = 0.5;}
 
         return mat4x4(            (-bf - 6.0*cf)/6.0,         (3.0*bf + 12.0*cf)/6.0,     (-3.0*bf - 6.0*cf)/6.0,             bf/6.0,
                                         (12.0 - 9.0*bf - 6.0*cf)/6.0, (-18.0 + 12.0*bf + 6.0*cf)/6.0,                      0.0, (6.0 - 2.0*bf)/6.0,
@@ -130,12 +127,8 @@ vec4 get_beam_profile()
 {
 	vec4 bp = vec4(param.SCANLINES_STRENGTH, param.BEAM_MIN_WIDTH, param.BEAM_MAX_WIDTH, param.COLOR_BOOST);
 
- if (param.BEAM_PROFILE == 1)  bp = vec4(0.40, 1.00, 1.00, 1.00); // Catmull-rom
-if (param.BEAM_PROFILE == 2)  bp = vec4(0.72, 1.00, 1.00, 1.25); // Catmull-rom
-if (param.BEAM_PROFILE == 3)  bp = vec4(0.60, 0.50, 1.00, 1.25); // Hermite
-if (param.BEAM_PROFILE == 4)  bp = vec4(0.60, 0.72, 1.00, 1.25); // Hermite
-if (param.BEAM_PROFILE == 5)  bp = vec4(0.68, 0.68, 1.00, 1.25); // Hermite
-if (param.BEAM_PROFILE == 6)  bp = vec4(0.70, 0.50, 1.00, 1.80); // Catmull-rom
+	if (param.BEAM_PROFILE == 1)  bp = vec4(0.62, 1.00, 1.00, 1.40); // Catmull-rom
+	if (param.BEAM_PROFILE == 2)  bp = vec4(0.72, 1.00, 1.00, 1.20); // Catmull-rom
 
 	return bp;
 }
@@ -145,14 +138,14 @@ void main()
 {
     vec4 profile = get_beam_profile();
 
-    vec2 TextureSize = vec2(global.SourceSize.x, global.SourceSize.y);
+    vec2 TextureSize = mix(vec2(global.SourceSize.x * param.SHARPNESS_HACK, global.SourceSize.y), vec2(global.SourceSize.x, global.SourceSize.y * param.SHARPNESS_HACK), param.VSCANLINES);
 
     vec2 dx = mix(vec2(1.0/TextureSize.x, 0.0), vec2(0.0, 1.0/TextureSize.y), param.VSCANLINES);
     vec2 dy = mix(vec2(0.0, 1.0/TextureSize.y), vec2(1.0/TextureSize.x, 0.0), param.VSCANLINES);
 
     vec2 pix_coord = vTexCoord.xy*TextureSize + vec2(-0.5, 0.5);
 
-    vec2 tc = mix((floor(pix_coord) + vec2(0.5, 0.5))/TextureSize, (floor(pix_coord) + vec2(1.0, -0.5))/TextureSize, param.VSCANLINES);
+    vec2 tc = mix((floor(pix_coord) + vec2(0.5, 0.5))/TextureSize, (floor(pix_coord) + vec2(1.5, -0.5))/TextureSize, param.VSCANLINES);
 
     vec2 fp = mix(fract(pix_coord), fract(pix_coord.yx), param.VSCANLINES);
 
@@ -183,10 +176,10 @@ void main()
     // Anti-ringing
     vec3 aux = color0;
     color0 = clamp(color0, min_sample0, max_sample0);
-    color0 = mix(aux, color0, param.CRT_ANTI_RINGING);
+    color0 = mix(aux, color0, param.CRT_ANTI_RINGING * step(0.0, (c00-c01)*(c02-c03)));
     aux = color1;
     color1 = clamp(color1, min_sample1, max_sample1);
-    color1 = mix(aux, color1, param.CRT_ANTI_RINGING);
+    color1 = mix(aux, color1, param.CRT_ANTI_RINGING * step(0.0, (c10-c11)*(c12-c13)));
 
     float pos0 = fp.y;
     float pos1 = 1 - fp.y;
@@ -194,8 +187,8 @@ void main()
     vec3 lum0 = mix(vec3(beam_min_width), vec3(beam_max_width), color0);
     vec3 lum1 = mix(vec3(beam_min_width), vec3(beam_max_width), color1);
 
-    vec3 d0 = scanlines_strength*pos0/(lum0+0.0000001);
-    vec3 d1 = scanlines_strength*pos1/(lum1+0.0000001);
+    vec3 d0 = scanlines_strength*pos0/(lum0*lum0+0.0000001);
+    vec3 d1 = scanlines_strength*pos1/(lum1*lum1+0.0000001);
 
     d0 = exp(-d0*d0);
     d1 = exp(-d1*d1);
