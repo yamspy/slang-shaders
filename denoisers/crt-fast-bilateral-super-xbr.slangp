@@ -6,6 +6,7 @@ scale_type_x0 = "source"
 scale_x0 = "1.000000"
 scale_type_y0 = "source"
 scale_y0 = "1.000000"
+alias0 = XbrSource
 shader1 = "../xbr/shaders/super-xbr/super-xbr-pass0.slang"
 filter_linear1 = "false"
 wrap_mode1 = "clamp_to_edge"
@@ -41,6 +42,6 @@ wrap_mode5 = "clamp_to_edge"
 float_framebuffer5 = "false"
 
 parameters = "JINC2_WINDOW_SINC;JINC2_SINC;JINC2_AR_STRENGTH"
-JINC2_WINDOW_SINC = 0.42
-JINC2_SINC = 0.92
-JINC2_AR_STRENGTH = 0.8
+JINC2_WINDOW_SINC = 0.50
+JINC2_SINC = 0.88
+JINC2_AR_STRENGTH = 0.0
