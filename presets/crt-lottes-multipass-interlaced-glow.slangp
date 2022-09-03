@@ -1,6 +1,6 @@
 shaders = 10
 
-shader0 = shaders/glow-trails/glow-trails0.slang
+shader0 = ../crt/shaders/glow-trails/glow-trails0.slang
 filter_linear0 = false
 scale_type0 = source
 scale0 = 1.0
@@ -18,33 +18,33 @@ scale_type2 = "source"
 scale2 = "1.0"
 srgb_framebuffer2 = "true"
 
-shader3 = shaders/glow-trails/glow-trails1.slang
+shader3 = ../crt/shaders/glow-trails/glow-trails1.slang
 
-shader4 = shaders/crt-royale/src/crt-royale-first-pass-linearize-crt-gamma-bob-fields.slang
+shader4 = ../crt/shaders/crt-royale/src/crt-royale-first-pass-linearize-crt-gamma-bob-fields.slang
 srgb_framebuffer4 = true
 alias4 = "ORIG_LINEARIZED"
 
-shader5 = "shaders/crt-easymode-halation/blur_horiz.slang"
+shader5 = "../crt/shaders/crt-easymode-halation/blur_horiz.slang"
 filter_linear5 = "true"
 scale_type5 = "source"
 scale5 = "1.0"
 srgb_framebuffer5 = "true"
 
-shader6 = "shaders/crt-easymode-halation/blur_vert.slang"
+shader6 = "../crt/shaders/crt-easymode-halation/blur_vert.slang"
 alias6 = "GlowPass"
 filter_linear6 = "true"
 scale_type6 = "source"
 scale6 = "1.0"
 srgb_framebuffer6 = "true"
 
-shader7 = "shaders/crt-easymode-halation/threshold.slang"
+shader7 = "../crt/shaders/crt-easymode-halation/threshold.slang"
 srgb_framebuffer7 = "true"
 
-shader8 = "shaders/crt-lottes-multipass/bloompass-glow.slang"
+shader8 = "../crt/shaders/crt-lottes-multipass/bloompass-glow.slang"
 filter_linear8 = "true"
 alias8 = BloomPass
 
-shader9 = "shaders/crt-lottes-multipass/scanpass-glow.slang"
+shader9 = "../crt/shaders/crt-lottes-multipass/scanpass-glow.slang"
 filter_linear9 = "true"
 
 parameters = "mixfactor;threshold;trail_bright;glowFactor;DIFFUSION;maskLight;maskDark;warpX"
