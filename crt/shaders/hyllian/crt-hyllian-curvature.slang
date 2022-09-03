@@ -27,22 +27,22 @@ layout(push_constant) uniform Push
 #pragma parameter HFILTER_PROFILE "  HORIZONTAL FILTER PROFILE [ HERMITE | CATMULL-ROM ]" 0.0 0.0 1.0 1.0
 #pragma parameter BEAM_MIN_WIDTH "    Custom [If   BP=0.00] MIN BEAM WIDTH" 1.0 0.0 1.0 0.01
 #pragma parameter BEAM_MAX_WIDTH "    Custom [If   BP=0.00] MAX BEAM WIDTH" 1.0 0.0 1.0 0.01
-#pragma parameter SCANLINES_STRENGTH "    Custom [If   BP=0.00] SCANLINES STRENGTH" 0.72 0.0 1.0 0.01
-#pragma parameter COLOR_BOOST "    Custom [If   BP=0.00] COLOR BOOST" 1.70 1.0 2.0 0.05
+#pragma parameter SCANLINES_STRENGTH "    Custom [If   BP=0.00] SCANLINES STRENGTH" 0.58 0.0 1.0 0.01
+#pragma parameter COLOR_BOOST "    Custom [If   BP=0.00] COLOR BOOST" 1.60 1.0 2.0 0.05
 #pragma parameter SHARPNESS_HACK "  SHARPNESS_HACK" 1.0 1.0 4.0 1.0
 #pragma parameter PHOSPHOR_LAYOUT "  PHOSPHOR LAYOUT" 4.0 0.0 24.0 1.0
-#pragma parameter MASK_INTENSITY "  MASK INTENSITY" 0.5 0.0 1.0 0.1
+#pragma parameter MASK_INTENSITY "  MASK INTENSITY" 0.7 0.0 1.0 0.1
 #pragma parameter CRT_ANTI_RINGING "  ANTI RINGING" 1.0 0.0 1.0 0.2
 #pragma parameter InputGamma "  INPUT GAMMA" 2.4 0.0 5.0 0.1
 #pragma parameter OutputGamma "  OUTPUT GAMMA" 2.2 0.0 5.0 0.1
 #pragma parameter VSCANLINES "  VERTICAL SCANLINES [ OFF | ON ]" 0.0 0.0 1.0 1.0
 #pragma parameter CRT_CURVATURE "CRT-Curvature" 1.0 0.0 1.0 1.0
-#pragma parameter CRT_warpX "CRT-Curvature X-Axis" 0.031 0.0 0.125 0.01
-#pragma parameter CRT_warpY "CRT-Curvature Y-Axis" 0.041 0.0 0.125 0.01
+#pragma parameter CRT_warpX "CRT-Curvature X-Axis" 0.010 0.0 0.125 0.01
+#pragma parameter CRT_warpY "CRT-Curvature Y-Axis" 0.020 0.0 0.125 0.01
 vec2 CRT_Distortion = vec2(param.CRT_warpX, param.CRT_warpY) * 15.;
 #pragma parameter CRT_cornersize "CRT-Corner Size" 0.01 0.001 1.0 0.005
 #define cornersize param.CRT_cornersize
-#pragma parameter CRT_cornersmooth "CRT-Corner Smoothness" 1000.0 80.0 2000.0 100.0
+#pragma parameter CRT_cornersmooth "CRT-Corner Smoothness" 280.0 80.0 2080.0 100.0
 #define cornersmooth param.CRT_cornersmooth
 
 layout(std140, set = 0, binding = 0) uniform UBO
