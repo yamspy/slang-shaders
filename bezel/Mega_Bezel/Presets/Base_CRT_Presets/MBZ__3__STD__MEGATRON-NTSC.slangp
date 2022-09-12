@@ -3,7 +3,7 @@ shaders = 31
 shader0 = ../../shaders/base/add-params-all.slang
 alias0 = "CorePass"
 
-shader1 =  ../../../../stock.slang
+shader1 =  ../../shaders/base/stock.slang
 filter_linear1 = false
 srgb_framebuffer1 = true
 scale_type1 = source
@@ -40,7 +40,7 @@ scale_type5 = source
 scale5 = 1.0
 alias5 = "IntroPass"
 
-shader6 = ../../../../stock.slang
+shader6 = ../../shaders/base/stock.slang
 alias6 = "PreCRTPass"
 
 shader7 = ../../shaders/guest/hsm-afterglow0.slang
@@ -62,7 +62,7 @@ filter_linear9 = true
 scale_type9 = source
 scale9 = 1.0
 
-shader10 = ../../../../stock.slang
+shader10 = ../../shaders/base/stock.slang
 alias10 = "PrePass0"
 
 shader11 = ../../shaders/guest/ntsc/hsm-ntsc-pass1.slang
@@ -94,7 +94,7 @@ scale_type14 = source
 scale_x14 = 1.0
 scale_y14 = 1.0
 
-shader15 = ../../../../stock.slang
+shader15 = ../../shaders/base/stock.slang
 filter_linear15 = true
 scale_type15 = source
 scale_x15 = 1.0
@@ -123,7 +123,7 @@ shader18 = "../../shaders/megatron/crt-sony-megatron-source-pass.slang"
 filter_linear18 = "false"
 scale_type18 = "source"
 scale18 = "1.0"
-wrap_mode0 = "clamp_to_border"
+wrap_mode18 = "clamp_to_border"
 mipmap_input18 = "false"
 alias18 = "SourceSDR"
 
@@ -131,13 +131,13 @@ shader19 = "../../shaders/megatron/crt-sony-megatron-hdr-pass.slang"
 filter_linear19 = "false"
 scale_type19 = "source"
 scale19 = "1.0"
-wrap_mode1 = "clamp_to_border"
+wrap_mode19 = "clamp_to_border"
 mipmap_input19 = "false"
 alias19 = "SourceHDR"
 
 shader20 = "../../shaders/megatron/crt-sony-megatron.slang"
 filter_linear20 = "false"
-wrap_mode2 = "clamp_to_border"
+wrap_mode20 = "clamp_to_border"
 mipmap_input20 = "false"
 alias20 = ""
 float_framebuffer20 = "false"

@@ -23,7 +23,7 @@
 */
 
 // Screen Scale Required Parameters
-#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.0.007_2022-08-29_Rev-1 --- ]" 0 0 0.01 0.01
+#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.2.0_2022-09-11 --- ]" 0 0 0.01 0.01
 
 #pragma parameter HSM_RESOLUTION_DEBUG_ON							"          Show Resolution Info" 0 0 1 1
 float HSM_RESOLUTION_DEBUG_ON = global.HSM_RESOLUTION_DEBUG_ON;
@@ -291,6 +291,13 @@ float HSM_SCANLINE_DIRECTION = global.HSM_SCANLINE_DIRECTION;
 
 
 //---------------------------------------------------------------------------------------------------
+//    DREZ Filter
+//---------------------------------------------------------------------------------------------------
+#pragma parameter HSM_DREZ_TITLE "[ DREZ DOWNSAMPLE FILTER - HYLLIAN - DREZ PRESETS ONLY ]:" 0 0 0.01 0.01
+
+#pragma parameter C_FILTER_MODE "     DREZ Filter: B-SPLINE | BICUBIC | CATMULL-ROM | BICUBIC H" 0.0 0.0 3.0 1.0
+
+//---------------------------------------------------------------------------------------------------
 //    CORE RES SAMPLING
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_SAMPLING_TITLE								"[ CORE RES SAMPLING]:" 0 0 0.01 0.01
@@ -301,7 +308,7 @@ float HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR = global.HSM_CORE_RES_SAMPLING_MUL
 #pragma parameter HSM_DOWNSAMPLE_BLUR_SCANLINE_DIR 					"          Scanline Dir Downsample Blur" 0 0 200 1
 float HSM_DOWNSAMPLE_BLUR_SCANLINE_DIR = global.HSM_DOWNSAMPLE_BLUR_SCANLINE_DIR / 100;
 
-#pragma parameter HSM_CORE_RES_SAMPLING_MULT_OPPOSITE_DIR			"          Opposite Dir Multiplier (Y Downsample for H Scanline)"  100 25 1600 25
+#pragma parameter HSM_CORE_RES_SAMPLING_MULT_OPPOSITE_DIR			"          Opposite Dir Multiplier (Y Downsample for H Scanline)"  100 5 1600 5
 float HSM_CORE_RES_SAMPLING_MULT_OPPOSITE_DIR = global.HSM_CORE_RES_SAMPLING_MULT_OPPOSITE_DIR / 100;
 
 #pragma parameter HSM_DOWNSAMPLE_BLUR_OPPOSITE_DIR 					"          Opposite Dir Downsample Blur" 0 0 200 1
