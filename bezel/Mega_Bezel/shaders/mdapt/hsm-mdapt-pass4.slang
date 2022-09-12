@@ -18,6 +18,8 @@ layout(push_constant) uniform Push
 	float CB;
 	float DEBUG;
 	float linear_gamma;
+    float HSM_DEDITHER_MODE;
+    float CD_BLEND_LEVEL;
 } params;
 
 // #pragma parameter VL    "[DE-DITHERING]    MDAPT Vertical Lines"	0.0 0.0 1.0 1.0
@@ -33,11 +35,13 @@ const float linear_gamma = 0;
 layout(std140, set = 0, binding = 0) uniform UBO
 {
 	mat4 MVP;
-    float MDAPT_MODE;
 } global;
 
-#pragma parameter MDAPT_MODE "          Mode -  OFF | Strict | Relaxed | Stripes"	0 0 3 1
+#pragma parameter HSM_DEDITHER_MODE "Mode: OFF| STRICT | RELAXED | HYLLIAN | HYL + STRIPES | STRIPES"	0 0 5 1
+#define HSM_DEDITHER_MODE  params.HSM_DEDITHER_MODE
 
+#pragma parameter CD_BLEND_LEVEL              "          Dedither Blend Amount"                1.0  0.0 1.0  0.02
+#define CD_BLEND_LEVEL             params.CD_BLEND_LEVEL
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -54,10 +58,10 @@ void main()
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D PreDeDitheringPass;
+layout(set = 0, binding = 3) uniform sampler2D PreMdaptPass;
 
 //#define TEX(dx,dy)   texture(Source, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw)
-//#define TEXt0(dx,dy) texture(PreDeDitheringPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw)
+//#define TEXt0(dx,dy) texture(PreMdaptPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw)
 
 vec4 TEX(float dx, float dy){
 	if(linear_gamma > 0.5) return pow(texture(Source, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw), vec4(2.2));
@@ -65,8 +69,8 @@ vec4 TEX(float dx, float dy){
 }
 
 vec4 TEXt0(float dx, float dy){
-	if(linear_gamma > 0.5) return pow(texture(PreDeDitheringPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw), vec4(2.2));
-	else return texture(PreDeDitheringPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw);
+	if(linear_gamma > 0.5) return pow(texture(PreMdaptPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw), vec4(2.2));
+	else return texture(PreMdaptPass, vTexCoord+vec2((dx),(dy))*params.SourceSize.zw);
 }
 
 bool eq(vec3 A, vec3 B){
@@ -105,11 +109,12 @@ void main()
 		DL D DR	
 	*/
 
-	if (global.MDAPT_MODE < 1)
+	if (HSM_DEDITHER_MODE < 1 || HSM_DEDITHER_MODE == 3)
 	{
 		FragColor = texture(Source, vTexCoord);
 		return;
 	}
+
 
 	vec4 C = TEX( 0., 0.);		vec3 c = TEXt0( 0., 0.).xyz;
 	vec2 L = TEX(-1., 0.).xy;	vec3 l = TEXt0(-1., 0.).xyz;
@@ -124,8 +129,8 @@ void main()
 	// Backpropagation
 	C.xy = or_(C.xy, and_(C.zw, or_(L.xy, R.xy, U.xy, D.xy)));
 
-
-	if(global.MDAPT_MODE == 3){
+	// Modes 4 and 5 blend the Stripe/Jailbar dithering
+	if(HSM_DEDITHER_MODE > 3.5){
 		float prSum = L.x + R.x;		
 
 		prVL = max(L.x, R.x);
@@ -173,5 +178,10 @@ void main()
 		FragColor = vec4(prVL, prCB, 0.0, 0.0);
 		
 	vec4 final = (prCB >= prVL) ? vec4(mix(c, fCB, prCB), 1.0) : vec4(mix(c, fVL, prVL), 1.0);
+
+	final = CD_BLEND_LEVEL * final + (1 - CD_BLEND_LEVEL) * texture(PreMdaptPass, vTexCoord);
+
 	FragColor = (linear_gamma > 0.5) ? pow(final, vec4(1.0 / 2.2)) : final;
+
+
 }

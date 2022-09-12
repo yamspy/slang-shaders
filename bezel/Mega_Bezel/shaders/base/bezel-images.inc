@@ -116,6 +116,8 @@ vec2 HSM_GetScaledCoord(vec2 in_viewport_coord,
 						float scale_full_with_zoom,
 						float image_aspect_mode,
 						float image_fill_mode,
+						float split_preserve_center,
+						float split_repeat_width,
 						bool apply_default_scale_offset,
 						inout vec2 out_placement_coord,
 						inout vec2 out_placement_scale)
@@ -210,16 +212,31 @@ vec2 HSM_GetScaledCoord(vec2 in_viewport_coord,
 
 	if ( image_fill_mode == FILL_MODE_SPLIT_FILL_HORIZONTAL )
 	{
+		float abs_ctr_coord_x = abs(out_placement_coord.x - 0.5);
 		// Correct the aspect so it matches the texture and is never stretched
 		float placement_aspect = out_placement_scale.x / out_placement_scale.y * output_aspect;
 		float placement_aspect_difference = explicit_texture_aspect / placement_aspect;
 		drawing_scale.x *= placement_aspect_difference;
 
-		slide_x = (out_placement_scale.x - drawing_scale.x) / 2;// * out_placement_scale.x; 
+		float center_width = split_preserve_center * placement_aspect_difference;
+		if ( abs_ctr_coord_x > center_width)
+		{
+			slide_x = ((placement_aspect - explicit_texture_aspect) / placement_aspect) / 2.0;
+		}
+
+		float repeat_width = split_repeat_width * placement_aspect_difference;
+		if (abs_ctr_coord_x > center_width && 
+			abs_ctr_coord_x < center_width + slide_x && 
+			repeat_width > 0)
+		{
+			if (clamp(split_repeat_width - 0.001, 0, 1) == 0)
+				slide_x = (abs_ctr_coord_x - center_width);
+			else
+				slide_x = (abs_ctr_coord_x - 0.001 - center_width) - mod(clamp(abs_ctr_coord_x - 0.01 - center_width, 0, 1), repeat_width);
+		}
 
 		if ( out_placement_coord.x < 0.5 )
 			slide_x *= -1;
-
 		inherited_coord.x -= slide_x;
 	}
 
@@ -435,6 +452,7 @@ void main()
 	float distance_from_crease_shifted = HHLP_GetDistanceToLine(corner_coord_shifted.x, corner_coord_shifted.y, 1, corner_crease_dir_shifted.y / corner_crease_dir_shifted.x, 0 );
 
 	float top_half_mask = smoothstep(0.55, 0.5, tube_curved_coord.y);
+	float left_half_mask = smoothstep(0.55, 0.5, tube_curved_coord.x);
 
 	// Get a mask which transitions between sides and top/bottom at the corner crease  
 	float top_bottom_vs_sides_mask = dot(normalize(corner_coord_shifted), normalize(corner_crease_dir_shifted)) > 0 ? 1 - smoothstep(0, corner_fade_width / 2, distance_from_crease_shifted) : 1;
@@ -469,9 +487,6 @@ void main()
 	So instead of trying to use the coordinates from the screen/tube we use a larger space 
 	and subtract the screen space to see how far we are outside of the sreen
 	*/
-	float hmbz_bezel_brightness_top = 0.5;
-	float hmbz_bezel_brightness_sides = 1;
-	float hmbz_bezel_brightness_bottom = 2;
 
 	float hmbz_bezel_highlight_edge = 0.9;
 	float hmbz_bezel_highlight_top = 0.2;
@@ -492,9 +507,11 @@ void main()
 	vec3 base_color = HSM_Linearize(vec4(HSM_HSVtoRGB(vec3(HSM_BZL_COLOR_HUE, HSM_BZL_COLOR_SATURATION, HSM_BZL_COLOR_VALUE)), 1), DEFAULT_SRGB_GAMMA).rgb;
 	float noise_mask = clamp(fract(sin(dot(tube_curved_coord_ctr + vec2(0.5, 0.5) + 1, vec2(12.9898, 78.233))) * 43758.5453), 0, 1);
 	vec3 base_color_with_noise = mix(base_color, 1.5 * base_color * noise_mask, HSM_BZL_NOISE);
-	vec3 top_color = hmbz_bezel_brightness_top * HSM_BZL_BRIGHTNESS * base_color_with_noise;
-	vec3 bottom_color = hmbz_bezel_brightness_bottom * HSM_BZL_BRIGHTNESS * base_color_with_noise;
-	vec3 sides_color = hmbz_bezel_brightness_sides * HSM_BZL_BRIGHTNESS * base_color_with_noise;
+	vec3 top_color = HSM_BZL_BRIGHTNESS_MULT_TOP * HSM_BZL_BRIGHTNESS * base_color_with_noise;
+	vec3 bottom_color = HSM_BZL_BRIGHTNESS_MULT_BOTTOM * HSM_BZL_BRIGHTNESS * base_color_with_noise;
+	vec3 sides_color = mix(HSM_BZL_BRIGHTNESS_MULT_SIDES * HSM_BZL_BRIGHTNESS_MULT_SIDE_RIGHT * HSM_BZL_BRIGHTNESS * base_color_with_noise,
+							HSM_BZL_BRIGHTNESS_MULT_SIDES * HSM_BZL_BRIGHTNESS_MULT_SIDE_LEFT * HSM_BZL_BRIGHTNESS * base_color_with_noise,
+							left_half_mask);
 
 	vec3 frame_base_color = base_color;
 	vec3 frame_base_color_with_noise = base_color_with_noise;
@@ -624,6 +641,8 @@ void main()
 												HSM_BG_SCALE_FULL_WITH_ZOOM,
 												HSM_BG_SCALE_KEEP_ASPECT,
 												HSM_BG_FILL_MODE,
+												HSM_BG_SPLIT_PRESERVE_CENTER,
+												HSM_BG_SPLIT_REPEAT_WIDTH,
 												true,
 												BACKGROUND_COORD,
 												BACKGROUND_SCALE);
@@ -673,6 +692,8 @@ void main()
 											HSM_DEVICE_SCALE_FULL_WITH_ZOOM,
 											HSM_DEVICE_SCALE_KEEP_ASPECT,
 											HSM_DEVICE_FILL_MODE,
+											HSM_DEVICE_SPLIT_PRESERVE_CENTER,
+											HSM_DEVICE_SPLIT_REPEAT_WIDTH,
 											true,
 											DEVICE_COORD,
 											DEVICE_SCALE);
@@ -719,6 +740,8 @@ void main()
 											HSM_LED_SCALE_FULL_WITH_ZOOM,
 											HSM_LED_SCALE_KEEP_ASPECT, 
 											HSM_LED_FILL_MODE,
+											HSM_LED_SPLIT_PRESERVE_CENTER,
+											HSM_LED_SPLIT_REPEAT_WIDTH,
 											true,
 											LED_COORD,
 											LED_SCALE);
@@ -762,6 +785,8 @@ void main()
 											HSM_DECAL_SCALE_FULL_WITH_ZOOM,
 											HSM_DECAL_SCALE_KEEP_ASPECT, 
 											HSM_DECAL_FILL_MODE,
+											HSM_DECAL_SPLIT_PRESERVE_CENTER,
+											HSM_DECAL_SPLIT_REPEAT_WIDTH,
 											true,
 											DECAL_COORD,
 											DECAL_SCALE);
@@ -804,6 +829,8 @@ void main()
 												HSM_TOP_SCALE_FULL_WITH_ZOOM,
 												HSM_TOP_SCALE_KEEP_ASPECT, 
 												HSM_TOP_FILL_MODE,
+												HSM_TOP_SPLIT_PRESERVE_CENTER,
+												HSM_TOP_SPLIT_REPEAT_WIDTH,
 												true,
 												TOP_IMAGE_COORD,
 												TOP_IMAGE_SCALE);
@@ -855,6 +882,8 @@ void main()
 													HSM_CAB_GLASS_SCALE_FULL_WITH_ZOOM,
 													HSM_CAB_GLASS_SCALE_KEEP_ASPECT, 
 													HSM_CAB_GLASS_FILL_MODE,
+													HSM_CAB_GLASS_SPLIT_PRESERVE_CENTER,
+													HSM_CAB_GLASS_SPLIT_REPEAT_WIDTH,
 													true,
 													CAB_GLASS_COORD,
 													CAB_GLASS_SCALE);
@@ -909,6 +938,8 @@ void main()
 											HSM_CUTOUT_SCALE_FULL_WITH_ZOOM,
 											HSM_CUTOUT_KEEP_ASPECT,
 											FILL_MODE_STRETCH,
+											0,
+											0,
 											false,
 											temp_coord,
 											temp_scale);
@@ -931,6 +962,8 @@ void main()
 												INHERITED_SCALE_MODE_VIEWPORT,
 												0,
 												FILL_MODE_STRETCH,
+												0,
+												0,
 												false,
 												temp_coord,
 												temp_scale);

@@ -1,11 +1,19 @@
 ![Mega_Bezel_Logo|512x256, 75%](upload://6PNkvcMF9Go9Wnk6OJXfYR1opXI.png) 
 
-Mega Bezel is updated to V1.0.007_2022-08-29_Rev-1
+Mega Bezel is updated to V1.2.0_2022-09-11
 
 Changes:
-  * Renamed DREZ Presets so the DREZ appears at the end
-  * Added additional STD DREZ presets for NDS, 3DS and PSP, 
-    * This includes high res presets for NDS and 3DS
+  * Split Scaliing
+    * Added Split Preserve Center %
+      * When an image is being split when it is being stretched this preserves the center area
+    * Added Split Repeat Width
+      * When this is 0 there is no repeat
+      * If this is larger than 0 this sets the width of the repeated area
+    * Fixed Split mode scaling when following wider horizontal aspect 
+  * Fixed some corner parameters not forcing update of the graphics cache
+  * Added Brightness parameters for the different sides of the bezel to help create directional lighting
+  * SMOOTH-ADV now uses mask 3 to add some more phosphor-ish texture to the screen
+  
 
 ----------------------------------------------------
 --- TODO  ---------------------------------------
@@ -13,8 +21,6 @@ Changes:
 
   * Try Leveraging Fake Scanlines for Gameboy type effect
 
-  * Megatron HDR Combination at end of chain
-  * Fix Tube Diffuse Shadow in 3D Curvature
   * Add .params #reference to with all parameters commented out
 
   * Bezel shadow on Potato Tube / Game Image
