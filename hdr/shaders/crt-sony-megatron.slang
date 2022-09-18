@@ -375,7 +375,7 @@ const uint kApertureGrilleMasks8K600TVL[kBGRAxis][kMaxApertureGrilleSize] =
 
 const uint kApertureGrilleMasks8K800TVL[kBGRAxis][kMaxApertureGrilleSize] = 
 { 
-   kRYCBX, kRMCGX, kRYCBX
+   kRYCBX, kRMCGX, kBCYRX
 };
 
 #undef kMaxApertureGrilleSize 
