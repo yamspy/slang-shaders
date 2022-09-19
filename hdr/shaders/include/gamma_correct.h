@@ -30,9 +30,14 @@ vec3 LinearTo709(const vec3 colour)
 	return vec3(LinearTo709_1(colour.r), LinearTo709_1(colour.g), LinearTo709_1(colour.b));
 }
 
+float LinearToDCIP3_1(const float channel)
+{
+	return pow(channel, 1.0f / (HCRT_GAMMA_OUT + 0.2f));   // Gamma: 2.4 + 0.2 = 2.6
+}
+
 vec3 LinearToDCIP3(const vec3 colour)
 {
-	return clamp(pow(colour, vec3(1.0f / (HCRT_GAMMA_OUT + 0.2f))), 0.0f, 1.0f);   // Gamma: 2.4 + 0.2 = 2.6
+	return vec3(LinearToDCIP3_1(colour.r), LinearToDCIP3_1(colour.g), LinearToDCIP3_1(colour.b));
 }
 
 void GammaCorrect(const vec3 scanline_colour, inout vec3 gamma_out)
