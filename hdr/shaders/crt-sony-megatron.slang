@@ -1124,7 +1124,6 @@ const uint kBlackWhiteMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxBlackWhiteS
 #endif // ENABLE_BLACK_WHITE_MASKS
 
 #include "include/scanline_generation.h"
-#include "include/hdr10.h"
 #include "include/gamma_correct.h"
 
 #define k1080p     0
@@ -1635,9 +1634,9 @@ void main()
       scanline_colour += scanline_channel_2 * kColourMask[channel_2];
    }
 
-   vec3 hdr10; 
+   vec3 gamma_corrected; 
    
-   GammaCorrect(scanline_colour, hdr10);
+   GammaCorrect(scanline_colour, gamma_corrected);
 
-   FragColor = vec4(hdr10, 1.0f);
+   FragColor = vec4(gamma_corrected, 1.0f);
 }
