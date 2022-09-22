@@ -40,6 +40,7 @@ layout(push_constant) uniform Push
    float hcrt_contrast;
    float hcrt_saturation;
    float hcrt_gamma_in;
+   float hcrt_colour_accurate;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -61,6 +62,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_CONTRAST                       params.hcrt_contrast
 #define HCRT_SATURATION                     params.hcrt_saturation
 #define HCRT_GAMMA_IN                       params.hcrt_gamma_in
+#define HCRT_COLOUR_ACCURATE                params.hcrt_colour_accurate
 
 #define COMPAT_TEXTURE(c, d) texture(c, d)
 
@@ -90,7 +92,7 @@ void main()
 
    vec3 transformed_colour;
 
-   if(HCRT_HDR < 1.0f)
+   if((HCRT_HDR < 1.0f) && (HCRT_COLOUR_ACCURATE < 1.0f))
    {
       if(HCRT_OUTPUT_COLOUR_SPACE == 2.0f)
       {

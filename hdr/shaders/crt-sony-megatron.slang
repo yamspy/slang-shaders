@@ -36,6 +36,7 @@ layout(push_constant) uniform Push
    float hcrt_paper_white_nits;
    float hcrt_expand_gamut;
    float hcrt_gamma_out;
+   float hcrt_colour_accurate;
 
    float hcrt_lcd_resolution;
    float hcrt_lcd_subpixel;
@@ -96,6 +97,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_PAPER_WHITE_NITS                params.hcrt_paper_white_nits
 #define HCRT_EXPAND_GAMUT                    params.hcrt_expand_gamut
 #define HCRT_GAMMA_OUT                       params.hcrt_gamma_out
+#define HCRT_COLOUR_ACCURATE                 params.hcrt_colour_accurate
 
 #define HCRT_LCD_RESOLUTION                  params.hcrt_lcd_resolution 
 #define HCRT_LCD_SUBPIXEL                    params.hcrt_lcd_subpixel
@@ -1634,9 +1636,32 @@ void main()
       scanline_colour += scanline_channel_2 * kColourMask[channel_2];
    }
 
+   vec3 transformed_colour;
+
+   if(HCRT_COLOUR_ACCURATE >= 1.0f)
+   {
+      if(HCRT_HDR >= 1.0f)
+      {
+         const vec3 rec2020  = scanline_colour * k2020Gamuts[uint(HCRT_EXPAND_GAMUT)];
+         transformed_colour  = rec2020 * (HCRT_PAPER_WHITE_NITS / kMaxNitsFor2084);
+      }
+      else if(HCRT_OUTPUT_COLOUR_SPACE == 2.0f)
+      {
+         transformed_colour = (scanline_colour * k709_to_XYZ) * kXYZ_to_DCIP3; 
+      }
+      else
+      {
+         transformed_colour = scanline_colour;
+      }
+   } 
+   else
+   {      
+      transformed_colour = scanline_colour;
+   }
+
    vec3 gamma_corrected; 
    
-   GammaCorrect(scanline_colour, gamma_corrected);
+   GammaCorrect(transformed_colour, gamma_corrected);
 
    FragColor = vec4(gamma_corrected, 1.0f);
 }
