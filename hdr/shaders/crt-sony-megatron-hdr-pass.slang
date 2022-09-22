@@ -33,6 +33,7 @@ layout(push_constant) uniform Push
    float hcrt_max_nits;
    float hcrt_paper_white_nits;
    float hcrt_expand_gamut;
+   float hcrt_colour_accurate;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -50,6 +51,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_MAX_NITS                       params.hcrt_max_nits
 #define HCRT_PAPER_WHITE_NITS               params.hcrt_paper_white_nits
 #define HCRT_EXPAND_GAMUT                   params.hcrt_expand_gamut
+#define HCRT_COLOUR_ACCURATE                params.hcrt_colour_accurate
 
 #define COMPAT_TEXTURE(c, d) texture(c, d)
 
@@ -92,14 +94,14 @@ void main()
 
    vec3 transformed_colour;
 
-   if(HCRT_HDR < 1.0f)
-   {      
-      transformed_colour = hdr_colour;
-   }
-   else
+   if((HCRT_HDR >= 1.0f) && (HCRT_COLOUR_ACCURATE < 1.0f))
    {
       const vec3 rec2020  = hdr_colour * k2020Gamuts[uint(HCRT_EXPAND_GAMUT)];
       transformed_colour  = rec2020 * (HCRT_PAPER_WHITE_NITS / kMaxNitsFor2084);
+   }
+   else
+   {      
+      transformed_colour = hdr_colour;
    }
 
    FragColor = vec4(transformed_colour, 1.0);
