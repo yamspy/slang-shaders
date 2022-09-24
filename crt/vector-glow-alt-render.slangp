@@ -1,6 +1,6 @@
 shaders = 4
 
-shader0 = "../misc/shaders/shaders/image-adjustment.slang"
+shader0 = "../misc/shaders/image-adjustment.slang"
 alias0 = PASS1
 
 shader1 = "../blurs/blur11fast-vertical.slang"
