@@ -11,13 +11,18 @@ layout(push_constant) uniform Push
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-   float BEAD_HIGH, BEAD_LOW;
+   float BEAD_HIGH, BEAD_LOW, scale_factor, BEAD_SHARP;
 } params;
 
-#pragma parameter BEAD_HIGH "Bead High" 0.35 0.0 1.0 0.01
+
+#pragma parameter scale_factor "Scale (0 = Auto)" 0.0 0.0 30.0 1.0
+int scale_factor = int(params.scale_factor);
+#pragma parameter BEAD_HIGH "Bead Outside Diameter" 0.45 0.0 1.0 0.01
 #define BEAD_HIGH params.BEAD_HIGH
-#pragma parameter BEAD_LOW  "Bead Low"  0.2  0.0 1.0 0.01
+#pragma parameter BEAD_LOW  "Bead Inside Diameter"  0.15  0.0 1.0 0.01
 #define BEAD_LOW params.BEAD_LOW
+#pragma parameter BEAD_SHARP "Bead Sharpness" 6.0 1.0 20.0 1.0
+#define BEAD_SHARP params.BEAD_SHARP
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -33,7 +38,13 @@ layout(location = 1) out vec2 pixel_no;
 void main()
 {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
+   vec2 box_scale = (scale_factor == 0) ? floor(params.OutputSize.xy * params.SourceSize.zw) : vec2(scale_factor);
+   box_scale = vec2(min(box_scale.x, box_scale.y));
+
+   vec2 scale = (params.OutputSize.xy * params.SourceSize.zw) / box_scale;
+   vec2 middle = vec2(0.5);
+   vec2 diff = TexCoord - middle;
+   vTexCoord = middle + diff * scale;
    pixel_no = vTexCoord * params.SourceSize.xy;
 }
 
@@ -51,7 +62,7 @@ float dist(vec2 coord, vec2 source)
 
 float rolloff(float len)
 {
-   return exp(-6.0 * len);
+   return exp(-BEAD_SHARP * len);
 }
 
 vec3 lookup(vec2 pixel_no, vec3 color)
@@ -68,7 +79,7 @@ vec3 lookup(vec2 pixel_no, vec3 color)
       return vec3(0.0, 0.0, 0.0);
 }
 
-#define TEX(coord) texture(Source, coord).rgb
+#define TEX(coord) texelFetch(Source, ivec2(coord*params.SourceSize.xy),0).rgb
 
 void main()
 {

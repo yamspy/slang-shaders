@@ -6,7 +6,7 @@
    https://forums.nesdev.com/viewtopic.php?p=85060#p85060
 
    Hue Preserve Clip functions ported from Drag's Palette Generator
-   http://drag.wootest.net/misc/palgen.html
+   http://drag.wootest.n../misc/shaders/palgen.html
 
    Use with Nestopia or FCEUmm libretro cores with the palette set to 'raw'.
 */

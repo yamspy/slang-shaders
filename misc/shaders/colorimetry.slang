@@ -3,7 +3,7 @@
 /*
    Colorimetry shader
    Ported from Drag's NES Palette Generator
-   http://drag.wootest.net/misc/palgen.html
+   http://drag.wootest.n../misc/shaders/palgen.html
 */
 
 layout(std140, set = 0, binding = 0) uniform UBO

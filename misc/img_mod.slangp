@@ -1,6 +1,6 @@
 shaders = 1
 
-shader0 = img_mod.slang
+shader0 = shaders/img_mod.slang
 
 textures = "SamplerLUT1;SamplerLUT2"
 SamplerLUT1 = ../reshade/shaders/LUT/16.png
