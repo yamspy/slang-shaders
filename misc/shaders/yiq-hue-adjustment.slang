@@ -22,7 +22,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter hue_degrees "Hue" 0.0 -360.0 360.0 1.0
 #define M_PI 3.1415926535897932384626433832795
 
-#include "colorspace-tools.h"
+#include "../../include/colorspace-tools.h"
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;

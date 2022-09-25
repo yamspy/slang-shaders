@@ -48,7 +48,7 @@ scale_type7 = source
 scale7 = 3.0
 alias7 = sfxp7
 
-shader8 = ../misc/image-adjustment.slang
+shader8 = ../misc/shaders/image-adjustment.slang
 filter_linear8 = false
 scale_type8 = source
 scale8 = 1.0

@@ -1,5 +1,5 @@
 shaders = "13"
-shader0 = "../misc/grade.slang"
+shader0 = "../misc/shaders/grade.slang"
 wrap_mode0 = "clamp_to_border"
 mipmap_input0 = "false"
 alias0 = ""

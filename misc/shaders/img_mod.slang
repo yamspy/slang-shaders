@@ -14,76 +14,76 @@ layout(push_constant) uniform Push
 layout(std140, set = 0, binding = 0) uniform UBO
 {
    mat4 MVP;
-#include "../include/img/param_floats.h"
+#include "../../include/img/param_floats.h"
 } global;
 
-#include "../include/img/helper_macros.h"
+#include "../../include/img/helper_macros.h"
 
 /////////////////////////////// INCLUDES ////////////////////////////////
 // comment the #include and corresponding line to remove functionality //
 /////////////////////////////////////////////////////////////////////////
 
 // Flip image vertically or horizontally
-#include "../include/img/image_flip.h"
+#include "../../include/img/image_flip.h"
 
 // Stretching, Zooming, Panning
-#include "../include/img/stretch_zoom_pan.h"
+#include "../../include/img/stretch_zoom_pan.h"
 
 // Film grain effect
-#include "../include/img/film_grain.h"
+#include "../../include/img/film_grain.h"
 
 // Sharp, antialiased pixels; use with linear filtering
-#include "../include/img/sharpening.h"
+#include "../../include/img/sharpening.h"
 
 // Saturation and Luminance
-//#include "../include/img/sat_lum.h"
-#include "../include/img/lum_chrom.h"
+//#include "../../include/img/sat_lum.h"
+#include "../../include/img/lum_chrom.h"
 
 // Gamma correction
 // exp_gamma is basic pow function 
-//#include "../include/img/exp_gamma.h"
-#include "../include/img/gamma_srgb.h"
+//#include "../../include/img/exp_gamma.h"
+#include "../../include/img/gamma_srgb.h"
 
 // Mask edges to hide unsightly garbage
-#include "../include/img/border_mask.h"
+#include "../../include/img/border_mask.h"
 
 // Change the whitepoint to warmer/cooler
-#include "../include/img/white_point.h"
+#include "../../include/img/white_point.h"
 
 // Add a phosphor mask effect onto the image
-#include "../include/img/subpx_masks.h"
+#include "../../include/img/subpx_masks.h"
 
 // Force integer scaling and custom aspect ratio
-//#include "../include/img/int_ar.h"
+//#include "../../include/img/int_ar.h"
 
 // Vignette; Darkens image around edges
-//#include "../include/img/vignette.h"
+//#include "../../include/img/vignette.h"
 
 
 // Black level
 // uncomment only one of the next 2 lines to set black level method
-//#include "../include/img/black_lvl.h"
-#include "../include/img/black_lvl_dogway.h"
+//#include "../../include/img/black_lvl.h"
+#include "../../include/img/black_lvl_dogway.h"
 
 // Brightness and Contrast control
 // uncomment only one of the next 2 lines to set contract complexity;
 // sigmoidal_con is advanced, bright_con is basic
-#include "../include/img/sigmoidal_con.h"
-//#include "../include/img/bright_con.h"
+#include "../../include/img/sigmoidal_con.h"
+//#include "../../include/img/bright_con.h"
 
 // Adjust color balance and tint
 // uncomment only one of the next 2 lines to set color channel complexity;
 // color mangler is advanced, channel mixer is basic
-//#include "../include/img/col_mangler.h"
-#include "../include/img/channel_mix.h"
+//#include "../../include/img/col_mangler.h"
+#include "../../include/img/channel_mix.h"
 
 // 2D screen curvature
-//#include "../include/img/gristle_warp.h"
-//#include "../include/img/lottes_warp.h"
-#include "../include/img/cgwg_warp.h"
+//#include "../../include/img/gristle_warp.h"
+//#include "../../include/img/lottes_warp.h"
+#include "../../include/img/cgwg_warp.h"
 
 // Rounded corners
-#include "../include/img/corner.h"
+#include "../../include/img/corner.h"
 
 ////////////////////////////// END INCLUDES //////////////////////////////
 
@@ -120,8 +120,8 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 //////////////////////////////// LUTS ///////////////////////////////////
 // Use either 1 or 2 color-grading LUTs
 // uncomment only one of the next 2 lines
-//#include "../include/img/lut1.h"
-//#include "../include/img/lut2.h"
+//#include "../../include/img/lut1.h"
+//#include "../../include/img/lut2.h"
 ////////////////////////////// END LUTS /////////////////////////////////
 
 void main()
