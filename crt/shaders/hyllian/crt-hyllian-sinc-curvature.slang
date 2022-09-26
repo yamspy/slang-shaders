@@ -13,6 +13,11 @@ layout(push_constant) uniform Push
     float OutputGamma;
     float VSCANLINES;
     float CRT_ANTI_RINGING;
+   float CRT_CURVATURE;
+   float CRT_warpX;
+   float CRT_warpY;
+   float CRT_cornersize;
+   float CRT_cornersmooth;
 } param;
 
 #pragma parameter CRT_HYLLIAN_SINC "[CRT-HYLLIAN-SINC PARAMS]" 0.0 0.0 0.0 0.0
@@ -26,8 +31,17 @@ layout(push_constant) uniform Push
 #pragma parameter InputGamma "    INPUT GAMMA" 2.4 0.0 5.0 0.1
 #pragma parameter OutputGamma "    OUTPUT GAMMA" 2.2 0.0 5.0 0.1
 #pragma parameter VSCANLINES "    SCANLINES DIRECTION" 0.0 0.0 1.0 1.0
+#pragma parameter CRT_CURVATURE "CRT-Curvature" 1.0 0.0 1.0 1.0
+#pragma parameter CRT_warpX "CRT-Curvature X-Axis" 0.015 0.0 0.125 0.005
+#pragma parameter CRT_warpY "CRT-Curvature Y-Axis" 0.015 0.0 0.125 0.005
+vec2 CRT_Distortion = vec2(param.CRT_warpX, param.CRT_warpY) * 15.;
+#pragma parameter CRT_cornersize "CRT-Corner Size" 0.01 0.001 1.0 0.005
+#define cornersize param.CRT_cornersize
+#pragma parameter CRT_cornersmooth "CRT-Corner Smoothness" 380.0 80.0 2080.0 100.0
+#define cornersmooth param.CRT_cornersmooth
 
-#pragma parameter CRT_ANTI_RINGING "Spline16 Anti-Ringing [ OFF | ON ]" 0.0 0.0 1.0 1.0
+
+#pragma parameter CRT_ANTI_RINGING "CRT Anti-Ringing [ OFF | ON ]" 1.0 0.0 1.0 1.0
 
 #define CRT_ANTI_RINGING param.CRT_ANTI_RINGING
 
@@ -94,7 +108,34 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 #define wa    (0.5*pi)
 #define wb    (pi)
 
-//#define CRT_ANTI_RINGING  1.0
+const vec2 corner_aspect   = vec2(1.0,  0.75);
+
+float corner(vec2 coord)
+{
+    coord = (coord - vec2(0.5)) + vec2(0.5, 0.5);
+    coord = min(coord, vec2(1.0) - coord) * corner_aspect;
+    vec2 cdist = vec2(cornersize);
+    coord = (cdist - min(coord, cdist));
+    float dist = sqrt(dot(coord, coord));
+    
+    return clamp((cdist.x - dist)*cornersmooth, 0.0, 1.0);
+}
+
+
+vec2 Warp(vec2 texCoord){
+
+  vec2 curvedCoords = texCoord * 2.0 - 1.0;
+  float curvedCoordsDistance = sqrt(curvedCoords.x*curvedCoords.x+curvedCoords.y*curvedCoords.y);
+
+  curvedCoords = curvedCoords / curvedCoordsDistance;
+
+  curvedCoords = curvedCoords * (1.0-pow(vec2(1.0-(curvedCoordsDistance/1.4142135623730950488016887242097)),(1.0/(1.0+CRT_Distortion*0.2))));
+
+  curvedCoords = curvedCoords / (1.0-pow(vec2(0.29289321881345247559915563789515),(1.0/(vec2(1.0)+CRT_Distortion*0.2))));
+
+  curvedCoords = curvedCoords * 0.5 + 0.5;
+  return curvedCoords;
+}
 
 float weight(float x)
 {
@@ -147,7 +188,10 @@ void main()
     vec2 dx = mix(vec2(1.0/TextureSize.x, 0.0), vec2(0.0, 1.0/TextureSize.y), param.VSCANLINES);
     vec2 dy = mix(vec2(0.0, 1.0/TextureSize.y), vec2(1.0/TextureSize.x, 0.0), param.VSCANLINES);
 
-    vec2 pix_coord = vTexCoord*TextureSize + vec2(-0.5, 0.5);
+    vec2 pp = vTexCoord.xy;
+    pp = (param.CRT_CURVATURE > 0.5) ? Warp(pp) : pp;
+ 
+    vec2 pix_coord = pp.xy*TextureSize + vec2(-0.5, 0.5);
 
     vec2 tc = mix((floor(pix_coord) + vec2(0.5, 0.5))/TextureSize, (floor(pix_coord) + vec2(1.5, -0.5))/TextureSize, param.VSCANLINES);
 
@@ -211,4 +255,6 @@ void main()
     color  = GAMMA_OUT(color);
 
     FragColor = vec4(color, 1.0);
+
+    FragColor *= (param.CRT_CURVATURE > 0.5) ? corner(pp) : 1.0;
 }
