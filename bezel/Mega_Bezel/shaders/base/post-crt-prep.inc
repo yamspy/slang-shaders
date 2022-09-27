@@ -246,7 +246,8 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_with_gamma, vec2 VIEWPORT_COORD, v
 
 			diffuse_coord = (diffuse_coord - 0.5) / (HSM_TUBE_DIFFUSE_IMAGE_SCALE * vec2(HSM_TUBE_DIFFUSE_IMAGE_SCALE_X, 1)) + 0.5;
 
-			tube_diffuse = HSM_GetMipmappedTexSample(TubeDiffuseImage, diffuse_coord, TUBE_SCALE * HSM_TUBE_DIFFUSE_IMAGE_SCALE, 0);
+			// HSM_RotateCoordinate(diffuse_coord, HSM_TUBE_DIFFUSE_IMAGE_ROTATION)
+			tube_diffuse = HSM_GetMipmappedTexSample(TubeDiffuseImage, HSM_RotateCoordinate(diffuse_coord, HSM_TUBE_DIFFUSE_IMAGE_ROTATION), TUBE_SCALE * HSM_TUBE_DIFFUSE_IMAGE_SCALE, 0);
 			tube_diffuse.rgb = HSM_GLOBAL_GRAPHICS_BRIGHTNESS * HSM_GetPreMultipliedColorLinear(vec4(tube_diffuse.rgb, 1), SOURCE_MATTE_PREMULTIPLIED, DEFAULT_SRGB_GAMMA).rgb;
 			tube_diffuse.rgb = HSM_ApplyHSVAdjustment(tube_diffuse.rgb, HSM_TUBE_DIFFUSE_IMAGE_HUE, HSM_TUBE_DIFFUSE_IMAGE_SATURATION, HSM_TUBE_DIFFUSE_IMAGE_BRIGHTNESS, HSM_TUBE_DIFFUSE_IMAGE_COLORIZE_ON, HSM_TUBE_DIFFUSE_IMAGE_GAMMA);
 			tube_diffuse.rgb *= HSM_TUBE_DIFFUSE_IMAGE_AMOUNT;
@@ -369,21 +370,33 @@ void main()
 	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, InfoCachePassFeedback, vTexCoord);
 
 	// Have to get the scale of the coordinates so we can figure out the size of the onscreen rectangle of the area 
-	HSM_GetBezelCoords(TUBE_DIFFUSE_COORD, 
-						TUBE_DIFFUSE_SCALE, 
-						TUBE_SCALE, 
-						TUBE_DIFFUSE_ASPECT, 
-						false,
-						BEZEL_OUTSIDE_SCALE,
-						BEZEL_OUTSIDE_COORD, 
-						BEZEL_OUTSIDE_CURVED_COORD, 
-						FRAME_OUTSIDE_CURVED_COORD);
+	vec2 bezel_outside_flat_coord;
+	vec2 frame_outside_flat_coord;
+	HSM_GetSimpleBezelCoords(TUBE_DIFFUSE_COORD, 
+							TUBE_DIFFUSE_SCALE, 
+							TUBE_SCALE, 
+							SCREEN_ASPECT,
+							bezel_outside_flat_coord, 
+							frame_outside_flat_coord);
+	vec2 cache_bounds_coord = (frame_outside_flat_coord - 0.5) * 0.9 + 0.5;
 
-	FRAME_OUTSIDE_CURVED_COORD = (FRAME_OUTSIDE_CURVED_COORD - 0.5) * 0.9 + 0.5;
-	if (FRAME_OUTSIDE_CURVED_COORD.x < -0.01 || FRAME_OUTSIDE_CURVED_COORD.x > 1.01 || FRAME_OUTSIDE_CURVED_COORD.y < -0.01 || FRAME_OUTSIDE_CURVED_COORD.y > 1.01)
+	if (HHLP_IsOutsideCoordSpace(cache_bounds_coord))
 	{
-		FragColor = vec4(0);
-		return;
+			FragColor = vec4(0);
+			return;
+	}
+	else
+	{
+		// Have to get the scale of the coordinates so we can figure out the size of the onscreen rectangle of the area 
+		HSM_GetBezelCoords(TUBE_DIFFUSE_COORD, 
+							TUBE_DIFFUSE_SCALE, 
+							TUBE_SCALE, 
+							SCREEN_ASPECT, 
+							false,
+							BEZEL_OUTSIDE_SCALE,
+							BEZEL_OUTSIDE_COORD, 
+							BEZEL_OUTSIDE_CURVED_COORD, 
+							FRAME_OUTSIDE_CURVED_COORD);
 	}
 
 	vec2 screen_curved_coord = HSM_GetCurvedCoord(SCREEN_COORD, 1, SCREEN_ASPECT);

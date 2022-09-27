@@ -3,7 +3,7 @@ shaders = 31
 shader0 = ../../shaders/base/add-params-all.slang
 alias0 = "CorePass"
 
-shader1 = ../../shaders/hyllian/cubic/hsm-b-spline-x.slang
+shader1 = ../../shaders/hyllian/cubic/hsm-drez-b-spline-x.slang
 filter_linear1 = false
 scale_type_x1 = absolute
 scale_x1 = 1280
@@ -11,7 +11,7 @@ scale_type_y1 = viewport
 scaley0 = 1.0
 wrap_mode1 = "clamp_to_edge"
 
-shader2 = ../../shaders/hyllian/cubic/hsm-b-spline-y.slang
+shader2 = ../../shaders/hyllian/cubic/hsm-drez-b-spline-y.slang
 filter_linear2 = false
 scale_type2 = absolute
 scale_x2 = 1280
@@ -222,7 +222,7 @@ shader30 = ../../shaders/base/combine-passes.slang
 scale_type30 = viewport
 alias30 = "CombinePass"
 // Define textures to be used by the different passes
-textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3;SamplerLUT4;IntroImage;ScreenPlacementImage;TubeDiffuseImage;TubeColoredGelImage;TubeShadowImage;TubeStaticReflectionImage;BackgroundImage;BackgroundVertImage;ReflectionMaskImage;FrameTextureImage;CabinetGlassImage;DeviceImage;DeviceVertImage;DecalImage;NightLightingImage;NightLighting2Image;LEDImage;TopLayerImage;"
+textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3;SamplerLUT4;IntroImage;ScreenPlacementImage;TubeDiffuseImage;TubeColoredGelImage;TubeShadowImage;TubeStaticReflectionImage;BackgroundImage;BackgroundVertImage;ReflectionMaskImage;FrameTextureImage;CabinetGlassImage;DeviceImage;DeviceVertImage;DeviceLEDImage;DecalImage;NightLightingImage;NightLighting2Image;LEDImage;TopLayerImage;"
 
 SamplerLUT1 = ../../shaders/guest/lut/trinitron-lut.png
 SamplerLUT1_linear = true 
@@ -283,6 +283,10 @@ DeviceImage_mipmap = 1
 DeviceVertImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
 DeviceVertImage_linear = true
 DeviceVertImage_mipmap = 1
+
+DeviceLEDImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
+DeviceLEDImage_linear = true
+DeviceLEDImage_mipmap = 1
 
 DecalImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
 DecalImage_linear = true
