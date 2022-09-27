@@ -34,6 +34,7 @@ layout(push_constant) uniform Push
    float hcrt_paper_white_nits;
    float hcrt_expand_gamut;
    float hcrt_gamma_out;
+   float hcrt_colour_accurate;
 
    float hcrt_lcd_resolution;
    float hcrt_lcd_subpixel;
@@ -96,6 +97,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_PAPER_WHITE_NITS                700
 #define HCRT_EXPAND_GAMUT                    0
 #define HCRT_GAMMA_OUT                       params.hcrt_gamma_out
+#define HCRT_COLOUR_ACCURATE                 params.hcrt_colour_accurate
 
 #define HCRT_LCD_RESOLUTION                  params.hcrt_lcd_resolution 
 #define HCRT_LCD_SUBPIXEL                    params.hcrt_lcd_subpixel
@@ -383,7 +385,7 @@ const uint kApertureGrilleMasks8K600TVL[kBGRAxis][kMaxApertureGrilleSize] =
 
 const uint kApertureGrilleMasks8K800TVL[kBGRAxis][kMaxApertureGrilleSize] = 
 { 
-   kRYCBX, kRMCGX, kRYCBX
+   kRYCBX, kRMCGX, kBCYRX
 };
 
 #undef kMaxApertureGrilleSize 
@@ -1132,7 +1134,6 @@ const uint kBlackWhiteMasks[kResolutionAxis][kTVLAxis][kBGRAxis][kMaxBlackWhiteS
 #endif // ENABLE_BLACK_WHITE_MASKS
 
 #include "include/scanline_generation.h"
-#include "include/hdr10.h"
 #include "include/gamma_correct.h"
 
 #define k1080p     0
@@ -1155,17 +1156,15 @@ void main()
 // If it's the potato preset render the whole frame
 #ifndef IS_POTATO_PRESET
 #ifndef IS_NO_REFLECT_PRESET
-	// Have to get the scale of the coordinates so we can figure out the size of the onscreen rectangle of the area 
-	HSM_GetBezelCoords(TUBE_DIFFUSE_COORD, 
-						   TUBE_DIFFUSE_SCALE, 
-                     TUBE_SCALE, 
-                     SCREEN_ASPECT, 
-                     false,
-                     BEZEL_OUTSIDE_SCALE,
-                     BEZEL_OUTSIDE_COORD, 
-                     BEZEL_OUTSIDE_CURVED_COORD, 
-                     FRAME_OUTSIDE_CURVED_COORD);
-	cache_bounds_coord = (FRAME_OUTSIDE_CURVED_COORD - 0.5) * 0.9 + 0.5;
+	vec2 bezel_outside_flat_coord;
+	vec2 frame_outside_flat_coord;
+	HSM_GetSimpleBezelCoords(TUBE_DIFFUSE_COORD, 
+							TUBE_DIFFUSE_SCALE, 
+							TUBE_SCALE, 
+							SCREEN_ASPECT,
+							bezel_outside_flat_coord, 
+							frame_outside_flat_coord);
+	cache_bounds_coord = (frame_outside_flat_coord - 0.5) * 0.9 + 0.5;
 #endif
 #endif
 
@@ -1677,9 +1676,32 @@ void main()
       scanline_colour += scanline_channel_2 * kColourMask[channel_2];
    }
 
-   vec3 hdr10; 
-   
-   GammaCorrect(scanline_colour, hdr10);
+   vec3 transformed_colour;
 
-   FragColor = vec4(hdr10, 1.0f);
+   if(HCRT_COLOUR_ACCURATE >= 1.0f)
+   {
+      if(HCRT_HDR >= 1.0f)
+      {
+         const vec3 rec2020  = scanline_colour * k2020Gamuts[uint(HCRT_EXPAND_GAMUT)];
+         transformed_colour  = rec2020 * (HCRT_PAPER_WHITE_NITS / kMaxNitsFor2084);
+      }
+      else if(HCRT_OUTPUT_COLOUR_SPACE == 2.0f)
+      {
+         transformed_colour = (scanline_colour * k709_to_XYZ) * kXYZ_to_DCIP3; 
+      }
+      else
+      {
+         transformed_colour = scanline_colour;
+      }
+   } 
+   else
+   {      
+      transformed_colour = scanline_colour;
+   }
+
+   vec3 gamma_corrected; 
+   
+   GammaCorrect(transformed_colour, gamma_corrected);
+
+   FragColor = vec4(gamma_corrected, 1.0f);
 }

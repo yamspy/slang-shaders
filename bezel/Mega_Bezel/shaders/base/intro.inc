@@ -98,7 +98,6 @@ vec4 GetColorWithIntro(vec4 in_color, vec2 in_coord, in sampler2D in_logo_image_
    in_coord.y = HSM_FLIP_VIEWPORT_VERTICAL * HSM_FLIP_CORE_VERTICAL * in_coord.y;
    in_coord.x = HSM_FLIP_VIEWPORT_HORIZONTAL * HSM_FLIP_CORE_HORIZONTAL * in_coord.x;
 
-   // in_coord = HSM_RotateCoordinate(in_coord, HSM_ROTATE_CORE_IMAGE);
    if (HSM_ROTATE_CORE_IMAGE > 0.5)
    {
       in_coord.xy = in_coord.yx;
@@ -288,7 +287,7 @@ void main()
       FragColor = GetColorWithIntro(FragColor, viewport_coord_adjusted, IntroImage);
 #endif
 
-   bool cache_info_changed = HSM_CheckCacheInfoChanged();
+   bool cache_info_changed = CACHE_INFO_CHANGED;
    bool cache_updated = cache_info_changed || HSM_CACHE_GRAPHICS_ON == 0;
    bool show_update_indicator = (HSM_CACHE_UPDATE_INDICATOR_MODE == 2 && HSM_CACHE_GRAPHICS_ON == 0) || (HSM_CACHE_UPDATE_INDICATOR_MODE == 1 && cache_info_changed);
 

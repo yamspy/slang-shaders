@@ -126,6 +126,7 @@ scale18 = "1.0"
 wrap_mode18 = "clamp_to_border"
 mipmap_input18 = "false"
 alias18 = "SourceSDR"
+float_framebuffer18 = "true"
 
 shader19 = "../../shaders/megatron/crt-sony-megatron-hdr-pass.slang"
 filter_linear19 = "false"
@@ -134,6 +135,7 @@ scale19 = "1.0"
 wrap_mode19 = "clamp_to_border"
 mipmap_input19 = "false"
 alias19 = "SourceHDR"
+float_framebuffer19 = "true"
 
 shader20 = "../../shaders/megatron/crt-sony-megatron.slang"
 filter_linear20 = "false"
@@ -200,7 +202,7 @@ shader27 = ../../shaders/base/reflection-glass.slang
 scale_type27 = viewport
 alias27 = "BR_CRTAndReflectionPass"
 // Define textures to be used by the different passes
-textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3;SamplerLUT4;IntroImage;ScreenPlacementImage;TubeDiffuseImage;TubeColoredGelImage;TubeShadowImage;TubeStaticReflectionImage;BackgroundImage;BackgroundVertImage;ReflectionMaskImage;FrameTextureImage;CabinetGlassImage;DeviceImage;DeviceVertImage;DecalImage;NightLightingImage;NightLighting2Image;LEDImage;TopLayerImage;"
+textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3;SamplerLUT4;IntroImage;ScreenPlacementImage;TubeDiffuseImage;TubeColoredGelImage;TubeShadowImage;TubeStaticReflectionImage;BackgroundImage;BackgroundVertImage;ReflectionMaskImage;FrameTextureImage;CabinetGlassImage;DeviceImage;DeviceVertImage;DeviceLEDImage;DecalImage;NightLightingImage;NightLighting2Image;LEDImage;TopLayerImage;"
 
 SamplerLUT1 = ../../shaders/guest/lut/trinitron-lut.png
 SamplerLUT1_linear = true 
@@ -261,6 +263,10 @@ DeviceImage_mipmap = 1
 DeviceVertImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
 DeviceVertImage_linear = true
 DeviceVertImage_mipmap = 1
+
+DeviceLEDImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
+DeviceLEDImage_linear = true
+DeviceLEDImage_mipmap = 1
 
 DecalImage = ../../shaders/textures/Placeholder_Transparent_16x16.png
 DecalImage_linear = true

@@ -506,6 +506,8 @@ float HSM_GetParameterSum()
 	float out_sum = (0
 					+ HSM_GLOBAL_GRAPHICS_BRIGHTNESS * 100
 					+ HSM_STATIC_LAYERS_GAMMA
+
+					+ HSM_CACHE_GRAPHICS_ON
 					
 					// Night Lighting
 					+ HSM_AMBIENT_LIGHTING_OPACITY * 100
@@ -523,7 +525,7 @@ float HSM_GetParameterSum()
 					+ HSM_FLIP_VIEWPORT_HORIZONTAL
 					// + HSM_FLIP_CORE_VERTICAL
 					// + HSM_FLIP_CORE_HORIZONTAL
-					// + HSM_ROTATE_CORE_IMAGE
+					+ HSM_ROTATE_CORE_IMAGE
 
 					//    ASPECT RATIO
 					+ HSM_ASPECT_RATIO_ORIENTATION
@@ -741,6 +743,7 @@ float HSM_GetParameterSum()
 					+ HSM_VIEWPORT_VIGNETTE_LAYER_ORDER
 					+ HSM_CRT_LAYER_ORDER
 					+ HSM_DEVICE_LAYER_ORDER
+					+ HSM_DEVICELED_LAYER_ORDER
 					+ HSM_CAB_GLASS_LAYER_ORDER
 					+ HSM_DECAL_LAYER_ORDER
 					+ HSM_LED_LAYER_ORDER
@@ -761,8 +764,9 @@ float HSM_GetParameterSum()
 					+ HSM_BG_MASK_MODE
 					+ HSM_BG_CUTOUT_MODE
 					+ HSM_BG_DUALSCREEN_VIS_MODE
-					+ HSM_BG_SCALE_MODE
-					+ HSM_BG_SCALE_FULL_WITH_ZOOM
+					+ HSM_BG_FOLLOW_LAYER
+					+ HSM_BG_FOLLOW_MODE
+					+ HSM_BG_FOLLOW_FULL_USES_ZOOM
 					+ HSM_BG_FILL_MODE
 					+ HSM_BG_SPLIT_PRESERVE_CENTER * 1000
 					+ HSM_BG_SPLIT_REPEAT_WIDTH * 1000
@@ -778,7 +782,7 @@ float HSM_GetParameterSum()
 					+ HSM_VIEWPORT_VIGNETTE_OPACITY * 100
 					+ HSM_VIEWPORT_VIGNETTE_MASK_MODE
 					+ HSM_VIEWPORT_VIGNETTE_CUTOUT_MODE
-					+ HSM_VIEWPORT_VIGNETTE_SCALE_MODE
+					+ HSM_VIEWPORT_VIGNETTE_FOLLOW_LAYER
 					+ HSM_VIEWPORT_VIGNETTE_SCALE * 100
 					+ HSM_VIEWPORT_VIGNETTE_SCALE_X * 100
 					+ HSM_VIEWPORT_VIGNETTE_POS_X * 100
@@ -787,8 +791,8 @@ float HSM_GetParameterSum()
 					// Cutout
 					+ HSM_CUTOUT_ASPECT_MODE
 					+ HSM_CUTOUT_EXPLICIT_ASPECT
-					+ HSM_CUTOUT_SCALE_MODE
-					+ HSM_CUTOUT_SCALE_FULL_WITH_ZOOM
+					+ HSM_CUTOUT_FOLLOW_LAYER
+					+ HSM_CUTOUT_FOLLOW_FULL_USES_ZOOM
 					+ HSM_CUTOUT_KEEP_ASPECT
 					+ HSM_CUTOUT_SCALE * 100
 					+ HSM_CUTOUT_SCALE_X * 100
@@ -811,8 +815,9 @@ float HSM_GetParameterSum()
 					+ HSM_LED_MASK_MODE
 					+ HSM_LED_CUTOUT_MODE
 					+ HSM_LED_DUALSCREEN_VIS_MODE
-					+ HSM_LED_SCALE_MODE
-					+ HSM_LED_SCALE_FULL_WITH_ZOOM
+					+ HSM_LED_FOLLOW_LAYER
+					+ HSM_LED_FOLLOW_MODE
+					+ HSM_LED_FOLLOW_FULL_USES_ZOOM
 					+ HSM_LED_SCALE_KEEP_ASPECT
 					+ HSM_LED_FILL_MODE
 					+ HSM_LED_SPLIT_PRESERVE_CENTER * 1000
@@ -838,8 +843,9 @@ float HSM_GetParameterSum()
 					+ HSM_DEVICE_MASK_MODE
 					+ HSM_DEVICE_CUTOUT_MODE
 					+ HSM_DEVICE_DUALSCREEN_VIS_MODE
-					+ HSM_DEVICE_SCALE_MODE
-					+ HSM_DEVICE_SCALE_FULL_WITH_ZOOM
+					+ HSM_DEVICE_FOLLOW_LAYER
+					+ HSM_DEVICE_FOLLOW_MODE
+					+ HSM_DEVICE_FOLLOW_FULL_USES_ZOOM
 					+ HSM_DEVICE_SCALE_KEEP_ASPECT
 					+ HSM_DEVICE_FILL_MODE
 					+ HSM_DEVICE_SPLIT_PRESERVE_CENTER * 1000
@@ -848,10 +854,37 @@ float HSM_GetParameterSum()
 					+ HSM_DEVICE_SCALE_X * 100
 					+ HSM_DEVICE_POS_X * 100
 					+ HSM_DEVICE_POS_Y * 100
-					+ HSM_DEVICE_COPY_INHERITED_COORD
 					+ HSM_DEVICE_MIPMAPPING_BLEND_BIAS
 
-					// // Decal
+					// Device LED
+					+ HSM_DEVICELED_OPACITY * 100
+					+ HSM_DEVICELED_COLORIZE_ON
+					+ HSM_DEVICELED_HUE * 360
+					+ HSM_DEVICELED_SATURATION * 100
+					+ HSM_DEVICELED_BRIGHTNESS * 100
+					+ HSM_DEVICELED_GAMMA
+					+ HSM_DEVICELED_AMBIENT_LIGHTING_MULTIPLIER * 100
+					+ HSM_DEVICELED_AMBIENT2_LIGHTING_MULTIPLIER * 100
+					+ HSM_DEVICELED_APPLY_AMBIENT_IN_ADD_MODE
+					+ HSM_DEVICELED_BLEND_MODE
+					+ HSM_DEVICELED_SOURCE_MATTE_TYPE
+					+ HSM_DEVICELED_MASK_MODE
+					+ HSM_DEVICELED_CUTOUT_MODE
+					+ HSM_DEVICELED_DUALSCREEN_VIS_MODE
+					+ HSM_DEVICELED_FOLLOW_LAYER
+					+ HSM_DEVICELED_FOLLOW_MODE
+					+ HSM_DEVICELED_FOLLOW_FULL_USES_ZOOM
+					+ HSM_DEVICELED_SCALE_KEEP_ASPECT
+					+ HSM_DEVICELED_FILL_MODE
+					+ HSM_DEVICELED_SPLIT_PRESERVE_CENTER * 1000
+					+ HSM_DEVICELED_SPLIT_REPEAT_WIDTH * 1000
+					+ HSM_DEVICELED_SCALE * 100
+					+ HSM_DEVICELED_SCALE_X * 100
+					+ HSM_DEVICELED_POS_X * 100
+					+ HSM_DEVICELED_POS_Y * 100
+					+ HSM_DEVICELED_MIPMAPPING_BLEND_BIAS
+
+					// Decal
 					+ HSM_DECAL_OPACITY * 100
 					+ HSM_DECAL_COLORIZE_ON
 					+ HSM_DECAL_HUE * 360
@@ -866,8 +899,9 @@ float HSM_GetParameterSum()
 					+ HSM_DECAL_MASK_MODE
 					+ HSM_DECAL_CUTOUT_MODE
 					+ HSM_DECAL_DUALSCREEN_VIS_MODE
-					+ HSM_DECAL_SCALE_MODE
-					+ HSM_DECAL_SCALE_FULL_WITH_ZOOM
+					+ HSM_DECAL_FOLLOW_LAYER
+					+ HSM_DECAL_FOLLOW_MODE
+					+ HSM_DECAL_FOLLOW_FULL_USES_ZOOM
 					+ HSM_DECAL_SCALE_KEEP_ASPECT
 					+ HSM_DECAL_FILL_MODE
 					+ HSM_DECAL_SPLIT_PRESERVE_CENTER * 1000
@@ -893,8 +927,9 @@ float HSM_GetParameterSum()
 					+ HSM_CAB_GLASS_MASK_MODE
 					+ HSM_CAB_GLASS_CUTOUT_MODE
 					+ HSM_CAB_GLASS_DUALSCREEN_VIS_MODE
-					+ HSM_CAB_GLASS_SCALE_MODE
-					+ HSM_CAB_GLASS_SCALE_FULL_WITH_ZOOM
+					+ HSM_CAB_GLASS_FOLLOW_LAYER
+					+ HSM_CAB_GLASS_FOLLOW_MODE
+					+ HSM_CAB_GLASS_FOLLOW_FULL_USES_ZOOM
 					+ HSM_CAB_GLASS_SCALE_KEEP_ASPECT
 					+ HSM_CAB_GLASS_FILL_MODE
 					+ HSM_CAB_GLASS_SPLIT_PRESERVE_CENTER * 1000
@@ -920,8 +955,9 @@ float HSM_GetParameterSum()
 					+ HSM_TOP_MASK_MODE
 					+ HSM_TOP_CUTOUT_MODE
 					+ HSM_TOP_DUALSCREEN_VIS_MODE
-					+ HSM_TOP_SCALE_MODE
-					+ HSM_TOP_SCALE_FULL_WITH_ZOOM
+					+ HSM_TOP_FOLLOW_LAYER
+					+ HSM_TOP_FOLLOW_MODE
+					+ HSM_TOP_FOLLOW_FULL_USES_ZOOM
 					+ HSM_TOP_SCALE_KEEP_ASPECT
 					+ HSM_TOP_FILL_MODE
 					+ HSM_TOP_SPLIT_PRESERVE_CENTER * 1000
@@ -1000,6 +1036,7 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	vec2 pos_offset_2nd_screen = HSM_GetScreenPositionOffset(vec2(0.5, 0.5), screen_scale_2nd_screen, 2);
 
 	vec4 sample_2d_range = vec4(0);
+	float parameter_sum = HSM_GetParameterSum();
 
 	// Sample 1, 1
 	// r AVERAGE_LUMA
@@ -1118,7 +1155,7 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	sample_2d_range = HSM_GetCacheSampleRange(1, 4);
 	if (HSM_IsCoordIn2DRange(viewport_coord, sample_2d_range) == 1)
 	{
-		out_color.r = HSM_GetParameterSum();
+		out_color.r = parameter_sum;
 
 		vec2 sample_coord = HSM_GetCacheSampleCoord(1, 4);
 		vec4 texture_sample = texture(feedback_pass, sample_coord);
@@ -1136,6 +1173,7 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	{
 		out_color.r = NEGATIVE_CROP_EXPAND_MULTIPLIER;
 		out_color.g = MAX_NEGATIVE_CROP;
+		out_color.b = HSM_GetUseVerticalScanlines(screen_aspect);
 	}
 
 	// TODO need to add TUBE_DIFFUSE_ASPECT & deal with 2nd Screen
@@ -1147,6 +1185,52 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	{
 		out_color.rg = tube_diffuse_scale;
 		out_color.ba = tube_diffuse_scale_2nd_screen;
+	}
+
+	vec2 sample_coord = vec2(0); 
+	vec4 texture_sample = vec4(0); 
+
+	// Check the difference in parameter sum values to see if the cache has changed
+	// Sample 1, 4 Feedback
+	// r parameter_sum_feedback
+	sample_coord = HSM_GetCacheSampleCoord(1, 4);
+	texture_sample = texture(feedback_pass, sample_coord);
+	float parameter_sum_feedback = texture_sample.r;
+
+	//-----------------------------------------------------
+	// Screen 1 resolution
+	float res_mult_size_sum = cropped_rotated_size_with_res_mult.x + cropped_rotated_size_with_res_mult.y;
+
+	// Sample 4, 1 Feedback
+	// rg parameter_sum_feedback
+	sample_coord = HSM_GetCacheSampleCoord(4, 1);
+	texture_sample = texture(feedback_pass, sample_coord);
+	CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK = texture_sample.rg;
+	float res_mult_size_sum_feedback = CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK.x + CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK.y;
+
+	//-----------------------------------------------------
+	// Screen 2 resolution
+	// r res_mult_size2_sum
+	float res_mult_size2_sum = cropped_size_with_res_mult_2nd_screen.x + cropped_size_with_res_mult_2nd_screen.y;
+
+	sample_coord = HSM_GetCacheSampleCoord(4, 2);
+	texture_sample = texture(feedback_pass, sample_coord);
+	CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK = texture_sample.rg;
+	float res_mult_size2_sum_feedback = CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK.x + CROPPED_ROTATED_SIZE_WITH_RES_MULT_FEEDBACK.y;
+
+	// Need to check croped sample resolutions of both screens
+	bool cache_changed = res_mult_size_sum != res_mult_size_sum_feedback || 
+						 res_mult_size2_sum != res_mult_size2_sum_feedback ||
+						 abs((parameter_sum) - (parameter_sum_feedback)) > 0.0000001 ? true : false;
+
+	//-----------------------------------------------------
+	// Store if the cache has changed since last frame
+	// Sample 4, 4
+	// r CACHE_INFO_CHANGED
+	sample_2d_range = HSM_GetCacheSampleRange(4, 4);
+	if (HSM_IsCoordIn2DRange(viewport_coord, sample_2d_range) == 1)
+	{
+		out_color.r = cache_changed ? 1 : 0;
 	}
 
 	return out_color;
