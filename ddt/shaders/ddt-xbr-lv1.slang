@@ -39,9 +39,7 @@ layout(push_constant) uniform Push
     float DYNAMIC_SHARPNESS_MIN;
     float DYNAMIC_SHARPNESS_MAX;
     float STATIC_SHARPNESS;
-    float WP1;
-    float WP2;
-    float WP3;
+    float DDT_THRESHOLD;
 } params;
 // set to 1.0 to use dynamic sharpening
 #pragma parameter USE_DYNAMIC_SHARPNESS "Dynamic Sharpness [ 0FF | ON ]" 1.0 0.0 1.0 1.0
@@ -53,16 +51,19 @@ layout(push_constant) uniform Push
 #pragma parameter DYNAMIC_SHARPNESS_MIN "Dynamic Sharpness Min" 0.0 0.0 1.0 0.1
 
 // Maximum amount of sharpening in range [0.0, 1.0]
-#pragma parameter DYNAMIC_SHARPNESS_MAX "Dynamic Sharpness Max" 0.6 0.0 1.0 0.1
+#pragma parameter DYNAMIC_SHARPNESS_MAX "Dynamic Sharpness Max" 0.3 0.0 1.0 0.1
 
 // If USE_DYNAMIC_SHARPNESS is 0 apply this static sharpness
 #pragma parameter STATIC_SHARPNESS "Static Sharpness" 0.5 0.0 1.0 0.1
+
+#pragma parameter DDT_THRESHOLD "DDT Diagonal Threshold" 2.6 1.0 6.0 0.2
 
 #define USE_DYNAMIC_SHARPNESS  params.USE_DYNAMIC_SHARPNESS
 #define USE_SHARPENING_BIAS    params.USE_SHARPENING_BIAS
 #define DYNAMIC_SHARPNESS_MIN  (params.DYNAMIC_SHARPNESS_MIN * 0.5)
 #define DYNAMIC_SHARPNESS_MAX  (params.DYNAMIC_SHARPNESS_MAX * 0.5)
 #define STATIC_SHARPNESS       (params.STATIC_SHARPNESS * 0.5)
+#define DDT_THRESHOLD params.DDT_THRESHOLD
 
 #define WP1  4.0
 #define WP2  1.0
@@ -231,11 +232,11 @@ void main()
 
     vec3 color;
 
-    if ( (wd1*3.0 < wd2) && (irlv1 > 0.0) )
+    if ( ((wd1+0.1*DDT_THRESHOLD)*DDT_THRESHOLD < wd2) && (irlv1 > 0.0) )
     {
            color = triangleInterpolate(B, D, C, A, vec2(q, 1-p), sharpness);
     }
-    else if ( (wd1 > wd2*3.0) && (irlv1 > 0.0))
+    else if ( (wd1 > (wd2+0.1*DDT_THRESHOLD)*DDT_THRESHOLD) && (irlv1 > 0.0))
     {
            color = triangleInterpolate(A, B, D, C, vec2(p, q), sharpness);
     }

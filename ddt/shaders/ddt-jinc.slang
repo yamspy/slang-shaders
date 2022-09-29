@@ -50,7 +50,7 @@ layout(push_constant) uniform Push
 #pragma parameter JINC2_AR_STRENGTH "Anti-ringing Strength" 1.0 0.0 1.0 0.1
 #define JINC2_AR_STRENGTH params.JINC2_AR_STRENGTH
 
-#pragma parameter DDT_THRESHOLD "DDT Diagonal Threshold" 3.0 1.0 6.0 0.2
+#pragma parameter DDT_THRESHOLD "DDT Diagonal Threshold" 2.6 1.0 6.0 0.2
 #define DDT_THRESHOLD params.DDT_THRESHOLD
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -193,7 +193,7 @@ void main()
 
       float irlv1 = (abs(a-b)+abs(a-c)+abs(a-d));
 
-	if ((wd1*DDT_THRESHOLD < wd2) && (irlv1 > 0.0))
+	if (((wd1+0.1*DDT_THRESHOLD)*DDT_THRESHOLD < wd2) && (irlv1 > 0.0))
 	{
 		if (q <= p)
 		{
@@ -210,7 +210,7 @@ void main()
 			c30 = c31 + c20 - c21;
 		}
 	}
-	else if ((wd1 > wd2*DDT_THRESHOLD)  && (irlv1 > 0.0))
+	else if ((wd1 > (wd2+0.1*DDT_THRESHOLD)*DDT_THRESHOLD)  && (irlv1 > 0.0))
 	{
 		if ((p+q) < 1.0)
 		{
