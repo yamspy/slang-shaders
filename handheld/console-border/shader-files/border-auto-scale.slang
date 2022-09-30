@@ -5,15 +5,14 @@ layout(push_constant) uniform Push
 	vec4 OutputSize;
 	vec4 SourceSize;
 	vec4 OriginalSize;
-	float video_scale;
 	float border_texture_scale;
 } params;
 
-#pragma parameter video_scale "Video Scale" 3.0 2.0 20.0 1.0
 #pragma parameter border_texture_scale "Border Scale" 4.0 1.0 20.0 0.005
 
 vec2 middle	= vec2(0.5, 0.5);
-vec2 border_scale = vec2(3200, 1600) * params.video_scale / params.border_texture_scale;
+vec2 screen_ratio = params.OutputSize.xy * params.SourceSize.zw;
+vec2 border_scale = vec2(3200, 1600) * (params.SourceSize.y / params.OriginalSize.y) / params.border_texture_scale;
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
@@ -30,9 +29,8 @@ void main()
 {
 	gl_Position	=	global.MVP * Position;
 
-	vTexCoord	=	TexCoord.xy;
-	
 	vec2 diff	=	TexCoord.xy - middle;
+	vTexCoord	=	middle + diff * screen_ratio;
 	tex_border	=	middle + diff * params.OutputSize.xy / border_scale;
 }
 

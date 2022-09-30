@@ -1,0 +1,21 @@
+shaders = "2"
+
+shader0 = "../shaders/lcd-cgwg/lcd-grid.slang"
+filter_linear0 = "false"
+wrap_mode0 = "clamp_to_border"
+scale_type0 = "source"
+scale0 = "4.0"
+
+shader1 = "shader-files/border-auto-scale.slang"
+filter_linear1 = "true"
+wrap_mode1 = "clamp_to_border"
+
+parameters = "border_texture_scale;GRID_STRENGTH"
+border_texture_scale = 2.4
+GRID_STRENGTH = 0.15
+
+textures = "BORDER"
+BORDER = "resources/psp border.png"
+BORDER_linear = "true"
+BORDER_wrap_mode = "clamp_to_border"
+BORDER_mipmap = "true"

@@ -1,0 +1,17 @@
+shaders = "2"
+
+shader0 = "../shaders/lcd-cgwg/lcd-grid.slang"
+filter_linear0 = "false"
+wrap_mode0 = "clamp_to_border"
+scale_type0 = "source"
+scale0 = "4.0"
+
+shader1 = "shader-files/border-auto-scale.slang"
+filter_linear1 = "true"
+wrap_mode1 = "clamp_to_border"
+
+textures = "BORDER"
+BORDER = "resources/color-border-square-4x.png"
+BORDER_linear = "true"
+BORDER_wrap_mode = "clamp_to_border"
+BORDER_mipmap = "false"
