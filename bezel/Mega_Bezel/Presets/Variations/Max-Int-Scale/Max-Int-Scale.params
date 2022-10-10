@@ -1,5 +1,3 @@
-#reference "../../Base_CRT_Presets/MBZ__0__SMOOTH-ADV-NO-REFLECT__GDV.slangp"
-
 BackgroundImage = ../../../shaders/textures/Placeholder_Transparent_16x16.png
 BackgroundVertImage = ../../../shaders/textures/Placeholder_Transparent_16x16.png
 NightLightingImage = ../../../shaders/textures/Placeholder_Transparent_16x16.png
