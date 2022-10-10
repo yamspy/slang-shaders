@@ -309,7 +309,6 @@ layout(location = 0) out vec4 FragColor;
 
 // Pass Framebuffer Textures
 layout(set = 0, binding = 1)  uniform sampler2D InfoCachePass;
-layout(set = 0, binding = 2)  uniform sampler2D InfoCachePassFeedback;
 
 layout(set = 0, binding = 3)  uniform sampler2D BackgroundImage;
 layout(set = 0, binding = 4)  uniform sampler2D BackgroundVertImage;
@@ -345,7 +344,7 @@ void main()
 	VIEWPORT_UNSCALED_COORD = HSM_GetViewportCoordWithFlip(vTexCoord);
 	VIEWPORT_COORD = HSM_GetViewportCoordWithZoomAndPan(vTexCoord);
 
-	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, InfoCachePassFeedback, vTexCoord);
+	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, vTexCoord);
 
 	vec4 feedback_color_test = texture(PassFeedback, vec2(0,0));
 	if (HSM_CACHE_GRAPHICS_ON > 0.5 && feedback_color_test.a < 0 && !CACHE_INFO_CHANGED)
@@ -620,7 +619,10 @@ void main()
 															HSM_BZL_BLEND_MODE,
 															HSM_AMBIENT_LIGHTING_SWAP_IMAGE_MODE);
 
-		float FRAME_AND_BEZEL_MASK = (1 - TUBE_MASK) * (1 - OUTSIDE_FRAME_MASK);
+		// Contract the tube mask to leave a little extra black ring at the edge of the bezel
+		// otherwise this will show slivers of the background otherwise
+		float tube_mask_contracted = HSM_GetCornerMask((tube_curved_coord - 0.5) * 1.004 + 0.5, TUBE_DIFFUSE_ASPECT, bezel_corner_radius, 0.99);
+		float FRAME_AND_BEZEL_MASK = (1 - tube_mask_contracted) * (1 - OUTSIDE_FRAME_MASK);
 
 		if (HSM_BZL_OPACITY > 0 || HSM_FRM_OPACITY > 0)
 			bezel_layer = clamp(bezel_and_frame_rgba * FRAME_AND_BEZEL_MASK, 0, 1);
@@ -645,7 +647,8 @@ void main()
 
 	float TUBE_MASK_EXPAND = HSM_GetCornerMask((tube_curved_coord - 0.5) * 0.997 + 0.5, TUBE_DIFFUSE_ASPECT, bezel_corner_radius, 0.99);
 	
-	vec4 tube_bg_layer = vec4(0, 0, 0, TUBE_MASK_EXPAND * HSM_GetTubeDiffuseOpacity());
+	// vec4 tube_bg_layer = vec4(0, 0, 0, TUBE_MASK_EXPAND * HSM_GetTubeOpacity());
+	vec4 tube_bg_layer = vec4(0, 0, 0, 0);
 
 // end of ifndef LAYERS_UNDER_CRT
 #endif
@@ -1155,7 +1158,6 @@ void main()
 
 	// Add background behind tube
 	frag_color_linear = HSM_PreMultAlphaBlend(frag_color_linear, tube_bg_layer);
-
 	// GENERATED BEZEL LAYER
 	if (HSM_BZL_OPACITY > 0 || HSM_FRM_OPACITY > 0)
 		frag_color_linear = BlendModeMaskLayerMix(frag_color_linear, 
@@ -1186,8 +1188,9 @@ void main()
 
 	FragColor = frag_color_linear;
 
+	// If we have calculated an image then set -1 as a flag to show that we have
 	if (UNFLIPPED_VIEWPORT_COORD.x < (2 / global.OutputSize.x) && UNFLIPPED_VIEWPORT_COORD.y < (2 / global.OutputSize.y))
-		FragColor = vec4(0.01, 0.01, 0.01, -1);
+		FragColor.a = -1;
 
 	return;
 }

@@ -24,6 +24,7 @@
 
 /////////////// IMPORTS ///////////////
 #include "common/globals-and-image-layers-params.inc"
+#include "common/common-functions.inc"
 #include "common/common-functions-bezel.inc"
 
 
@@ -58,7 +59,6 @@ layout(location = 0) out vec4 FragColor;
 
 // Pass Framebuffer Textures
 layout(set = 0, binding = 1) uniform sampler2D InfoCachePass;
-layout(set = 0, binding = 2) uniform sampler2D InfoCachePassFeedback;
 
 layout(set = 0, binding = 3) uniform sampler2D BR_LayersUnderCRTPass;
 
@@ -80,7 +80,7 @@ void main()
 {
 	UNFLIPPED_VIEWPORT_COORD = vTexCoord;
 	vec2 VIEWPORT_COORD = HSM_GetViewportCoordWithZoomAndPan(vTexCoord);
-	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, InfoCachePassFeedback, vTexCoord);
+	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, vTexCoord);
 
 
 	// Have to get the scale of the coordinates so we can figure out the size of the onscreen rectangle of the area 
@@ -94,7 +94,7 @@ void main()
 						BEZEL_OUTSIDE_CURVED_COORD, 
 						FRAME_OUTSIDE_CURVED_COORD);
 
-	if (BEZEL_OUTSIDE_COORD.x < -0.01 || BEZEL_OUTSIDE_COORD.x > 1.01 || BEZEL_OUTSIDE_COORD.y < -0.01 || BEZEL_OUTSIDE_COORD.y > 1.01)
+	if (HHLP_IsOutsideCoordSpace(BEZEL_OUTSIDE_COORD))
 	{
 		vec4 feedback_color_test = texture(PassFeedback, vec2(0,0));
 		if (HSM_CACHE_GRAPHICS_ON > 0.5 && feedback_color_test.a < 0 && !CACHE_INFO_CHANGED && HSM_RENDER_SIMPLE_MODE < 0.5)
@@ -108,6 +108,7 @@ void main()
 	out_color.rgb *= HSM_GLOBAL_GRAPHICS_BRIGHTNESS;
 
 	vec4 crt_layer = texture(MiddlePass, vTexCoord);
+
 	#ifdef IS_NO_REFLECT_PRESET
 		crt_layer = HSM_Linearize(crt_layer, DEFAULT_SRGB_GAMMA);
 	#endif
@@ -118,10 +119,9 @@ void main()
 	float bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * HSM_GLOBAL_CORNER_RADIUS;
 	if(HSM_BZL_USE_INDEPENDENT_CURVATURE > 0)
 		bezel_corner_radius = HSM_BZL_INNER_CORNER_RADIUS_SCALE * DEFAULT_SCREEN_CORNER_RADIUS;
-	vec2 tube_curved_coord = HSM_GetTubeCurvedCoord(TUBE_DIFFUSE_COORD, 1, TUBE_DIFFUSE_SCALE, TUBE_SCALE, TUBE_DIFFUSE_ASPECT, 1);
 
 	if (HSM_RENDER_SIMPLE_MODE < 0.5)
-		out_color.rgb += crt_layer.rgb;
+		out_color = HSM_PreMultAlphaBlend(out_color, crt_layer);
 
 	vec4 over_layer = texture(BR_LayersOverCRTPass, vTexCoord);
 	over_layer.rgb *= HSM_GLOBAL_GRAPHICS_BRIGHTNESS;
@@ -131,6 +131,8 @@ void main()
 
 	if (HSM_RENDER_SIMPLE_MODE > 0.5)
 	{
+		vec2 tube_curved_coord = HSM_GetTubeCurvedCoord(TUBE_DIFFUSE_COORD, 1, TUBE_DIFFUSE_SCALE, TUBE_SCALE, TUBE_DIFFUSE_ASPECT, 1);
+
 		TUBE_DIFFUSE_CURVED_COORD = HSM_GetCurvedCoord(TUBE_DIFFUSE_COORD, HSM_TUBE_BLACK_EDGE_CURVATURE_SCALE, TUBE_DIFFUSE_ASPECT);
 		TUBE_DIFFUSE_MASK = HSM_GetCornerMask(((TUBE_DIFFUSE_CURVED_COORD - 0.5) * 1.001) + 0.5, TUBE_DIFFUSE_ASPECT, HSM_GLOBAL_CORNER_RADIUS * HSM_TUBE_BLACK_EDGE_CORNER_RADIUS_SCALE, HSM_TUBE_BLACK_EDGE_SHARPNESS);
 
@@ -186,8 +188,10 @@ void main()
 				FragColor = vec4(FRAME_MASK);
 		}
 	}
+
+	// If we have calculated an image then set -1 as a flag to show that we have
 	if (UNFLIPPED_VIEWPORT_COORD.x < (2 / global.OutputSize.x) && UNFLIPPED_VIEWPORT_COORD.y < (2 / global.OutputSize.y))
-		FragColor = vec4(0.01, 0.01, 0.01, -1);
+		FragColor.a = -1;
 		
 	return;
 }

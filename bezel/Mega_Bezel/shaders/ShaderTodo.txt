@@ -1,19 +1,29 @@
 ![Mega_Bezel_Logo|512x256, 75%](upload://6PNkvcMF9Go9Wnk6OJXfYR1opXI.png) 
 
-Mega Bezel is updated to V1.4.2_2022-09-27
+Mega Bezel is updated to V1.4.3_2022-10-09
 
 Changes:
-  * Fixed LCD Grid and Easymode
+  * Fixed D3D11 bugs, Shaders now load, Compilation is still much slower than Vulkan or GlCore
+  * Added SCREEN-ONLY presets for those users which don't use the Refletion, Bezel or Graphics
+  * Adjusted SUPER-XBR settings to be more like the latest SUPER-XBR
+  * Added Tube Opacity
+  * Updated Text to faster compiling and rendering
+  * The names of the Max-Int presets has now changed because they point to these SCREEN-ONLY base presets which are faster
+  * Split apart libraries to improve compile times and optimize execution
 
 ----------------------------------------------------
 --- TODO  ---------------------------------------
 ----------------------------------------------------
 
-  * Try Leveraging Fake Scanlines for Gameboy type effect
-  * Integer Scale Mode not affecting tube scale
+  * Fix Blur Noise Samples
+  * Fix No Reflect Tube Edge Mask (Can see through right now)
+  * Integer Scale Mode X & Y not affecting tube scale
+  * Move Global Variable Update to separate file for compile speed
 
   * Add .params #reference to with all parameters commented out
   * Bezel shadow on Potato Tube / Game Image
+  * Get CRT image to composite on top of the BG, so effects can affect the BG
+  * We should have a middle pass which has the device behind the CRT tube
 
 ----------------------------------------------------
 --- Examples  --------------------------------------

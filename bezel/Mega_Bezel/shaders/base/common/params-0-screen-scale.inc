@@ -23,14 +23,14 @@
 */
 
 // Screen Scale Required Parameters
-#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.4.2_2022-09-27 --- ]" 0 0 0.01 0.01
+#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.4.3_2022-10-09 --- ]" 0 0 0.01 0.01
 
 #pragma parameter HSM_RESOLUTION_DEBUG_ON							"          Show Resolution Info" 0 0 1 1
 float HSM_RESOLUTION_DEBUG_ON = global.HSM_RESOLUTION_DEBUG_ON;
 
 
 //---------------------------------------------------------------------------------------------------
-//    CRT Layer
+//    CRT BRIGHTNESS & GAMMA
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_CRT_TITLE                             "[ CRT BRIGHTNESS & GAMMA ]:" 0 0 0.01 0.01
 
@@ -145,7 +145,7 @@ float HSM_ASPECT_RATIO_EXPLICIT = global.HSM_ASPECT_RATIO_EXPLICIT;
 
 
 //---------------------------------------------------------------------------------------------------
-//    SCALING
+//    CRT SCREEN SCALING GENERAL
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_SCALING_TITLE									"[ CRT SCREEN SCALING GENERAL ]:" 0 0 0.01 0.01
 
@@ -242,7 +242,7 @@ float HSM_SNAP_TO_CLOSEST_INT_SCALE_TOLERANCE = HSM_USE_SNAP_TO_CLOSEST_INT_SCAL
 
 
 //---------------------------------------------------------------------------------------------------
-//    Position
+//    POSITION OFFSET
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_SCREEN_POSITION_TITLE							"[ POSITION OFFSET ]:" 0 0 0.01 0.01
 
@@ -257,7 +257,7 @@ float HSM_SCREEN_POSITION_Y = -1 * global.HSM_SCREEN_POSITION_Y / 1000;
 //    CROPPING
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_CROPPING_TITLE								"[ CROPPING CORE IMAGE ]:" 0 0 0.01 0.01
-#pragma parameter HSM_CROP_FYI 									"!!! FYI !!! Negative Crop is currently Disabled :(" 2 0 2 1
+#pragma parameter HSM_CROP_FYI 									    "    FYI !!! Negative Crop is currently Disabled" 0 0 0.001 0.001
 
 #pragma parameter HSM_CROP_MODE 									"          Crop Mode  -  OFF | CROP BLACK ONLY | CROP ANY" 2 0 2 1
 float HSM_CROP_MODE = global.HSM_CROP_MODE;
@@ -282,7 +282,7 @@ float HSM_CROP_BLACK_THRESHOLD = global.HSM_CROP_BLACK_THRESHOLD / 100;
 
 
 //---------------------------------------------------------------------------------------------------
-//    SCANLINES
+//    SCANLINE DIRECTION
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_SCANLINE_TITLE								"[ SCANLINE DIRECTION ]:" 0 0 0.01 0.01
 
@@ -295,12 +295,12 @@ float HSM_SCANLINE_DIRECTION = global.HSM_SCANLINE_DIRECTION;
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_DREZ_TITLE "[ DREZ DOWNSAMPLE FILTER - HYLLIAN - DREZ PRESETS ONLY ]:" 0 0 0.01 0.01
 
-#pragma parameter C_FILTER_MODE "     DREZ Filter: B-SPLINE | BICUBIC | CATMULL-ROM | BICUBIC H" 0.0 0.0 3.0 1.0
+#pragma parameter C_FILTER_MODE "     DREZ Filter: B-SPLINE | BICUBIC | CATMULL-ROM | BICUBIC H" 0 0 3 1
 
 //---------------------------------------------------------------------------------------------------
 //    CORE RES SAMPLING
 //---------------------------------------------------------------------------------------------------
-#pragma parameter HSM_SAMPLING_TITLE								"[ CORE RES SAMPLING]:" 0 0 0.01 0.01
+#pragma parameter HSM_SAMPLING_TITLE								"[ CORE RES SAMPLING ]:" 0 0 0.01 0.01
 
 #pragma parameter HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR			"          Scanline Dir Multiplier (X-Prescale for H Scanline)"  100 25 1600 25
 float HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR = global.HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR / 100;
@@ -318,7 +318,7 @@ float HSM_DOWNSAMPLE_BLUR_OPPOSITE_DIR = global.HSM_DOWNSAMPLE_BLUR_OPPOSITE_DIR
 float HSM_CORE_RES_SAMPLING_SHIFT_OPPOSITE_DIR = global.HSM_CORE_RES_SAMPLING_SHIFT_OPPOSITE_DIR / 100;
 
 //---------------------------------------------------------------------------------------------------
-//    SHARPEN
+//    FAST SHARPEN - GUEST.R
 //---------------------------------------------------------------------------------------------------
 #pragma parameter SHARPEN_TITLE  	"[ FAST SHARPEN - GUEST.R ]:"         			0.00 0.0 2.00 0.05
 #pragma parameter SHARPEN  			"          Sharpen Strength"    0.00 0.0 4.00 0.10 
@@ -429,7 +429,7 @@ float HSM_CRT_CURVATURE_SCALE = global.HSM_CRT_CURVATURE_SCALE / 100;
 
 
 //---------------------------------------------------------------------------------------------------
-//    CRT vs ORIGINAL A/B TESTING
+//    A/B SPLITSCREEN COMPARE
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_CRT_AB_COMPARE_TITLE							"[ A/B SPLITSCREEN COMPARE ]:" 0 0 0.01 0.01
 
@@ -450,7 +450,7 @@ float HSM_AB_COMPARE_FREEZE_GRAPHICS = global.HSM_AB_COMPARE_FREEZE_GRAPHICS;
 
 
 //---------------------------------------------------------------------------------------------------
-//    Screen Vignette
+//    SCREEN VIGNETTE
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_SCREEN_VIGNETTE_TITLE							"[ SCREEN VIGNETTE ]:" 0 0 0.01 0.01
 
@@ -471,7 +471,7 @@ float HSM_SCREEN_VIGNETTE_DUALSCREEN_VIS_MODE = global.HSM_SCREEN_VIGNETTE_DUALS
 
 
 //---------------------------------------------------------------------------------------------------
-//    Monochrome
+//    MONOCHROME
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_MONOCHROME_TITLE 								"[ MONOCHROME ]:" 0 0 0.01 0.01
 
@@ -495,15 +495,12 @@ float HSM_MONOCHROME_DUALSCREEN_VIS_MODE = global.HSM_MONOCHROME_DUALSCREEN_VIS_
 
 
 //---------------------------------------------------------------------------------------------------
-//    TUBE DIFFUSE COLOR
+//    TUBE DIFFUSE IMAGE
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_TUBE_DIFFUSE_IMAGE_TITLE						"[ TUBE DIFFUSE IMAGE ]:" 0 0 0.01 0.01
 
 #pragma parameter HSM_TUBE_DIFFUSE_MODE  					        "          Tube Diffuse Color - BLACK | IMAGE | TRANSPARENT" 0 0 2 1
 float HSM_TUBE_DIFFUSE_MODE = global.HSM_TUBE_DIFFUSE_MODE;
-
-#pragma parameter HSM_TUBE_DIFFUSE_OPACITY                          "          Opacity" 100 0 100 0.1
-float HSM_TUBE_DIFFUSE_OPACITY = global.HSM_TUBE_DIFFUSE_OPACITY / 100;
 
 #pragma parameter HSM_TUBE_DIFFUSE_IMAGE_AMOUNT                     "          Amount" 100 0 100 1
 float HSM_TUBE_DIFFUSE_IMAGE_AMOUNT = global.HSM_TUBE_DIFFUSE_IMAGE_AMOUNT / 100;
@@ -585,9 +582,9 @@ float HSM_TUBE_SHADOW_CURVATURE_SCALE = global.HSM_TUBE_SHADOW_CURVATURE_SCALE /
 
 
 //---------------------------------------------------------------------------------------------------
-//    TUBE STATIC REFLECTION
+//    TUBE GLASS STATIC REFLECTION IMAGE
 //---------------------------------------------------------------------------------------------------
-#pragma parameter HSM_TUBE_STATIC_TITLE			"[ TUBE STATIC REFLECTION IMAGE ]:" 0 0 0.01 0.01
+#pragma parameter HSM_TUBE_STATIC_TITLE			"[ TUBE GLASS STATIC REFLECTION IMAGE ]:" 0 0 0.01 0.01
 
 #pragma parameter HSM_TUBE_STATIC_REFLECTION_IMAGE_ON  				"          Use Tube Static Reflection Image - OFF | ON" 0 0 1 1
 float HSM_TUBE_STATIC_REFLECTION_IMAGE_ON = global.HSM_TUBE_STATIC_REFLECTION_IMAGE_ON;
@@ -639,12 +636,15 @@ float HSM_TUBE_STATIC_DITHER_AMOUNT = global.HSM_TUBE_STATIC_DITHER_AMOUNT;
 //    CRT Blend Over Diffuse
 //---------------------------------------------------------------------------------------------------
 
-#pragma parameter HSM_CRT_BLEND_TITLE						"[ CRT ON TUBE DIFFUSE BLENDING ]:" 0 0 0.01 0.01
+#pragma parameter HSM_CRT_BLEND_TITLE						"[ CRT & TUBE BLENDING ]:" 0 0 0.01 0.01
 
-#pragma parameter HSM_CRT_BLEND_MODE                        "          CRT On Tube Diffuse Blend Mode: OFF | ADD | MULTIPLY" 1 0 2 1
+#pragma parameter HSM_TUBE_OPACITY                          "          Tube Opacity" 100 0 100 0.1
+float HSM_TUBE_OPACITY = global.HSM_TUBE_OPACITY / 100;
+
+#pragma parameter HSM_CRT_BLEND_MODE                        "          CRT Blend Mode: OFF | ADD | MULTIPLY" 1 0 2 1
 #define HSM_CRT_BLEND_MODE global.HSM_CRT_BLEND_MODE
 
-#pragma parameter HSM_CRT_BLEND_AMOUNT                      "          CRT On Tube Diffuse Blend Amount" 100 0 100 1
+#pragma parameter HSM_CRT_BLEND_AMOUNT                      "          CRT Blend Amount" 100 0 100 1
 #define HSM_CRT_BLEND_AMOUNT global.HSM_CRT_BLEND_AMOUNT / 100
 
 

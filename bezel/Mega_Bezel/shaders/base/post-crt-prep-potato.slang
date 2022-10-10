@@ -25,7 +25,7 @@
 */
 
 #include "common/globals-and-potato-params.inc"
-
+#include "common/common-functions.inc"
 #pragma stage vertex
 
 layout(location = 0) in vec4 Position;
@@ -52,7 +52,6 @@ layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 1) uniform sampler2D Source;
 
 layout(set = 0, binding = 2) uniform sampler2D InfoCachePass;
-layout(set = 0, binding = 3) uniform sampler2D InfoCachePassFeedback;
 
 layout(set = 0, binding = 7) uniform sampler2D BackgroundImage;
 layout(set = 0, binding = 8) uniform sampler2D BackgroundVertImage;
@@ -146,9 +145,9 @@ vec4 HSM_GetPostCrtPreppedColorPotato(vec4 in_color_with_gamma, vec2 VIEWPORT_CO
 void main()
 {
 	vec2 viewportCoordTransformed = HSM_GetViewportCoordWithZoomAndPan(vTexCoord);
-	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, InfoCachePassFeedback, vTexCoord);
+	HSM_UpdateGlobalScreenValuesFromCache(InfoCachePass, vTexCoord);
 	
-	if (SCREEN_COORD.x < -0.01 || SCREEN_COORD.x > 1.01 || SCREEN_COORD.y < -0.01 || SCREEN_COORD.y > 1.01)
+	if (HHLP_IsOutsideCoordSpace(SCREEN_COORD))
 	{
 		vec4 feedback_color_test = texture(PassFeedback, vec2(0,0));
 		if (HSM_CACHE_GRAPHICS_ON > 0.5 && feedback_color_test.a < 0 && !CACHE_INFO_CHANGED)
@@ -162,7 +161,4 @@ void main()
 
 	vec2 screen_curved_coord = HSM_GetCurvedCoord(SCREEN_COORD, HSM_CRT_CURVATURE_SCALE, SCREEN_ASPECT);
 	FragColor = HSM_GetPostCrtPreppedColorPotato(FragColor, vTexCoord, viewportCoordTransformed, screen_curved_coord, BackgroundImage, BackgroundVertImage);
-
-	if (UNFLIPPED_VIEWPORT_COORD.x < (2 / global.OutputSize.x) && UNFLIPPED_VIEWPORT_COORD.y < (2 / global.OutputSize.y))
-		FragColor = vec4(0.01, 0.01, 0.01, -1);
 }
