@@ -1,7 +1,7 @@
 shaders = 5
-shader0 = ../ntsc/shaders/ntsc-pass1-composite-3phase.slang
-shader1 = ../ntsc/shaders/ntsc-pass2-3phase.slang
-shader2 = ../ntsc/shaders/ntsc-stock.slang
+shader0 = ../ntsc/shaders/maister/ntsc-pass1-composite-3phase.slang
+shader1 = ../ntsc/shaders/maister/ntsc-pass2-3phase.slang
+shader2 = ../ntsc/shaders/maister/ntsc-stock.slang
 shader3 = shaders/static.slang
 shader4 = ../misc/shaders/image-adjustment.slang
 
